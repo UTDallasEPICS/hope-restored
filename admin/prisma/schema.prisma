@@ -12,6 +12,88 @@ datasource db {
 
 model User {
   id    Int     @id @default(autoincrement())
-  email String  @unique
-  name  String?
+  createdAt DateTime @default(now())
+  username String @unique                  // unique username for login
+  name  String?                            // Optional name field
+  password  String                        // Password field
+  role      Role     @default(ADMIN)       // Role can be USER or ADMIN
+  @@map("user") // Table name in the database
+}
+model Resource {
+  id          Int      @id @default(autoincrement()) // Primary key with auto-increment
+  name        String   @unique
+  description String
+  eligibility String   @default("N/A")// this is the criteria for which a person can be elgible for this resource
+  cost        Float    @default(0)
+  externalLink String?  // A call to action link for the resource 
+  locations Location[] // Backward relation to Location (One-to-many relationship)
+  demographics Demographic[] 
+  phoneNumbers PhoneNumber[]
+  emails      Email[]
+  languages Language[]
+  groupId    Int // Foreign key to Groups
+  group      Group @relation(fields: [groupId], references: [id])
+  archived   Boolean  @default(false) // Default value for archived
+  createdAt  DateTime @default(now()) // Default value for createdAt
+  updatedAt  DateTime @updatedAt      // UpdatedAt field
+  //tags Tags[]
+  @@map("resource") // Table name in the database
+}
+model Language {
+  id Int              @id @default(autoincrement()) // Primary key with auto-increment
+  name String         @unique
+  resources Resource[]
+
+  @@map("language") // Table name in the database
+}
+model Group {
+  id Int              @id @default(autoincrement()) // Primary key with auto-increment
+  name String         @unique
+  resources Resource[]
+
+  @@map("group") // Table name in the database
+}
+model Demographic{
+  id Int                @id @default(autoincrement()) // Primary key with auto-increment
+  name String           @unique
+  resources Resource[]
+
+  @@map("demographic") // Table name in the database
+}
+model PhoneNumber {
+  id Int                    @id @default(autoincrement()) // Primary key with auto-increment
+  number String             @unique
+  name String?              // Optional name of the person associated with the phone number
+  description String?       // Optional description of the phone number
+  resourceId Int
+  resource Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+
+  @@map("phone_number") // Table name in the database
+}
+
+model Email {
+  id Int                    @id @default(autoincrement()) // Primary key with auto-increment
+  email String              @unique
+  name String?              // Optional name of the person associated with the email
+  description String?       // Optional description of the email
+  resourceId Int
+  resource Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+
+  @@map("email") // Table name in the database
+}
+
+model Location {
+  id           Int       @id @default(autoincrement()) // Primary key
+  addressLine1 String    @unique
+  addressLine2 String
+  city         String
+  state        String
+  postalCode   String    // Changed from PostalLink Int to String for clarity
+  country      String    @default("USA") // Default value for country
+  longitude    Float?    // Changed from Int to Float
+  latitude     Float?    // Changed from Int to Float
+  resourceId   Int       // Foreign key
+  resource     Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+
+  @@map("location") // Table name in the database
 }
