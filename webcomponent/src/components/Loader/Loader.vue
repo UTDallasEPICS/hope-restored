@@ -41,11 +41,11 @@ const globalLoading = loadingStore.getGlobalLoading;
   font-weight: bold;
   text-transform: uppercase;
   color: #0000;
-  -webkit-text-stroke: 1px theme(colors.hrm-dark-green);
+  -webkit-text-stroke: 1px theme('colors.hrm-dark-green');
   background: linear-gradient(
       -60deg,
       #fff 45%,
-      theme(colors.hrm-green) 0 55%,
+      theme('colors.hrm-green') 0 55%,
       #fff 0
     )
     0/300% 100% no-repeat text;

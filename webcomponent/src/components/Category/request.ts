@@ -1,4 +1,4 @@
-import { Prisma } from "@prisma/client";
+//import { Prisma } from "@prisma/client";
 type CategoryDB = Prisma.GroupGetPayload<{}>;
 
 async function fetchCategories(): Promise<CategoryDB[]> {
