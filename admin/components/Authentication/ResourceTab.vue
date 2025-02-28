@@ -35,11 +35,11 @@
   </template>
   
   <script lang="ts">
-  import { defineComponent, ref, computed } from 'vue';
-  import { useFetch } from '@vueuse/core';
-  import ResourceDeck from '../Resource/ResourceDeck.vue';
+//   import { defineComponent, ref, computed } from 'vue';
+//   import { useFetch } from '@vueuse/core';
+//   import ResourceDeck from '../Resource/ResourceDeck.vue';
 
-  const { data: resource, error } = await useFetch('/api/resource/get/retrieveAll');
+//   const { data: resource, error } = await useFetch('/api/resource/get/retrieveAll');
 
   /*
   export default defineComponent({
@@ -73,7 +73,4 @@
 
   </script>
   
-  <style scoped>
-  /* Add any additional styles here */
-  </style>
   

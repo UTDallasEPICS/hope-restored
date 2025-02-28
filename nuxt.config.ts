@@ -1,5 +1,20 @@
+import { defineNuxtConfig } from "nuxt/config";
+
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
-  devtools: { enabled: true },
-  compatibilityDate: "2025-02-27"
-})
+  compatibilityDate: "2024-04-03",
+  ssr: true,
+  devtools: { enabled: false },
+  modules: ["@nuxtjs/tailwindcss"],
+  css: ["~/admin/assets/css/App.css"],
+  postcss: {
+    plugins: {
+      tailwindcss: {},
+      autoprefixer: {},
+    },
+  },
+  app: {
+    baseURL: "/",
+  },
+  
+});
