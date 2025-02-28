@@ -11,6 +11,9 @@
 </template>
 
 <script setup lang="ts">
+import { useRuntimeConfig } from 'nuxt/app';
+import { onMounted, ref } from 'vue';
+
 // Import the useRuntimeConfig composable
 const config = useRuntimeConfig();
 

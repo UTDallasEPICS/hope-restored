@@ -147,8 +147,8 @@
     import { ref, computed, onMounted } from 'vue';
     import { useRuntimeConfig } from '#app';
     import QRCode from 'qrcode.vue';
-    import ItemsPerCategoryChart from '~/components/ItemsPerCategoryChart.vue';
-    import ItemsPerLocationChart from '~/components/ItemsPerLocationChart.vue';
+    import ItemsPerCategoryChart from '../components/Inventory/ItemsPerCategoryChart.vue';
+    import ItemsPerLocationChart from '../components/Inventory/ItemsPerLocationChart.vue';
     
     const inventory = ref([]);
     const searchQuery = ref('');

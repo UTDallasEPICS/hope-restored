@@ -61,7 +61,7 @@
 
 <script setup lang="ts">
     import { ref } from 'vue';
-    import QrCodeScanner from '~/components/QrCodeScanner.vue';
+    import QrCodeScanner from '../components/Inventory/QrCodeScanner.vue';
 
     const showAddItemModal = ref(false);
     const scannedCode = ref('');
