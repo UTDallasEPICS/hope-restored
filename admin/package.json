@@ -3,7 +3,7 @@
   "private": true,
   "scripts": {
     "build": "nuxt build",
-    "dev": "cd admin && nuxt dev",
+    "dev": "nuxt dev",
     "build-vue": "vite build --config vite.config.wordpress.ts",
     "dev-vue": "vite --config vite.config.wordpress.ts ",
     "generate": "nuxt generate",
