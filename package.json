@@ -23,7 +23,7 @@
     "csv-parser": "^3.0.0",
     "jsbarcode": "^3.11.6",
     "nuxt": "^3.14.159",
-    "qrcode.vue": "^3.3.1",
+    "qrcode.vue": "^3.6.0",
     "quagga": "^0.12.1",
     "vite": "^5.4.14",
     "vue": "^3.2.0",
