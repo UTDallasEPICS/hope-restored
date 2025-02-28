@@ -45,15 +45,15 @@
 </template>
 
 <script>
-    import DonationsChart from '~/components/DonationsChart.vue';
-    import InventoryDistributionChart from '~/components/InventoryDistributionChart.vue';
+    // import DonationsChart from '~/components/DonationsChart.vue';
+    // import InventoryDistributionChart from '~/components/InventoryDistributionChart.vue';
 
-    export default {
-        components: {
-            DonationsChart,
-            InventoryDistributionChart,
-        },
-    };
+    // export default {
+    //     components: {
+    //         DonationsChart,
+    //         InventoryDistributionChart,
+    //     },
+    // };
 </script>
 
 <style scoped>
