@@ -16,8 +16,15 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "importHelpers": true,
-    "jsx": "preserve"
+    "jsx": "preserve",
     // "baseUrl": "src" // Move this to another place if needed
+    "paths": {
+      "~/*": [ "./*" ],
+      "@/*": [ "./*" ],
+      "#app": [ "./.nuxt/types/app" ],
+      "#imports": [ "./.nuxt/types/app/imports" ],
+      "#components": [ "./.nuxt/types/app/components" ]
+    }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", "vite-env.d.ts"],
   "exclude": ["node_modules"]
