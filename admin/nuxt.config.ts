@@ -7,5 +7,10 @@ export default defineNuxtConfig({
   modules: [
     '@nuxtjs/tailwindcss'
   ],
+  components:{
+    dirs: [
+      "@/components/"
+    ]
+  },
   compatibilityDate: "2025-02-27"
 })
