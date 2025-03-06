@@ -1,5 +1,5 @@
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 generator client {
@@ -7,21 +7,15 @@ generator client {
   previewFeatures = ["fullTextSearch"]
 }
 
-
-enum Role {
-  ADMIN    // Admin user
-}
-
-
 model User {
   id        Int      @id @default(autoincrement())
   createdAt DateTime @default(now())
   username  String   @unique              // Unique username for login
   password  String                        // Password field
   name      String?                       // Optional name field (can be made required by removing `?`)
-  role      Role     @default(ADMIN)       // Role can be USER or ADMIN
+  role      String     @default("USER")       // Role can be USER or ADMIN
 
-  @@map("user") // Table name in the database
+  @@map("users") // Table name in the database
 }
 
 model Resource {
@@ -116,7 +110,7 @@ model Location {
   @@map("location") // Table name in the database
 }
 
-// The rest is from Inventory Tracking
+//The rest is from Inventory Tracking
 
 model ItemCategory {
   id    Int    @id @default(autoincrement())
