@@ -3,7 +3,7 @@
   "private": true,
   "scripts": {
     "build": "nuxt build",
-    "dev": "nuxt dev",
+    "dev": "cd admin && nuxt dev",
     "build-vue": "vite build --config vite.config.wordpress.ts",
     "dev-vue": "vite --config vite.config.wordpress.ts ",
     "generate": "nuxt generate",
@@ -30,7 +30,6 @@
     "vue-chartjs": "^4.1.2",
     "vue3-qr-reader": "^1.0.0"
   },
-  
   "devDependencies": {
     "@nuxtjs/tailwindcss": "^6.12.1",
     "@sidebase/nuxt-auth": "^0.6.7",

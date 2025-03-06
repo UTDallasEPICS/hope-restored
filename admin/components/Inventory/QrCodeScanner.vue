@@ -1,8 +1,17 @@
-<!-- pages/scanner.vue -->
+<!-- components/QrCodeScanner.vue -->
 <template>
-    <div class="scanner-container">
-        <h1>QR Code Scanner</h1>
-        <QrCodeScanner @code-detected="handleCodeDetected" />
+    <div class="qr-code-scanner">
+        <QrReader @decode="onDecode"
+                  @init="onInit"
+                  :paused="paused"
+                  :constraints="constraints"
+                  class="scanner-view" />
+        <div v-if="initializing" class="scanner-info">
+            Initializing Camera...
+        </div>
+        <div v-if="error" class="scanner-error">
+            {{ error }}
+        </div>
 
         <!-- Add Item Modal -->
         <div v-if="showAddItemModal" class="modal-overlay">
@@ -61,10 +70,20 @@
 
 <script setup lang="ts">
     import { ref } from 'vue';
-    import QrCodeScanner from '../components/Inventory/QrCodeScanner.vue';
+    import QrReader from 'vue3-qr-reader';
 
+    const initializing = ref(true);
+    const error = ref<string | null>(null);
+    const paused = ref(false);
     const showAddItemModal = ref(false);
     const scannedCode = ref('');
+    const constraints = ref({
+        audio: false,
+        video: {
+            facingMode: 'environment',
+        },
+    });
+
     const newItem = ref({
         category: '',
         style: '',
@@ -74,17 +93,25 @@
         location: '',
     });
 
-    // Handle code detected from the scanner
-    const handleCodeDetected = (code) => {
-        scannedCode.value = code;
-        // Pre-fill the newItem with scanned code if necessary
-        // For example, you might fetch item details from an API using the scanned code
-        // For now, we'll just show the modal
+    function onDecode(decodedString: string) {
+        // Handle the decoded QR code data
+        console.log('Decoded string:', decodedString);
+        scannedCode.value = decodedString;
         showAddItemModal.value = true;
-    };
+        paused.value = true; // Pause the scanner after successful scan
+    }
 
-    // Function to add the new item to the inventory
-    const addItem = async () => {
+    function onInit(promise: Promise<void>) {
+        promise
+            .then(() => {
+                initializing.value = false;
+            })
+            .catch((e) => {
+                error.value = e.message || 'Cannot initialize QR reader';
+            });
+    }
+
+    const addItem = () => {
         // Here you would typically send the new item to your backend API
         // For this example, we'll just log it to the console
         const itemToAdd = {
@@ -105,8 +132,7 @@
         };
         scannedCode.value = '';
         showAddItemModal.value = false;
-
-        // Optionally, show a success message or redirect the user
+        paused.value = false; // Resume scanning if needed
     };
 
     const cancelAddItem = () => {
@@ -121,23 +147,42 @@
         };
         scannedCode.value = '';
         showAddItemModal.value = false;
+        paused.value = false; // Resume scanning if needed
     };
 </script>
 
 <style scoped>
     /* General Styling */
-    .scanner-container {
+    .qr-code-scanner {
+        position: relative;
+        width: 100%;
+        height: calc(100vh - 60px); /* Adjust based on your header/footer height */
         font-family: 'Open Sans', sans-serif;
-        padding: 2em;
-        background-color: #f9fafc; /* Lighter background */
-        min-height: 100vh;
-        text-align: center;
     }
 
-    h1 {
-        font-size: 2.5em;
-        color: #3f51b5; /* Indigo */
-        margin-bottom: 1em;
+    .scanner-view {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .scanner-info,
+    .scanner-error {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        color: white;
+        text-align: center;
+        padding: 10px;
+    }
+
+    .scanner-error {
+        background-color: rgba(255, 0, 0, 0.7);
+    }
+
+    .scanner-info {
+        background-color: rgba(0, 0, 0, 0.7);
     }
 
     /* Modal Styling */

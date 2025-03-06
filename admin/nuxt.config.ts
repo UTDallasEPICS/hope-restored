@@ -1,10 +1,11 @@
+import { defineNuxtConfig } from "nuxt/config";
+
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
-  compatibilityDate: '2024-11-01',
   devtools: { enabled: true },
+  plugins: ['~/qr-code-stuff/vue3-qr-reader.client.ts'],
   modules: [
-    '@nuxtjs/tailwindcss',
-    '@prisma/nuxt',
-    '@sidebase/nuxt-auth'
-  ]
+    '@nuxtjs/tailwindcss'
+  ],
+  compatibilityDate: "2025-02-27"
 })
