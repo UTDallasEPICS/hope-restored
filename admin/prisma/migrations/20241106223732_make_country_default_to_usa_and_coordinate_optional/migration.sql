@@ -1,4 +1,0 @@
--- AlterTable
-ALTER TABLE "Location" ALTER COLUMN "country" SET DEFAULT 'USA',
-ALTER COLUMN "longitude" DROP NOT NULL,
-ALTER COLUMN "latitude" DROP NOT NULL;

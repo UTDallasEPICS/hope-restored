@@ -1,5 +1,5 @@
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 generator client {
@@ -7,9 +7,12 @@ generator client {
   previewFeatures = ["fullTextSearch"]
 }
 
+
 enum Role {
   ADMIN    // Admin user
 }
+
+
 model User {
   id        Int      @id @default(autoincrement())
   createdAt DateTime @default(now())
@@ -113,7 +116,7 @@ model Location {
   @@map("location") // Table name in the database
 }
 
-//The rest is from Inventory Tracking
+// The rest is from Inventory Tracking
 
 model ItemCategory {
   id    Int    @id @default(autoincrement())
