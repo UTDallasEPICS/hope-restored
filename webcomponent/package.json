@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev-vue": "vite --config vite.config.wordpress.ts ",
     "build": "run-p type-check \"build-only {@}\" --",
     "preview": "vite preview",
     "test:unit": "vitest",
@@ -17,9 +18,8 @@
     "format": "prettier --write src/"
   },
   "dependencies": {
-    "@tailwindcss/vite": "^4.0.7",
+    "@tailwindcss/postcss": "^4.0.12",
     "pinia": "^3.0.1",
-    "tailwindcss": "^4.0.7",
     "vue": "^3.5.13",
     "vue-router": "^4.5.0"
   },
@@ -33,6 +33,7 @@
     "@vue/eslint-config-typescript": "^14.4.0",
     "@vue/test-utils": "^2.4.6",
     "@vue/tsconfig": "^0.7.0",
+    "autoprefixer": "^10.4.21",
     "cypress": "^14.0.3",
     "eslint": "^9.20.1",
     "eslint-plugin-cypress": "^4.1.0",
@@ -40,8 +41,10 @@
     "jiti": "^2.4.2",
     "jsdom": "^26.0.0",
     "npm-run-all2": "^7.0.2",
+    "postcss": "^8.5.3",
     "prettier": "^3.5.1",
     "start-server-and-test": "^2.0.10",
+    "tailwindcss": "^4.0.12",
     "typescript": "~5.7.3",
     "vite": "^6.1.0",
     "vite-plugin-vue-devtools": "^7.7.2",
