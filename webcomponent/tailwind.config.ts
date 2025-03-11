@@ -1,7 +1,22 @@
 /** @type {import('tailwindcss').Config} */
 const { fontFamily } = require("tailwindcss/defaultTheme");
-module.exports = {
-  content: [],
+export default {
+  mode: "jit",
+  content: [
+    "./components/**/*.{js,vue,ts}",
+    "./layouts/**/*.vue",
+    "./pages/**/*.vue",
+    "./plugins/**/*.{js,ts}",
+    "./index.html",
+    "./app.vue",
+    "./error.vue",
+  ],
+  screens: {
+    sm: "480px",
+    md: "768px",
+    lg: "976px",
+    xl: "1440px",
+  },
   theme: {
     extend: {
       colors: {
@@ -16,5 +31,4 @@ module.exports = {
     },
   },
   plugins: [],
-}
-
+};

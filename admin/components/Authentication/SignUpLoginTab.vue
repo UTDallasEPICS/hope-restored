@@ -26,13 +26,17 @@
   
 <script setup lang="ts">
 import {ref} from 'vue'
+import { useRouter } from 'vue-router';
+const router = useRouter();
 const username = ref('');
 const password = ref('');
 
-const handleSubmit = () => {
+const handleSubmit = async () => {
     // Handle sign up/login logic here
     console.log('Username:', username.value);
     console.log('Password:', password.value);
+
+    router.push('/inventoryHomepage');
 };
 </script>
 

@@ -1,17 +1,158 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-generator client {
-  provider = "prisma-client-js"
-}
-
 datasource db {
   provider = "sqlite"
   url      = env("DATABASE_URL")
 }
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["fullTextSearch"]
+}
 
 model User {
-  id    Int     @id @default(autoincrement())
-  email String  @unique
-  name  String?
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  username  String   @unique              // Unique username for login
+  password  String                        // Password field
+  name      String?                       // Optional name field (can be made required by removing `?`)
+  role      String     @default("USER")       // Role can be USER or ADMIN
+
+  @@map("users") // Table name in the database
+}
+
+model Resource {
+  id          Int      @id @default(autoincrement()) // Primary key with auto-increment
+  name        String   @unique
+  description String
+  eligibility String   @default("N/A")// this is the criteria for which a person can be elgible for this resource
+  cost        Float    @default(0)
+  externalLink String?  // A call to action link for the resource 
+  locations Location[] // Backward relation to Location (One-to-many relationship)
+  demographics Demographic[] 
+  phoneNumbers PhoneNumber[]
+  emails      Email[]
+  languages Language[]
+  groupId    Int // Foreign key to Groups
+  group      Group @relation(fields: [groupId], references: [id])
+  archived   Boolean  @default(false) // Default value for archived
+  createdAt  DateTime @default(now()) // Default value for createdAt
+  updatedAt  DateTime @updatedAt      // UpdatedAt field
+  //tags Tags[]
+  @@map("resource") // Table name in the database
+}
+
+model Language {
+  id Int              @id @default(autoincrement()) // Primary key with auto-increment
+  name String         @unique
+  resources Resource[]
+
+  @@map("language") // Table name in the database
+}
+
+//model Tag {
+//  id Int                @id @default(autoincrement()) // Primary key with auto-increment
+//  name String
+//  resourceId Int @unique
+//  resource Resource[]
+// 
+//  @@map("tag") // Table name in the database
+//}
+
+model Group {
+  id Int              @id @default(autoincrement()) // Primary key with auto-increment
+  name String         @unique
+  resources Resource[]
+
+  @@map("group") // Table name in the database
+}
+
+model Demographic{
+  id Int                @id @default(autoincrement()) // Primary key with auto-increment
+  name String           @unique
+  resources Resource[]
+
+  @@map("demographic") // Table name in the database
+}
+
+model PhoneNumber {
+  id Int                    @id @default(autoincrement()) // Primary key with auto-increment
+  number String             @unique
+  name String?              // Optional name of the person associated with the phone number
+  description String?       // Optional description of the phone number
+  resourceId Int
+  resource Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+
+  @@map("phone_number") // Table name in the database
+}
+
+model Email {
+  id Int                    @id @default(autoincrement()) // Primary key with auto-increment
+  email String              @unique
+  name String?              // Optional name of the person associated with the email
+  description String?       // Optional description of the email
+  resourceId Int
+  resource Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+
+  @@map("email") // Table name in the database
+}
+
+model Location {
+  id           Int       @id @default(autoincrement()) // Primary key
+  addressLine1 String    @unique
+  addressLine2 String
+  city         String
+  state        String
+  postalCode   String    // Changed from PostalLink Int to String for clarity
+  country      String    @default("USA") // Default value for country
+  longitude    Float?    // Changed from Int to Float
+  latitude     Float?    // Changed from Int to Float
+  resourceId   Int       // Foreign key
+  resource     Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+
+  @@map("location") // Table name in the database
+}
+
+//The rest is from Inventory Tracking
+
+model ItemCategory {
+  id    Int    @id @default(autoincrement())
+  name  String @unique
+
+  inventory Inventory[]
+}
+
+model ItemStyle {
+  id         Int    @id @default(autoincrement())
+  name       String
+
+
+  inventory Inventory[]
+}
+
+model Size {
+  id       Int    @id @default(autoincrement())
+  sizeCode String  // E.g., 'M', 'L', 'XL'
+
+  inventory Inventory[]
+}
+
+model Gender {
+  id    Int    @id @default(autoincrement())
+  name  String @unique  // E.g., "Men", "Women", "Children"
+
+  inventory Inventory[]
+}
+
+model Inventory {
+  barcode     String  @id  // Use barcode as primary key
+  quantity    Int     @default(0)
+  lastUpdated DateTime @default(now())
+
+  categoryId Int
+  styleId    Int
+  sizeId     Int
+  genderId   Int
+
+  category ItemCategory @relation(fields: [categoryId], references: [id])
+  style    ItemStyle    @relation(fields: [styleId], references: [id])
+  size     Size         @relation(fields: [sizeId], references: [id])
+  gender   Gender       @relation(fields: [genderId], references: [id])
 }
