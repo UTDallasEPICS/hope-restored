@@ -1,6 +1,6 @@
-// import { createApp } from "vue";
-// import Wordpress from "./pages/Resource.vue";
-// import "./assets/css/App.css";
+import { createApp } from "vue";
+import Wordpress from "./src/pages/Resource.vue";
+import "./assets/css/App.css";
 
-// const app = createApp(Wordpress);
-// app.mount("#app");
+const app = createApp(Wordpress);
+app.mount("#app");
