@@ -6,4 +6,5 @@
   <div class="font-bold">
     
   </div>
+  <RouterView />
 </template>
