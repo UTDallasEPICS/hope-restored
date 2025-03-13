@@ -10,7 +10,7 @@ import {
   MapPinIcon,
   PhoneIcon,
 } from "@heroicons/vue/24/solid";
-import { compareURLs } from "../../utils/originChecker";
+// import { compareURLs } from "../../utils/originChecker";
 import ResourceMoreDetail from "./ResourceMoreDetail.vue";
 export interface ResourceProps {
   id: number;
