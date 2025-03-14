@@ -7,6 +7,20 @@
   font-weight: normal;
 }
 
+html {
+    font-family: 'Roboto', sans-serif;
+}
+
+h2 {
+    font-size: 1.5rem; 
+    line-height: 2rem; 
+    font-weight: 700;
+}
+
+p {
+    font-size: 1rem; 
+    line-height: 1.5rem;
+}
 a,
 .green {
   text-decoration: none;
@@ -33,3 +47,19 @@ a,
     padding: 0 2rem;
   }
 }
+/* @import url("https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap");
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    @apply font-Roboto;
+  }
+  h2 {
+    @apply text-2xl font-bold;
+  }
+  p {
+    @apply text-base;
+  }
+} */

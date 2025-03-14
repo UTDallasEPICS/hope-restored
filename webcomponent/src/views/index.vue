@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import NavBar from "../components/PublicNavBar.vue";
+import ResourceDeck from "../components/Resource/ResourceDeck.vue"
 
 
 </script>
