@@ -6,7 +6,7 @@ import {
   locationToString,
   phoneNumberToString,
   emailToString,
-} from "~/utils/stringAssembler";
+} from "../../utils/stringAssembler.ts";
 import { useFilterStore, type FilterGroup } from "../Filter/filterStore";
 
 const filterStore = useFilterStore();

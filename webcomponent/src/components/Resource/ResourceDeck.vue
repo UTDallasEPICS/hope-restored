@@ -43,23 +43,26 @@ const getIndex = (index: number) => {
     </TransitionRoot>
     <div v-if="isLoading"></div>
     <div v-else-if="resources.length > 0">
-      <ResourceCard
-        v-for="(card, index) in resources"
-        :key="card.title"
-        :id="card.id"
-        :index="getIndex(index)"
-        :title="card.title"
-        :description="card.description"
-        :demographics="card.demographics"
-        :phoneNumbers="card.phoneNumbers"
-        :emails="card.emails"
-        :addresses="card.addresses"
-        :languages="card.languages"
-        :eligibility="card.eligibility"
-        :cost="card.cost"
-        :link="card.link"
-      />
+        <ResourceCard
+            v-for="(card, index) in resources"
+            :key="card.title"
+            :id="card.id"
+            :index="getIndex(index)"
+            :title="card.title"
+            :description="card.description"
+            :demographics="card.demographics"
+            :phoneNumbers="card.phoneNumbers"
+            :emails="card.emails"
+            :addresses="card.addresses"
+            :languages="card.languages"
+            :eligibility="card.eligibility"
+            :cost="card.cost"
+            :link="card.link"
+            :createdAt="card.createdAt" 
+            :updatedAt="card.updatedAt" 
+        />
     </div>
+
     <div v-else class="p-4 text-2xl font-semibold">
       <p>No results found.</p>
       <span class="block mt-2 text-base font-normal text-gray-600">

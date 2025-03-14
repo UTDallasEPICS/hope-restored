@@ -9,6 +9,7 @@ export const RESOURCE_INCLUDE_ALL = {
   emails: true,
 };
 
+
 export type ResourceDB = Prisma.ResourceGetPayload<{
   include: typeof RESOURCE_INCLUDE_ALL;
 }>;
