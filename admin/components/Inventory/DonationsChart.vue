@@ -33,7 +33,7 @@
     export default defineComponent({
         name: 'DonationsChart',
         components: {
-            Line,
+            Line, 
         },
         data() {
             return {

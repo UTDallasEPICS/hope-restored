@@ -16,7 +16,8 @@ defineProps({
 });
 
 const categoryStore = useCategoryStore();
-const categories = categoryStore.getFCategories;
+const categories = categoryStore.getFCategories.value;
+console.log("categories: ", categories);
 const error = categoryStore.getError;
 const isLoading = categoryStore.getIsLoading;
 const selectedCategory = categoryStore.getSelectedCategory;
@@ -53,7 +54,7 @@ const emit = defineEmits(["selectCategory"]);
       @selectCategory="setSelectedCategory"
       class="flex flex-auto basis-2"
     />
-    <p v-else>No categories found.</p>
+    <p v-else if>No categories found.</p>
     <p v-if="error">{{ error }}</p>
   </div>
 </template>
