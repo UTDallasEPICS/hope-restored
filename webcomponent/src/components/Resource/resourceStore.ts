@@ -1,6 +1,6 @@
 import { ref, computed, watch } from "vue";
 import ResourceService from "./request";
-import { type ResourceDB } from "~/server/db/constants";
+import { type ResourceDB } from "../../server/db/constants.ts";
 import { type ResourceProps } from "./ResourceCard.vue";
 import {
   locationToString,

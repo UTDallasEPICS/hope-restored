@@ -1,6 +1,7 @@
 {
 //   "extends": "@tsconfig/node22/tsconfig.json",
   "compilerOptions": {
+    "allowImportingTsExtensions": true,
     "types": ["node", "vite/client"],
     "target": "es6",
     "lib": ["dom", "dom.iterable", "esnext"],
