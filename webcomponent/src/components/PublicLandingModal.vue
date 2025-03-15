@@ -71,7 +71,7 @@ import {
 import SearchField from "./Filter/SearchField.vue";
 import CategoryDeck from "./Category/CategoryDeck.vue";
 
-const isOpen = ref(true);
+const isOpen = ref(false);
 const openModal = () => (isOpen.value = true);
 const closeModal = () => (isOpen.value = false);
 </script>
