@@ -1,13 +1,13 @@
 <script lang="ts" setup>
 import { MagnifyingGlassCircleIcon } from "@heroicons/vue/24/solid";
-import { defineEmits, ref, watch } from "vue";
 import { useResourceStore } from "../Resource/resourceStore";
 import { useCategoryStore } from "../Category/categoryStore";
 import { useSearchStore } from "./searchStore";
+import {ref, watch} from 'vue'
 const searchStore = useSearchStore();
 const categoryStore = useCategoryStore();
 const resourceStore = useResourceStore();
-const searchResources = async () => {
+const searchResources = () => {
   emit("searchResources");
   searchStore.setSearchTerm(search.value);
   resourceStore.loadResourcesBySearchTerm(search.value);

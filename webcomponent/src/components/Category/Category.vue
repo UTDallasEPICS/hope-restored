@@ -1,5 +1,4 @@
 <script lang="ts" setup>
-import { defineProps, defineEmits } from "vue";
 export interface CategoryProps {
   id: number;
   title: string;
