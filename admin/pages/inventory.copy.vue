@@ -86,63 +86,6 @@
             </div>
         </div>
 
-        <!-- Add to existing item modal -->
-        <div v-if="showAddQuantityModal" class="modal-overlay">
-            <div class="modal-content">
-                <h2>Add Inventory Item</h2>
-                <h2>Item Barcode: {{ editedItem.barcode }}</h2>
-                <form @submit.prevent="updateItem">
-                    <div class="form-group">
-                        <label for="quantity">Quantity:</label>
-                        <input type="number"
-                               v-model.number="editedItem.quantity"
-                               id="quantity"
-                               required
-                               min="1" />
-                    </div>
-                    <div class="form-actions">
-                        <button type="submit" @click="editItem(editedItem)" class="save-button">
-                            <i class="fas fa-save"></i> Save
-                        </button>
-                        <button type="button"
-                                @click="showAddQuantityModal = false"
-                                class="cancel-button">
-                            <i class="fas fa-times"></i> Cancel
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        <!-- Remove from existing item modal -->
-        <div v-if="showReduceQuantityModal" class="modal-overlay">
-            <div class="modal-content">
-                <h2>Remove Inventory Item</h2>
-                <h2>Item Barcode: {{ editedItem.barcode }}</h2>
-                <form @submit.prevent="updateItem">
-                    <div class="form-group">
-                        <label for="quantity">Quantity:</label>
-                        <input type="number"
-                               v-model.number="editedItem.quantity"
-                               id="quantity"
-                               required
-                               min="0"
-                               :max="editedItem.quantity" />
-                    </div>
-                    <div class="form-actions">
-                        <button type="submit" @click="editItem({ barcode: editedItem.barcode, quantity: editedItem.quantity * -1 })" class="save-button">
-                            <i class="fas fa-save"></i> Save
-                        </button>
-                        <button type="button"
-                                @click="showReduceQuantityModal = false"
-                                class="cancel-button">
-                            <i class="fas fa-times"></i> Cancel
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-
         <!-- Filter and Sort Section -->
         <div class="filter-sort-section">
             <div class="search-input">
@@ -173,32 +116,20 @@
                         <th>Size</th>
                         <th>Quantity</th>
                         <th>Location</th>
-                        <th>Add</th>
-                        <th>Remove</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr v-for="item in sortedAndFilteredInventory" :key="item.barcode">
-                        <td>{{ item.barcode }}</td>
+                    <tr v-for="item in sortedAndFilteredInventory" :key="item.id">
+                        <td>{{ item.id }}</td>
                         <td>
-                            <QRCode :value="item.barcode.toString()" :size="50" />
+                            <QRCode :value="item.id.toString()" :size="50" />
                         </td>
-                        <td>{{ item.category.name }}</td>
-                        <td>{{ item.style.name }}</td>
-                        <td>{{ item.gender.name }}</td>
-                        <td>{{ item.size.sizeCode }}</td>
+                        <td>{{ item.category }}</td>
+                        <td>{{ item.style }}</td>
+                        <td>{{ item.gender }}</td>
+                        <td>{{ item.size }}</td>
                         <td>{{ item.quantity }}</td>
                         <td>{{ item.location }}</td>
-                        <td>
-                            <button @click="openAddQuantityModal({ barcode: item.barcode, quantity: item.quantity })" class="add-item-button">
-                                <i class="fas fa-plus"></i> Add
-                            </button>
-                        </td>
-                        <td>
-                            <button @click="openReduceQuantityModal({ barcode: item.barcode, quantity: item.quantity })" class="remove-item-button">
-                                <i class="fas fa-plus"></i> Remove
-                            </button>
-                        </td>
                     </tr>
                 </tbody>
             </table>
@@ -214,21 +145,16 @@
 
 <script setup lang="ts">
     import { ref, computed, onMounted } from 'vue';
-    import { useFetch, useRuntimeConfig } from 'nuxt/app';
+    import { useRuntimeConfig } from 'nuxt/app';
     import QRCode from 'qrcode.vue';
     import ItemsPerCategoryChart from '../components/Inventory/ItemsPerCategoryChart.vue';
     import ItemsPerLocationChart from '../components/Inventory/ItemsPerLocationChart.vue';
-    //import { RefSymbol } from '@vue/reactivity';
     
     const inventory = ref([]);
-    //inventory.value = await getInventory();
     const searchQuery = ref('');
     const selectedSort = ref('alphabetical');
     const config = useRuntimeConfig();
     const showAddItemModal = ref(false);
-    const showAddQuantityModal = ref(false);
-    const showReduceQuantityModal = ref(false);
-    const editedItem = ref({ barcode: null, quantity: null });
 
     const newItem = ref({
         category: '',
@@ -239,117 +165,37 @@
         location: '',
     });
 
-    function openAddQuantityModal(item) {
-        editedItem.value = item;
-        showAddQuantityModal.value = true;
-    }
-
-    function openReduceQuantityModal(item) {
-        editedItem.value = item;
-        showReduceQuantityModal.value = true;
-    }
-
-    async function editItem(editedItem) {
-        let item = null;
-
-        if (editedItem.barcode && editedItem.quantity){
-            item = await $fetch('/api/inventory/:id', {  // update entry in database; call [id].put.ts
-                method: 'PUT',
-                body: { // data for database entry
-                    barcode: editedItem.barcode,
-                    quantity: editedItem.quantity,
-                },
-            });
-        }
-
-        showAddQuantityModal.value = false;
-        showReduceQuantityModal.value = false;
-        async function checkAndDelete() {
-            const quantity = await getItem(editedItem.barcode); // Wait for the quantity
-            console.log(quantity);
-            if (quantity == 0) { 
-                deleteEntry(editedItem.barcode);
-                getInventory();
-            }
-        }
-
-        // delete item from inventory if quantity == 0
-        checkAndDelete();
-
-        getInventory();
-    }
-
     // Fetch inventory data
-    //onMounted(async () => { // Fetches data when the page (component) is initially loaded
-    async function getInventory() {
+    onMounted(async () => {
         try {
-            //inventory.value = await $fetch('/api/inventory/');
-            inventory.value = await $fetch('/api/inventory/', { // get inventory data; call index.get.ts
-                //baseURL: config.public.apiBase,
-                method: 'GET'
+            inventory.value = await $fetch('/api/inventory/', {
+                baseURL: config.public.apiBase,
             });
         } catch (error) {
             console.error('Fetch error:', error);
         }
-    };
-
-    onMounted(getInventory);
-
-    // Fetch inventory item
-    async function getItem(id) {
-        try {
-            console.log(id);
-            const item = await $fetch(`/api/inventory/${id}`, { // get inventory data; call [id].get.ts
-                method: 'GET'
-            });
-
-            //console.log("Fetching from get item API!");
-            console.log(item?.quantity);
-            //return item;
-            return item?.quantity;
-        } catch (error) {
-            console.error('Fetch error:', error);
-        }
-    };
-
-    // Call the server-side API to delete this item from the database
-    async function deleteEntry(barcode) {
-        const response = await $fetch('/api/inventory/', {  // post entry to database; call index.delete.ts
-            method: 'DELETE',
-            body: { // data for database entry
-                barcode: barcode
-            },
-        });
-
-        console.log("Response from API:", response); // Log API response
-    }
+    });
 
     // Computed property to filter and sort inventory based on search query and sort option
     const sortedAndFilteredInventory = computed(() => {
-        let filtered = inventory.value; //.value accesses the actual array inside the inventory variable
-        console.log(filtered);
+        let filtered = inventory.value;
 
         // Filter by search query
         if (searchQuery.value) {
             const query = searchQuery.value.toLowerCase();
-            filtered = filtered.filter((item) =>    // loops through inventory items
-                Object.values(item).some((value) => { // checks if any of the fields contain the query value
-                    if (value && typeof value === 'object') { // checks if the value is an object (nested structure)
-                        return Object.values(value).some((nestedValue) => // checks if any of the nested fields contain the query value
-                            nestedValue.toString().toLowerCase().includes(query) // checks if nested value contains the query
-                        );
-                    }
-                    return value?.toString().toLowerCase().includes(query); // checks if value contains the query
-                })
+            filtered = filtered.filter((item) =>
+                Object.values(item).some((value) =>
+                    value.toString().toLowerCase().includes(query)
+                )
             );
         }
 
         // Sort based on selected option
         return filtered.slice().sort((a, b) => {
             if (selectedSort.value === 'alphabetical') {
-                return a.category.name.localeCompare(b.category.name); // Alphabetical by category
+                return a.category.localeCompare(b.category); // Alphabetical by category
             } else if (selectedSort.value === 'recent') {
-                return b.barcode - a.barcode; // Assuming higher barcode means more recent
+                return b.id - a.id; // Assuming higher ID means more recent
             } else if (selectedSort.value === 'dateAdded') {
                 return new Date(b.dateAdded).getTime() - new Date(a.dateAdded).getTime(); // Sort by dateAdded if available
             }
@@ -360,9 +206,9 @@
     // Function to add a new item to the inventory
     const addItem = async () => {
         // Generate a new ID
-        const newId = inventory.value.length;
-        //    ? Math.max(...inventory.value.map((item) => item.id)) + 1
-        //    : 1;
+        const newId = inventory.value.length
+            ? Math.max(...inventory.value.map((item) => item.id)) + 1
+            : 1;
 
         // Create a new item object
         const item = {
@@ -371,11 +217,9 @@
             quantity: Number(newItem.value.quantity),
         };
 
-        console.log("ID: " + item.id);
-
         // Add the new item to the inventory list
-        //inventory.value.push(item);
-        console.log("This is the inventory: " + inventory.value);
+        inventory.value.push(item);
+        console.log(inventory);
 
         // Reset the newItem form
         newItem.value = {
@@ -390,25 +234,28 @@
         // Close the modal
         showAddItemModal.value = false;
 
-        insertEntry();
-
         // Call the server-side API to insert this item into the database
-        async function insertEntry() {
-            const response = await $fetch('/api/inventory/', {  // post entry to database; call index.post.ts
+        try {
+            const response = await fetch('/api/insertEntry', {
                 method: 'POST',
-                body: { // data for database entry
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
                     id: item.id,
                     category: item.category,
                     style: item.style,
                     gender: item.gender,
                     size: item.size,
                     quantity: item.quantity,
-                },
+                }),
             });
 
-            console.log("Response from API:", response); // Log API response
+            const result = await response.json();
+            console.log(result.message); // "Item added successfully"
+        } catch (error) {
+            console.error('Error adding item to the database:', error);
         }
-        await getInventory();
     };
 </script>
 
@@ -451,27 +298,8 @@
         gap: 0.5em;
     }
 
-    .remove-item-button {
-        padding: 0.5em 1.5em;
-        background-color: #f44336; /* Red */
-        color: #fff;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 1em;
-        text-transform: uppercase;
-        transition: background-color 0.3s ease;
-        display: flex;
-        align-items: center;
-        gap: 0.5em;
-    }
-
         .add-item-button:hover {
             background-color: #43a047;
-        }
-
-        .remove-item-button:hover {
-            background-color: #e53935;
         }
 
     /* Modal Styling */
