@@ -41,7 +41,7 @@ async function seed() {
   console.log("Seeding completed!");
 }
 
-const COLLIN_COLLEGE_PATH =
+const COLLIN_COLLEGE_PATH = //"static/client_files/Dallas-Area-Shelters-and-Housing-Programs/Shelters and Housing - Dallas Area Shelters.csv";
   "static/client_files/collin-college/collin_college.csv";
 
 function read_collin_college(): Promise<CreateResourceInput[]> {

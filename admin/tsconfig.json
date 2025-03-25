@@ -1,5 +1,4 @@
 {
-  "extends": "./.nuxt/tsconfig.json",
   "compilerOptions": {
     "types": ["node", "vite/client"],
     "target": "es6",
@@ -21,9 +20,9 @@
     "paths": {
       "~/*": [ "./*" ],
       "@/*": [ "./*" ],
-      "#app": [ "./.nuxt/types/app" ],
-      "#imports": [ "./.nuxt/types/app/imports" ],
-      "#components": [ "./.nuxt/types/app/components" ]
+      "#app": [ "./types/app" ],
+      "#imports": [ "./types/app/imports" ],
+      "#components": [ "./types/app/components" ]
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", "vite-env.d.ts"],
