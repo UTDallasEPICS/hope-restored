@@ -1,6 +1,6 @@
 import { defineCustomElement, createApp, getCurrentInstance, h } from 'vue';
 import { createPinia } from 'pinia';
-import App from '@/components/App.ce.vue';
+import App from '../src/app.vue';
 import css from '@/styles/index.css';
 
 const createElementInstance = (component: any) => {
