@@ -10,7 +10,7 @@ import {
   MapPinIcon,
   PhoneIcon,
 } from "@heroicons/vue/24/solid";
-import { compareURLs } from "../../utils/originChecker";
+import { compareURLs } from "../../utils/originChecker.ts";
 import ResourceMoreDetail from "./ResourceMoreDetail.vue";
 export interface ResourceProps {
   id: number;
@@ -78,7 +78,7 @@ function onPopupClose() {
 const isPublicView = compareURLs(
   window?.location.href,
   import.meta.env.VITE_EXTERNAL_VIEWER_URL
-  // Ignore the red squiggly line. This is a valid import statement.
+   
 );
 </script>
 
@@ -111,8 +111,9 @@ const isPublicView = compareURLs(
         <div class="flex items-center flex-row gap-x-2 pt-2">
           <button
             class="flex flex-row items-center bg-white hover:bg-gray-100 text-gray-800 font-semibold py-2 px-4 border border-gray-400 rounded shadow"
-            @click="$refs.resourceMoreDetailRef?.openModal()"
-          >
+            >
+            <!-- @click="$refs.resourceMoreDetailRef?.openModal()" -->
+        
             <span class="uppercase">View details</span>
           </button>
           <ResourceActionBar

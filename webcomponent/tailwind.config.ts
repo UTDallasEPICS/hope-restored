@@ -1,14 +1,14 @@
 /** @type {import('tailwindcss').Config} */
-const { fontFamily } = require("tailwindcss/defaultTheme");
-export default {
+import { fontFamily } from "tailwindcss/defaultTheme"
+module.exports = {
   mode: "jit",
   content: [
-    "./components/**/*.{js,vue,ts}",
+    "./src/components/**/*.{js,vue,ts}",
     "./layouts/**/*.vue",
-    "./pages/**/*.vue",
+    "./src/views/**/*.vue",
     "./plugins/**/*.{js,ts}",
     "./index.html",
-    "./app.vue",
+    "./src/app.vue",
     "./error.vue",
   ],
   screens: {

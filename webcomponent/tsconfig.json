@@ -1,6 +1,7 @@
 {
 //   "extends": "@tsconfig/node22/tsconfig.json",
   "compilerOptions": {
+    "allowImportingTsExtensions": true,
     "types": ["node", "vite/client"],
     "target": "es6",
     "lib": ["dom", "dom.iterable", "esnext"],
@@ -19,6 +20,6 @@
     "jsx": "preserve"
     // "baseUrl": "src" // Move this to another place if needed
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", "vite-env.d.ts"],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", "vite-env.d.ts", "postcss.config.js"],
   "exclude": ["node_modules"]
 }
