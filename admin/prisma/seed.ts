@@ -10,7 +10,7 @@ const prisma = new PrismaClient();
 async function seed() {
   const usage = new CreateResourceUseCase();
 
-  let resources = await read_collin_college();
+  let resources = await read_Resources();
   for (const resource of resources) {
     console.log("Seeding resource:", resource.name, resource.phoneNumbers);
     await usage.execute(resource);
@@ -41,10 +41,10 @@ async function seed() {
   console.log("Seeding completed!");
 }
 
-const COLLIN_COLLEGE_PATH = //"static/client_files/Dallas-Area-Shelters-and-Housing-Programs/Shelters and Housing - Dallas Area Shelters.csv";
-  "static/client_files/collin-college/collin_college.csv";
+const RESOURCES_PATH = "static/client_files/Resources";
+//const COLLIN_COLLEGE_PATH = "static/client_files/collin-college/collin_college.csv";
 
-function read_collin_college(): Promise<CreateResourceInput[]> {
+function read_Resources(): Promise<CreateResourceInput[]> {
   const fs = require("fs");
   const csv = require("csv-parser");
   const resources: CreateResourceInput[] = [];
@@ -52,7 +52,9 @@ function read_collin_college(): Promise<CreateResourceInput[]> {
   const uniquePhoneNumbersSet = new Set<string>();
 
   return new Promise((resolve, reject) => {
-    fs.createReadStream(COLLIN_COLLEGE_PATH)
+    fs.readdirSync(RESOURCES_PATH).forEach((fileName: string) => {
+
+    fs.createReadStream(RESOURCES_PATH + "/" + fileName)
       .pipe(csv())
       .on("data", (data: any) => {
         const name = data["Name"];
@@ -90,6 +92,9 @@ function read_collin_college(): Promise<CreateResourceInput[]> {
       .on("error", (error: Error) => {
         reject(error);
       });
+
+    });
+
   });
 
    /*
