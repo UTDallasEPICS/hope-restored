@@ -1,6 +1,6 @@
 /** @type {import('tailwindcss').Config} */
-import { fontFamily } from "tailwindcss/defaultTheme"
-module.exports = {
+// import { fontFamily } from "tailwindcss/defaultTheme"
+export default {
   mode: "jit",
   content: [
     "./src/components/**/*.{js,vue,ts}",
@@ -25,9 +25,9 @@ module.exports = {
         "black-neutral": "#1A1A1A",
         "white-neutral": "#F7F7F7",
       },
-      fontFamily: {
-        Roboto: ["Roboto", "sans-serif", ...fontFamily.sans],
-      },
+    //   fontFamily: {
+    //     Roboto: ["Roboto", "sans-serif", ...fontFamily.sans],
+    //   },
     },
   },
   plugins: [],
