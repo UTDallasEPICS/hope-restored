@@ -26,7 +26,7 @@ const getIndex = (index: number) => {
         <SorterListBox />
     </div>
     <!-- Resource cards -->
-    <div class="flex flex-auto flex-col p-5 pt-1 pb-28">
+    <div class="flex flex-auto flex-col p-5 pt-1 pb-50">
         <TransitionRoot
         :show="isLoading"
         enter="transition-opacity duration-75"
@@ -76,10 +76,10 @@ const getIndex = (index: number) => {
             <li>Adjust your filters to broaden the results.</li>
         </ul>
         </div>
-        <p v-if="error" class="p-4">{{ error }}</p>
-        <ResourcePagination
-        v-if="resourceStore.getTotalPages.value > 1"
-        class="mt-2"
-        />
+        <!-- Fixed Bottom Footer -->
+        <div class="sticky bottom-0 z-10 bg-white border-t border-gray-200 px-4 py-3">
+            <p v-if="error" class="text-red-600">{{ error }}</p>
+            <ResourcePagination v-if="resourceStore.getTotalPages.value > 1" />
+        </div>
     </div>
 </template>

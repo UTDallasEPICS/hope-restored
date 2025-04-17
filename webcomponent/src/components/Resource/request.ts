@@ -1,4 +1,4 @@
-import { type ResourceDB } from "~/server/db/constants";
+import { type ResourceDB } from "../../server/db/constants";
 
 async function fetchResourcesByID(id: number): Promise<ResourceDB> {
   try {
@@ -33,6 +33,7 @@ async function fetchResources(
       sortByField,
       sortOrder,
     });
+    
     const response: Response = await fetch(
       `${import.meta.env.VITE_NUXT_ENV_API_URL}/api/resource/get/all?${query}`,
       {
