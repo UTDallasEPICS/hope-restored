@@ -14,12 +14,10 @@ import PublicLandingModal from "../components/PublicLandingModal.vue";
     <!-- Main Content -->
     <div class="flex-1 overflow-y-auto">
       <div id="scroll-to-top-anchor">
-        <PublicLandingModal />
+        <!-- <PublicLandingModal /> -->
         <ResourceDeck />
       </div>
     </div>
   </div>
 </template>
-
-
 
