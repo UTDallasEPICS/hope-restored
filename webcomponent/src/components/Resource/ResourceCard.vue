@@ -152,14 +152,12 @@ const isPublicView = compareURLs(
           />
         </div>
         <div v-if="isPublicView && link">
-          <button
-            class="initial bg-hrm-dark-green hover:bg-hrm-green text-white-neutral font-semibold py-2 px-4 border border-gray-400 rounded shadow"
-          >
+          <button class="initial bg-hrm-dark-green hover:bg-hrm-green text-white-neutral font-semibold py-2 px-4 border border-gray-400 rounded shadow">
             <a
-              :href="link"
-              target="_blank"
-              rel="noopener"
-              class="flex flex-row justify-center items-center gap-x-4"
+                :href="link.startsWith('http') ? link : `https://${link}`"
+                target="_blank"
+                rel="noopener"
+                class="flex flex-row justify-center items-center gap-x-4"
             >
               <span class="uppercase">Apply on their website</span>
               <ArrowTopRightOnSquareIcon class="w-4 h-4" />
