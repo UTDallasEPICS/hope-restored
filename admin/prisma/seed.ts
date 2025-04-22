@@ -76,14 +76,14 @@ function read_Resources(): Promise<CreateResourceInput[]> {
 
           if(fullAddress != "")
           {
-            addressParts = fullAddress.split(",");
+            const addressParts = fullAddress.split(",");
 
             location = {
           
-              city: addressParts[0].trim(),
-              state: addressParts[1].trim(),
-              postalCode: addressParts[2].trim(),
-              addressLine1: addressParts[3].trim(),
+              city: addressParts[0]?.trim() || "",
+              state: addressParts[1]?.trim() || "",
+              postalCode: addressParts[2]?.trim() || "",
+              addressLine1: addressParts[3]?.trim() || "",
               addressLine2: addressParts[4]?.trim() || "",
 
             };
