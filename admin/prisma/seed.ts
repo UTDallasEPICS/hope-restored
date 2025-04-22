@@ -69,6 +69,28 @@ function read_Resources(): Promise<CreateResourceInput[]> {
         );
 
         if (isNameUnique && arePhoneNumbersUnique) {
+          
+          const fullAddress = data["Addresses"];
+
+          let location;
+
+          if(fullAddress != "")
+          {
+            addressParts = fullAddress.split(",");
+
+            location = {
+          
+              city: addressParts[0].trim(),
+              state: addressParts[1].trim(),
+              postalCode: addressParts[2].trim(),
+              addressLine1: addressParts[3].trim(),
+              addressLine2: addressParts[4]?.trim() || "",
+
+            };
+
+          }
+          
+          
           const resource = {
             name: name,
             description: data["Description"],
@@ -77,6 +99,7 @@ function read_Resources(): Promise<CreateResourceInput[]> {
             phoneNumbers: phoneNumbers,
             emails: data["Emails"] ? data["Emails"].split(",") : undefined,
             groupName: data["Type"] ? data["Type"] : "Others",
+            locations: location ? [location] : [],
           };
 
           uniqueNamesSet.add(name);
