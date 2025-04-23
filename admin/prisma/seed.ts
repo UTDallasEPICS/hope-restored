@@ -10,8 +10,22 @@ const prisma = new PrismaClient();
 async function seed() {
   const usage = new CreateResourceUseCase();
 
+  //<<<<<<< Databases
   let resources = await read_Resources();
   for (const resource of resources) {
+  //=======
+  /* segment from Combining repos causing conflict
+  let resources1 = await read_collin_college();
+  for (const resource of resources1) {
+    console.log("Seeding resource:", resource.name, resource.phoneNumbers);
+    await usage.execute(resource);
+  }
+
+  let resources2 = await read_family_gateway();
+  console.log("# of resources in resources2 is %d", resources2.length);
+  for (const resource of resources2) {
+  */
+  //>>>>>>> CombiningRepos
     console.log("Seeding resource:", resource.name, resource.phoneNumbers);
     await usage.execute(resource);
   }
@@ -41,8 +55,80 @@ async function seed() {
   console.log("Seeding completed!");
 }
 
+//<<<<<<< Databases
 const RESOURCES_PATH = "static/client_files/Resources";
 //const COLLIN_COLLEGE_PATH = "static/client_files/collin-college/collin_college.csv";
+/* segment from CombiningRepos causing conflict 
+=======
+const FAMILY_GATEWAY_PATH = 
+  "static/client_files/family-gateway";
+
+function read_family_gateway(): Promise<CreateResourceInput[]> { 
+  //reads every csv file in the family-gateway folder into resources2
+  const fs = require("fs");
+  const csv = require("csv-parser");
+  const path = require("path");
+  const resources: CreateResourceInput[] = [];
+  const uniqueNamesSet = new Set<string>();
+  const uniquePhoneNumbersSet = new Set<string>();
+
+
+  return new Promise((resolve, reject) => {
+    fs.readdirSync(FAMILY_GATEWAY_PATH).forEach((file: string) => {
+      if (path.extname(file) == ".csv") {
+        fs.createReadStream(FAMILY_GATEWAY_PATH + "/" + file)
+          .pipe(csv())
+          .on("data", (data: any) => {
+            const name = data["Organization Name"];
+            const phoneNumbers = data["Phone Number"] ? data["Phone Number"].split(",") : [];
+            console.log(name); //debug
+            // Check if the name and phone numbers are unique
+            // Temporary fix. Need to remove duplicate name in file
+            // For phone, need to make many-to-many relationship in Prisma
+            const isNameUnique = !uniqueNamesSet.has(name);
+            const arePhoneNumbersUnique = phoneNumbers.every(
+              (phone: any) => !uniquePhoneNumbersSet.has(phone)
+            );
+            //supposed to get "bleh blah" from "bleh_blah.csv"
+            const fggroup = file.split("/[_.]+/").splice(0, path.length - 1).join(" "); 
+            if (isNameUnique && arePhoneNumbersUnique) {
+              const resource = {
+                name: name,
+                description: data["Description"],
+                externalLink: data["Url"] ? data["Url"] : undefined,
+                languages: ["English"],
+                phoneNumbers: phoneNumbers,
+                emails: undefined,
+                groupName: file,
+              };
+              console.log("resource is %s of %s", resource.name, resource.groupName)
+              uniqueNamesSet.add(name);
+              phoneNumbers.forEach((phone: any) =>
+                uniquePhoneNumbersSet.add(phone)
+              );
+              resources.push(resource);
+              console.log("resources2 length is now %d", resources.length);
+            }
+          })
+          .on("end", () => {
+            if(resources.length == 167) {
+              resolve(resources);
+            }
+           }) 
+          .on("error", (error: Error) => {
+            reject(error);
+          });
+        }
+    });
+    //console.log("length of resources2 is %d", resources.length);
+    //resolve(resources);
+  });
+}
+
+const COLLIN_COLLEGE_PATH =
+  "static/client_files/collin-college/collin_college.csv";
+//>>>>>>> CombiningRepos
+*/
 
 function read_Resources(): Promise<CreateResourceInput[]> {
   const fs = require("fs");
@@ -58,8 +144,7 @@ function read_Resources(): Promise<CreateResourceInput[]> {
       .pipe(csv())
       .on("data", (data: any) => {
         const name = data["Name"];
-        const phoneNumbers = data["Phone"] ? data["Phone"].split(",") : [];
-
+        const phoneNumbers = data["Phone"] ? data["Phone"].split(",") : [];        
         // Check if the name and phone numbers are unique
         // Temporary fix. Need to remove duplicate name in file
         // For phone, need to make many-to-many relationship in Prisma

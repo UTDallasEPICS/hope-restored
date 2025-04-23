@@ -1,6 +1,7 @@
 <template>
   <div class="p-4 space-y-4 flex flex-col flex-auto">
-    <TransitionRoot
+    <p>Filters:</p>
+    <TransitionRoot v-if="isLoading"
       :show="isLoading"
       enter="transition-opacity duration-75"
       enter-from="opacity-0"
@@ -14,7 +15,6 @@
       <FilterSkeleton />
       <FilterSkeleton />
     </TransitionRoot>
-    <p v-if="isLoading"></p>
     <div v-else-if="filterGroups.length > 0">
       <FilterDisclosure
         v-for="(group, index) in filterGroups"

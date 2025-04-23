@@ -1,14 +1,14 @@
 /** @type {import('tailwindcss').Config} */
-import { fontFamily } from "tailwindcss/defaultTheme"
+// import { fontFamily } from "tailwindcss/defaultTheme"
 export default {
   mode: "jit",
   content: [
-    "./components/**/*.{js,vue,ts}",
+    "./src/components/**/*.{js,vue,ts}",
     "./layouts/**/*.vue",
-    "./pages/**/*.vue",
+    "./src/views/**/*.vue",
     "./plugins/**/*.{js,ts}",
     "./index.html",
-    "./app.vue",
+    "./src/app.vue",
     "./error.vue",
   ],
   screens: {
@@ -25,9 +25,9 @@ export default {
         "black-neutral": "#1A1A1A",
         "white-neutral": "#F7F7F7",
       },
-      fontFamily: {
-        Roboto: ["Roboto", "sans-serif", ...fontFamily.sans],
-      },
+    //   fontFamily: {
+    //     Roboto: ["Roboto", "sans-serif", ...fontFamily.sans],
+    //   },
     },
   },
   plugins: [],

@@ -1,5 +1,5 @@
 import { ref, computed } from "vue";
-import FilterService from "./request";
+import FilterService from "../components/Filter/request";
 export interface FilterItem {
   label: string;
   isChecked: boolean;

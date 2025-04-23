@@ -1,13 +1,13 @@
 import { ref, computed, watch } from "vue";
-import ResourceService from "./request";
-import { type ResourceDB } from "~/server/db/constants";
-import { type ResourceProps } from "./ResourceCard.vue";
+import ResourceService from "../components/Resource/request.ts";
+import { type ResourceDB } from "../server/db/constants";
+import { type ResourceProps } from "../components/Resource/ResourceCard.vue";
 import {
   locationToString,
   phoneNumberToString,
   emailToString,
-} from "~/utils/stringAssembler";
-import { useFilterStore, type FilterGroup } from "../Filter/filterStore";
+} from "../utils/stringAssembler";
+import { useFilterStore, type FilterGroup } from "../components/Filter/filterStore";
 
 const filterStore = useFilterStore();
 const resources = ref<ResourceDB[]>([]);
@@ -131,13 +131,13 @@ function toResourceProps(resource: ResourceDB): ResourceProps {
     title: resource.name,
     description: resource.description,
     link: resource.externalLink ? resource.externalLink : "",
-    demographics: resource.demographics.map((demographic) => demographic.name),
-    languages: resource.languages.map((language) => language.name),
-    addresses: resource.locations.map((location) => locationToString(location)),
-    phoneNumbers: resource.phoneNumbers.map((phoneNumber) =>
+    demographics: resource.demographics.map((demographic: { name: string; }) => demographic.name),
+    languages: resource.languages.map((language: { name: string; }) => language.name),
+    addresses: resource.locations.map((location: string) => locationToString(location)),
+    phoneNumbers: resource.phoneNumbers.map((phoneNumber: string) =>
       phoneNumberToString(phoneNumber)
     ),
-    emails: resource.emails.map((email) => emailToString(email)),
+    emails: resource.emails.map((email: string) => emailToString(email)),
     eligibility: resource.eligibility,
     cost: resource.cost === 0 ? "Free" : "$" + resource.cost,
     index: -1, // index is set in ResourceCard.vue
