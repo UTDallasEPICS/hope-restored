@@ -19,24 +19,34 @@
                         <label for="category">Category:</label>
                         <!-- <input v-model="newItem.category" id="category" required /> -->
                         <select v-model="newItem.category" id="category" required>
-                            <option value="Blouses">Blouses</option>
-                            <option value="Shirts">Shirts</option>
+                            <!--<option value="Blouses">Blouses</option>-->
+                            <!--<option value="Shirts">Shirts</option>-->
                             <option value="Tops">Tops</option>
-                            <option value="Dresses">Dresses</option>
-                            <option value="Dress Pants / Slacks">Dress Pants / Slacks</option>
+                            <!--<option value="Dresses">Dresses</option>-->
+                            <!--<option value="Dress Pants / Slacks">Dress Pants / Slacks</option>-->
                             <option value="Suits">Suits</option>
-                            <option value="Jeans">Jeans</option>
+                            <option value="Pants">Pants</option>
                             <option value="Shorts">Shorts</option>
                             <option value="Socks">Socks</option>
                             <option value="Underwear">Underwear</option>
-                            <option value="Shoes / Boots">Shoes / Boots</option>
-                            <option value="Sweater / Sweatshirt">Sweater / Sweatshirt</option>
-                            <option value="Coats / Jackets / Hoodies">Coats / Jackets / Hoodies</option>
+                            <option value="Shoes">Shoes</option>
+                            <!--<option value="Sweater / Sweatshirt">Sweater / Sweatshirt</option>-->
+                            <option value="OuterWear">OuterWear</option>
                         </select>
                     </div>
                     <div class="form-group">
                         <label for="style">Style:</label>
                         <!-- <input v-model="newItem.style" id="style" required /> -->
+                        <select v-model="newItem.style" id="style" :disabled="!newItem.category" required>
+                            <option disabled value="">Select a style</option>
+                            <option v-for="style in filteredStyles" :key="style" :value="style">
+                                {{ style }}
+                            </option>
+                        </select>
+
+
+
+                    <!--<input v-model="newItem.style" id="style" required />
                         <select v-model="newItem.style" id="style" required>
                             <option disabled value="">Select a style</option>
                             <option value="Long Sleeve">Long Sleeve</option>
@@ -47,7 +57,8 @@
                             <option value="Canvas">Canvas</option>
                             <option value="Leather">Leather</option>
                             <option value="Misc.">Miscellaneous</option>
-                        </select>
+                        </select>-->    
+                    
                     </div>
                     <div class="form-group">
                         <label for="gender">Gender:</label>
@@ -250,6 +261,20 @@
     const showReduceQuantityModal = ref(false);
     const showInvalidQuantityPopup = ref(false);
     const editedItem = ref({ barcode: null, quantity: null });
+    
+    // making the drop down dynamic
+
+    const styleOptions: Record<string, string[]> = {
+        Tops: ["Long Sleeve", "Short Sleeve", "T-Shirt"],
+        OuterWear: ["Jackets", "Hoodies", "Coats"],
+        Pants: ["Jeans", "Sweat Pants", "Cargos"],
+        Suits: ["Blazer", "Business"],
+        // Jeans: ["Casual"],
+        Shorts: ["Cargo", "Athletic"],
+        Socks: ["Misc."],
+        Underwear: ["Misc."],
+        Shoes: ["Boots", "Canvas", "Leather", "Athletic"]
+    }    
 
     const newItem = ref({
         category: '',
@@ -454,6 +479,16 @@
             await getInventory();
         }
     };
+
+    const filteredStyles = computed(() => {
+        return styleOptions[newItem.value.category] || [];
+    })
+
+
+    watch(() => newItem.value.category, () => {
+        newItem.value.style = '';        
+    })
+
 </script>
 
 <style scoped>
