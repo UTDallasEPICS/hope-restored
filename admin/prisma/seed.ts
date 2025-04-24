@@ -69,18 +69,19 @@ function read_Resources(): Promise<CreateResourceInput[]> {
         );
 
         if (isNameUnique && arePhoneNumbersUnique) {
-         /* 
-          const fullAddress = data["Addresses"];
 
-          let location;
+            const fullAddress = data["Addresses"];
 
-          if(fullAddress != "")
-          {
-            const addresses = fullAddress.split("::");
-            
-            location = addresses.map((address: string) => {
+            let location;
+  
+            if(fullAddress != "")
+            {
+              const addresses = fullAddress.split("::");
               
-              let locationName = "";
+              location = addresses.map((address: string) => {
+                
+                
+                let locationName = "";
               let modifiedAddress = address.trim();
 
               if(address.includes("["))
@@ -94,37 +95,10 @@ function read_Resources(): Promise<CreateResourceInput[]> {
                 modifiedAddress = address.substring(index2 + 1).trim();
               }  
 
-              const addressParts = modifiedAddress.split(",");
-
-              return  {
-                name: locationName.trim() || "",
-                city: addressParts[0]?.trim() || "",
-                state: addressParts[1]?.trim() || "",
-                postalCode: addressParts[2]?.trim() || "",
-                addressLine1: addressParts[3]?.trim() || "",
-                addressLine2: addressParts[4]?.trim() || "",
-              };
-              
-
-            });
-          */
-
-
-
-            const fullAddress = data["Addresses"];
-
-            let location;
-  
-            if(fullAddress != "")
-            {
-              const addresses = fullAddress.split("::");
-              
-              location = addresses.map((address: string) => {
-                
-  
-                const addressParts = address.split(",");
+                const addressParts = modifiedAddress.split(",");
   
                 return  {
+                  name: locationName.trim() || "",
                   city: addressParts[0]?.trim() || "",
                   state: addressParts[1]?.trim() || "",
                   postalCode: addressParts[2]?.trim() || "",
