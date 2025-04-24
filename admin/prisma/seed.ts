@@ -69,7 +69,7 @@ function read_Resources(): Promise<CreateResourceInput[]> {
         );
 
         if (isNameUnique && arePhoneNumbersUnique) {
-          
+         /* 
           const fullAddress = data["Addresses"];
 
           let location;
@@ -80,7 +80,7 @@ function read_Resources(): Promise<CreateResourceInput[]> {
             
             location = addresses.map((address: string) => {
               
-              let locationName;
+              let locationName = "";
               let modifiedAddress = address.trim();
 
               if(address.includes("["))
@@ -107,6 +107,33 @@ function read_Resources(): Promise<CreateResourceInput[]> {
               
 
             });
+          */
+
+
+
+            const fullAddress = data["Addresses"];
+
+            let location;
+  
+            if(fullAddress != "")
+            {
+              const addresses = fullAddress.split("::");
+              
+              location = addresses.map((address: string) => {
+                
+  
+                const addressParts = address.split(",");
+  
+                return  {
+                  city: addressParts[0]?.trim() || "",
+                  state: addressParts[1]?.trim() || "",
+                  postalCode: addressParts[2]?.trim() || "",
+                  addressLine1: addressParts[3]?.trim() || "",
+                  addressLine2: addressParts[4]?.trim() || "",
+                };
+                
+  
+              });
 
           }
           
@@ -119,7 +146,7 @@ function read_Resources(): Promise<CreateResourceInput[]> {
             phoneNumbers: phoneNumbers,
             emails: data["Emails"] ? data["Emails"].split(",") : undefined,
             groupName: data["Type"] ? data["Type"] : "Others",
-            locations: location ? [location] : [],
+            locations: location ?? [],
           };
 
           uniqueNamesSet.add(name);

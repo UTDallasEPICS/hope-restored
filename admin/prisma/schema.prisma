@@ -95,9 +95,9 @@ model Email {
 
 model Location {
   id           Int       @id @default(autoincrement()) // Primary key
-  addressLine1 String    @unique
+  addressLine1 String    //@unique
   addressLine2 String
-  name         String    // name of the location if there are multiple locations
+ // name         String?    // name of the location if there are multiple locations
   city         String
   state        String
   postalCode   String    // Changed from PostalLink Int to String for clarity
