@@ -9,8 +9,8 @@ import CategoryDeck from "../components/Category/CategoryDeck.vue";
 <template>
   <div class="flex h-screen overflow-hidden fixed">
     <!-- Sidebar -->
-    <div class="w-64 flex-row[2] flex-shrink-0 border-r border-gray-200 bg-white">
-        <FilterDeck class="shadow-md"/>
+    <div class="w-64 flex-row[3] flex-shrink-0 border-r border-gray-200 bg-white">
+        <FilterDeck class="border-b-2 border-gray-200"/>
         <CategoryDeck />
     </div>
 

@@ -37,8 +37,9 @@ const getIndex = (index: number) => {
           <ResourceSkeleton />
           <ResourceSkeleton />
         </TransitionRoot>
-  
-        <div v-if="!isLoading && resources.length > 0">
+        
+        <p v-if="error" class="text-red-600 mt-4 p-4">{{ error }}</p>
+        <div v-else-if="!isLoading && resources.length > 0">
           <ResourceCard
             v-for="(card, index) in resources"
             :key="card.id"
@@ -58,7 +59,7 @@ const getIndex = (index: number) => {
             :updatedAt="card.updatedAt"
           />
         </div>
-  
+        
         <div v-else-if="!isLoading" class="text-gray-600">
           <p class="text-2xl font-semibold">No results found.</p>
           <span class="block mt-2 text-base">You can try the following:</span>
@@ -68,12 +69,10 @@ const getIndex = (index: number) => {
             <li>Adjust your filters to broaden results.</li>
           </ul>
         </div>
-  
-        <p v-if="error" class="text-red-600 mt-4">{{ error }}</p>
       </main>
   
       <!-- Pinned footer -->
-      <footer class="p-2 border-t-2 border-gray-200 bg-white z-20 pb-40">
+      <footer v-if="!isLoading&&!error" class="p-2 border-t-2 border-gray-200 bg-white z-20 pb-25">
         <ResourcePagination
           v-if="resourceStore.getTotalPages.value > 1"
         />
