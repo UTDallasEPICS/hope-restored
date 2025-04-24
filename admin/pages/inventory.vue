@@ -70,7 +70,23 @@
                     </div>
                     <div class="form-group">
                         <label for="size">Size:</label>
-                        <input v-model="newItem.size" id="size" required />
+                        <!--<input v-model="newItem.size" id="size" required />-->
+
+
+                        <select v-model="newItem.size" id="size" :disabled="!newItem.category" required>
+                            <option disabled value="">Select a size</option>
+                           <!--<option v-for="style in filteredStyles" :key="style" :value="style">
+                                {{ style }}
+                            </option>--> 
+                            <!--<option value="">Select Size</option>-->
+                            <option value="S">Small</option>
+                            <option value="M">Medium</option>
+                            <option value="L">Large</option>
+                            <option value="XL">Extra Large</option>
+
+                        </select>
+
+
                     </div>
                     <div class="form-group">
                         <label for="quantity">Quantity:</label>
