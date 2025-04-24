@@ -10,15 +10,8 @@ const prisma = new PrismaClient();
 async function seed() {
   const usage = new CreateResourceUseCase();
 
-  let resources1 = await read_collin_college();
-  for (const resource of resources1) {
-    console.log("Seeding resource:", resource.name, resource.phoneNumbers);
-    await usage.execute(resource);
-  }
-
-  let resources2 = await read_family_gateway();
-  console.log("# of resources in resources2 is %d", resources2.length);
-  for (const resource of resources2) {
+  let resources = await read_Resources();
+  for (const resource of resources) {
     console.log("Seeding resource:", resource.name, resource.phoneNumbers);
     await usage.execute(resource);
   }
@@ -48,75 +41,10 @@ async function seed() {
   console.log("Seeding completed!");
 }
 
-const FAMILY_GATEWAY_PATH = 
-  "static/client_files/family-gateway";
+const RESOURCES_PATH = "static/client_files/Resources";
+//const COLLIN_COLLEGE_PATH = "static/client_files/collin-college/collin_college.csv";
 
-function read_family_gateway(): Promise<CreateResourceInput[]> { 
-  //reads every csv file in the family-gateway folder into resources2
-  const fs = require("fs");
-  const csv = require("csv-parser");
-  const path = require("path");
-  const resources: CreateResourceInput[] = [];
-  const uniqueNamesSet = new Set<string>();
-  const uniquePhoneNumbersSet = new Set<string>();
-
-
-  return new Promise((resolve, reject) => {
-    fs.readdirSync(FAMILY_GATEWAY_PATH).forEach((file: string) => {
-      if (path.extname(file) == ".csv") {
-        fs.createReadStream(FAMILY_GATEWAY_PATH + "/" + file)
-          .pipe(csv())
-          .on("data", (data: any) => {
-            const name = data["Organization Name"];
-            const phoneNumbers = data["Phone Number"] ? data["Phone Number"].split(",") : [];
-            console.log(name); //debug
-            // Check if the name and phone numbers are unique
-            // Temporary fix. Need to remove duplicate name in file
-            // For phone, need to make many-to-many relationship in Prisma
-            const isNameUnique = !uniqueNamesSet.has(name);
-            const arePhoneNumbersUnique = phoneNumbers.every(
-              (phone: any) => !uniquePhoneNumbersSet.has(phone)
-            );
-            //supposed to get "bleh blah" from "bleh_blah.csv"
-            const fggroup = file.split("/[_.]+/").splice(0, path.length - 1).join(" "); 
-            if (isNameUnique && arePhoneNumbersUnique) {
-              const resource = {
-                name: name,
-                description: data["Description"],
-                externalLink: data["Url"] ? data["Url"] : undefined,
-                languages: ["English"],
-                phoneNumbers: phoneNumbers,
-                emails: undefined,
-                groupName: file,
-              };
-              console.log("resource is %s of %s", resource.name, resource.groupName)
-              uniqueNamesSet.add(name);
-              phoneNumbers.forEach((phone: any) =>
-                uniquePhoneNumbersSet.add(phone)
-              );
-              resources.push(resource);
-              console.log("resources2 length is now %d", resources.length);
-            }
-          })
-          .on("end", () => {
-            if(resources.length == 167) {
-              resolve(resources);
-            }
-           }) 
-          .on("error", (error: Error) => {
-            reject(error);
-          });
-        }
-    });
-    //console.log("length of resources2 is %d", resources.length);
-    //resolve(resources);
-  });
-}
-
-const COLLIN_COLLEGE_PATH =
-  "static/client_files/collin-college/collin_college.csv";
-
-function read_collin_college(): Promise<CreateResourceInput[]> {
+function read_Resources(): Promise<CreateResourceInput[]> {
   const fs = require("fs");
   const csv = require("csv-parser");
   const resources: CreateResourceInput[] = [];
@@ -124,11 +52,14 @@ function read_collin_college(): Promise<CreateResourceInput[]> {
   const uniquePhoneNumbersSet = new Set<string>();
 
   return new Promise((resolve, reject) => {
-    fs.createReadStream(COLLIN_COLLEGE_PATH)
+    fs.readdirSync(RESOURCES_PATH).forEach((fileName: string) => {
+
+    fs.createReadStream(RESOURCES_PATH + "/" + fileName)
       .pipe(csv())
       .on("data", (data: any) => {
         const name = data["Name"];
-        const phoneNumbers = data["Phone"] ? data["Phone"].split(",") : [];        
+        const phoneNumbers = data["Phone"] ? data["Phone"].split(",") : [];
+
         // Check if the name and phone numbers are unique
         // Temporary fix. Need to remove duplicate name in file
         // For phone, need to make many-to-many relationship in Prisma
@@ -138,6 +69,49 @@ function read_collin_college(): Promise<CreateResourceInput[]> {
         );
 
         if (isNameUnique && arePhoneNumbersUnique) {
+
+            const fullAddress = data["Addresses"];
+
+            let location;
+  
+            if(fullAddress != "")
+            {
+              const addresses = fullAddress.split("::");
+              
+              location = addresses.map((address: string) => {
+                
+                
+                let locationName = "";
+              let modifiedAddress = address.trim();
+
+              if(address.includes("["))
+              {
+                let index1 = address.indexOf("[");
+                let index2 = address.indexOf("]");
+
+                //get location name
+                locationName = address.substring(index1, index2 + 1).trim();
+
+                modifiedAddress = address.substring(index2 + 1).trim();
+              }  
+
+                const addressParts = modifiedAddress.split(",");
+  
+                return  {
+                  name: locationName.trim() || "",
+                  city: addressParts[0]?.trim() || "",
+                  state: addressParts[1]?.trim() || "",
+                  postalCode: addressParts[2]?.trim() || "",
+                  addressLine1: addressParts[3]?.trim() || "",
+                  addressLine2: addressParts[4]?.trim() || "",
+                };
+                
+  
+              });
+
+          }
+          
+          
           const resource = {
             name: name,
             description: data["Description"],
@@ -146,6 +120,7 @@ function read_collin_college(): Promise<CreateResourceInput[]> {
             phoneNumbers: phoneNumbers,
             emails: data["Emails"] ? data["Emails"].split(",") : undefined,
             groupName: data["Type"] ? data["Type"] : "Others",
+            locations: location ?? [],
           };
 
           uniqueNamesSet.add(name);
@@ -161,6 +136,9 @@ function read_collin_college(): Promise<CreateResourceInput[]> {
       .on("error", (error: Error) => {
         reject(error);
       });
+
+    });
+
   });
 
    /*
