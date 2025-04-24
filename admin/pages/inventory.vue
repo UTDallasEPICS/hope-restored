@@ -19,18 +19,14 @@
                         <label for="category">Category:</label>
                         <!-- <input v-model="newItem.category" id="category" required /> -->
                         <select v-model="newItem.category" id="category" required>
-                            <!--<option value="Blouses">Blouses</option>-->
-                            <!--<option value="Shirts">Shirts</option>-->
+                            <option disabled value="">Select a category</option>
                             <option value="Tops">Tops</option>
-                            <!--<option value="Dresses">Dresses</option>-->
-                            <!--<option value="Dress Pants / Slacks">Dress Pants / Slacks</option>-->
                             <option value="Suits">Suits</option>
                             <option value="Pants">Pants</option>
                             <option value="Shorts">Shorts</option>
                             <option value="Socks">Socks</option>
                             <option value="Underwear">Underwear</option>
                             <option value="Shoes">Shoes</option>
-                            <!--<option value="Sweater / Sweatshirt">Sweater / Sweatshirt</option>-->
                             <option value="OuterWear">OuterWear</option>
                         </select>
                     </div>
@@ -64,6 +60,7 @@
                         <label for="gender">Gender:</label>
                         <!-- <input v-model="newItem.gender" id="gender" required /> -->
                         <select v-model="newItem.gender" id="gender" required>
+                            <option disabled value="">Select a gender</option>
                             <option value="Male">Male</option>
                             <option value="Female">Female</option>
                         </select>
