@@ -159,7 +159,7 @@ const isPublicView = compareURLs(
                 rel="noopener"
                 class="flex flex-row justify-center items-center gap-x-4"
             >
-              <span class="uppercase">Apply on their website</span>
+              <span class="uppercase">Visit their website</span>
               <ArrowTopRightOnSquareIcon class="w-4 h-4" />
             </a>
           </button>
