@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import SearchField from "./Filter/SearchField.vue";
-import CategoryDeck from "./Category/CategoryDeck.vue";
+import SorterListBox from "./Filter/SorterListBox.vue";
+
 </script>
 
 <template>
@@ -9,11 +10,11 @@ import CategoryDeck from "./Category/CategoryDeck.vue";
       <img
         src="/HRM-Logo-350x-300x300.jpg"
         alt="HRM Logo"
-        class="h-[7.5rem] w-auto self-center"
+        class="h-[3rem] w-auto self-center"
       />
-      <div class="flex flex-col flex-auto gap-y-4 overflow-hidden">
+      <div class="flex flex-col[2] flex-auto gap-y-4 gap-x-20 items-center">
         <SearchField />
-        <CategoryDeck />
+        <SorterListBox />
       </div>
     </div>
   </nav>

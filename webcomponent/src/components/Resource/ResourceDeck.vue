@@ -1,9 +1,7 @@
 <script lang="ts" setup>
 import ResourceCard from "./ResourceCard.vue";
-import ResourceIndicator from "./ResourceIndicator.vue";
 import ResourceSkeleton from "./ResourceSkeleton.vue";
 import ResourcePagination from "./ResourcePagination.vue";
-import SorterListBox from "../Filter/SorterListBox.vue";
 import { useResourceStore } from "./resourceStore";
 import { TransitionRoot } from "@headlessui/vue";
 
@@ -21,12 +19,7 @@ const getIndex = (index: number) => {
 
 <template>
     <div class="flex flex-col h-screen overflow-hidden">
-      <!-- Header pinned to the top -->
-      <header class="flex flex-row justify-between items-center border-b-2 border-gray-200 bg-white p-1 z-10">
-        <ResourceIndicator />
-        <SorterListBox />
-      </header>
-  
+
       <!-- Scrollable content area -->
       <main class="flex-1 overflow-y-auto">
         <!-- This is your resource card container -->

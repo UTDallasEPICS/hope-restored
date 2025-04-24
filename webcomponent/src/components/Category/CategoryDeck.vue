@@ -36,12 +36,15 @@ const emit = defineEmits(["selectCategory"]);
 
 <template>
   <div
-    class="flex flex-row flex-auto text-white-neutral"
+    class="flex flex-col flex-auto text-white-neutral p-4"
     :style="{ fontSize: itemSize }"
     :class="
       wrap ? 'flex-wrap justify-center gap-y-10' : 'flex-nowrap justify-between'
     "
   >
+
+    <p>Categories:</p>
+    <br>
     <p v-if="isLoading">Loading...</p>
     <Category
       v-else-if="categories.length"
