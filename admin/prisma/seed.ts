@@ -76,17 +76,37 @@ function read_Resources(): Promise<CreateResourceInput[]> {
 
           if(fullAddress != "")
           {
-            const addressParts = fullAddress.split(",");
+            const addresses = fullAddress.split("::");
+            
+            location = addresses.map((address: string) => {
+              
+              let locationName;
+              let modifiedAddress = address.trim();
 
-            location = {
-          
-              city: addressParts[0]?.trim() || "",
-              state: addressParts[1]?.trim() || "",
-              postalCode: addressParts[2]?.trim() || "",
-              addressLine1: addressParts[3]?.trim() || "",
-              addressLine2: addressParts[4]?.trim() || "",
+              if(address.includes("["))
+              {
+                let index1 = address.indexOf("[");
+                let index2 = address.indexOf("]");
 
-            };
+                //get location name
+                locationName = address.substring(index1, index2 + 1).trim();
+
+                modifiedAddress = address.substring(index2 + 1).trim();
+              }  
+
+              const addressParts = modifiedAddress.split(",");
+
+              return  {
+                name: locationName.trim() || "",
+                city: addressParts[0]?.trim() || "",
+                state: addressParts[1]?.trim() || "",
+                postalCode: addressParts[2]?.trim() || "",
+                addressLine1: addressParts[3]?.trim() || "",
+                addressLine2: addressParts[4]?.trim() || "",
+              };
+              
+
+            });
 
           }
           
