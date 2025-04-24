@@ -38,6 +38,7 @@
                         <label for="style">Style:</label>
                         <!-- <input v-model="newItem.style" id="style" required /> -->
                         <select v-model="newItem.style" id="style" required>
+                            <option disabled value="">Select a style</option>
                             <option value="Long Sleeve">Long Sleeve</option>
                             <option value="Short Sleeve">Short Sleeve</option>
                             <option value="T-Shirt">T-Shirt</option>
@@ -143,6 +144,25 @@
             </div>
         </div>
 
+        <div v-if="showInvalidQuantityPopup" class="modal-overlay">
+            <div class="modal-content">
+                <h1>Invalid Action</h1>
+                <p>You cannot remove that quantity because you do not have enough existing quantity in the inventory.</p>
+                <form>
+                    <div class="form-actions">
+                        <button type="button" @click="showInvalidQuantityPopup = false" class="save-button">
+                            <i class="fas fa-save"></i> Ok
+                        </button>
+                        <button type="button"
+                            @click="showInvalidQuantityPopup = false"
+                            class="cancel-button">
+                            <i class="fas fa-times"></i> Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
         <!-- Filter and Sort Section -->
         <div class="filter-sort-section">
             <div class="search-input">
@@ -161,7 +181,7 @@
         </div>
 
         <!-- Inventory Table Section -->
-        <section id="inventory">
+        <div id="inventory" class="inventory_table_container">
             <table>
                 <thead>
                     <tr>
@@ -202,7 +222,7 @@
                     </tr>
                 </tbody>
             </table>
-        </section>
+        </div>
 
         <!-- Charts Section -->
         <section id="charts" class="charts-section">
@@ -228,6 +248,7 @@
     const showAddItemModal = ref(false);
     const showAddQuantityModal = ref(false);
     const showReduceQuantityModal = ref(false);
+    const showInvalidQuantityPopup = ref(false);
     const editedItem = ref({ barcode: null, quantity: null });
 
     const newItem = ref({
@@ -237,6 +258,7 @@
         size: '',
         quantity: 1,
         location: '',
+        lastUpdated: '',
     });
 
     function openAddQuantityModal(item) {
@@ -247,6 +269,10 @@
     function openReduceQuantityModal(item) {
         editedItem.value = item;
         showReduceQuantityModal.value = true;
+    }
+
+    function openInvalidQuantityPopup() {
+        showInvalidQuantityPopup.value = true;
     }
 
     async function editItem(editedItem) {
@@ -269,6 +295,19 @@
             console.log(quantity);
             if (quantity == 0) { 
                 deleteEntry(editedItem.barcode);
+                getInventory();
+            }
+            else if (quantity < 0) {
+                openInvalidQuantityPopup();
+                if (editedItem.barcode && editedItem.quantity){
+                    item = await $fetch('/api/inventory/:id', {  // update entry in database; call [id].put.ts
+                        method: 'PUT',
+                        body: { // data for database entry
+                            barcode: editedItem.barcode,
+                            quantity: -editedItem.quantity,
+                        },
+                    });
+                }
                 getInventory();
             }
         }
@@ -349,9 +388,11 @@
             if (selectedSort.value === 'alphabetical') {
                 return a.category.name.localeCompare(b.category.name); // Alphabetical by category
             } else if (selectedSort.value === 'recent') {
-                return b.barcode - a.barcode; // Assuming higher barcode means more recent
+                //return b.barcode - a.barcode; // Assuming higher barcode means more recent
+                return new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime(); // Most recent first (must convert to Date format for comparison)
             } else if (selectedSort.value === 'dateAdded') {
-                return new Date(b.dateAdded).getTime() - new Date(a.dateAdded).getTime(); // Sort by dateAdded if available
+                //return new Date(b.dateAdded).getTime() - new Date(a.dateAdded).getTime(); // Sort by dateAdded if available
+                return new Date(a.lastUpdated).getTime() - new Date(b.lastUpdated).getTime(); // Oldest first (must convert to Date format for comparison)
             }
             return 0;
         });
@@ -385,6 +426,7 @@
             size: '',
             quantity: 1,
             location: '',
+            lastUpdated: '',
         };
 
         // Close the modal
@@ -407,8 +449,10 @@
             });
 
             console.log("Response from API:", response); // Log API response
+
+            // Refresh inventory after insertion completes
+            await getInventory();
         }
-        await getInventory();
     };
 </script>
 
@@ -419,6 +463,9 @@
         padding: 2em;
         background-color: #f0f2f5; /* Light gray background */
         min-height: 100vh;
+        max-height: 300px; /* Adjust as needed */
+        overflow-y: auto; /* Vertical scroll */
+        overflow-x: auto; /* Horizontal scroll if needed */
     }
 
     /* Heading Styling */
@@ -593,6 +640,12 @@
             border: 1px solid #ddd;
         }
 
+    #inventory {
+        max-height: 500px;
+        overflow-y: auto;
+        border: 1px solid #ddd;
+    }
+
     /* Inventory Table */
     #inventory table {
         width: 100%;
@@ -600,7 +653,7 @@
         table-layout: fixed;
         background-color: #fff;
         border-radius: 8px;
-        overflow: hidden;
+        /*overflow: hidden;*/
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
 
@@ -617,6 +670,13 @@
         font-weight: bold;
     }
 
+    thead {
+        position: sticky;
+        top: 0;
+        background-color: #fff; /* Ensures the background is white so it covers content */
+        z-index: 2; /* Keeps header on top */
+    }
+    
     #inventory tr:nth-child(even) {
         background-color: #f9f9f9;
     }
