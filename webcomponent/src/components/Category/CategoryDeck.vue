@@ -1,8 +1,18 @@
 <script lang="ts" setup>
 import { default as Category } from "./Category.vue";
-// import { useResourceStore } from "../Resource/resourceStore";
-import { useCategoryStore } from "./categoryStore";
+import { ref, computed } from 'vue';
+import { type CategoryProps } from './Category.vue'
+import CategoryService from './request'
 import { useLoadingStore } from "../Loader/loadingStore";
+import { CakeIcon, UserIcon, HomeIcon } from '@heroicons/vue/24/solid'
+import { Prisma } from '@prisma/client'
+type CategoryDB = Prisma.GroupGetPayload<{}>
+
+const categories = ref<CategoryProps[]>([])
+const selectedCategory = ref<string | null>(null)
+const isLoading = ref(false)
+const error = ref(null)
+loadCategory()
 
 defineProps({
   itemSize: {
@@ -15,15 +25,65 @@ defineProps({
   },
 });
 
+async function loadCategory() {
+  isLoading.value = true
+  error.value = null
+  try {
+    const response = await CategoryService.fetchCategories()
+    categories.value = response.map(toCategoryProps)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } catch (err: any) {
+    error.value = err.message
+  } finally {
+    isLoading.value = false
+  }
+}
+
+ function useCategoryStore() {
+  const getFCategories = computed(() => categories.value)
+  const getIsLoading = computed(() => isLoading.value)
+  const getError = computed(() => error.value)
+  const getSelectedCategory = computed(() => selectedCategory.value)
+
+  function setSelectedCategory(categoryTitle: string) {
+    selectedCategory.value = categoryTitle
+  }
+
+  function clearSelectedCategory() {
+    selectedCategory.value = null
+  }
+
+  return {
+    getFCategories,
+    getIsLoading,
+    getError,
+    getSelectedCategory,
+    setSelectedCategory,
+    clearSelectedCategory,
+  }
+}
+
+function toCategoryProps(category: CategoryDB): CategoryProps {
+  return {
+    id: category.id,
+    title: category.name,
+    icon: CATEGORY_ICONS[category.name] || CATEGORY_ICONS.Default,
+    isClicked: false,
+  }
+}
+
+const CATEGORY_ICONS: { [key: string]: typeof CakeIcon } = {
+  'Category 1': UserIcon,
+  'Category 2': HomeIcon,
+  Default: CakeIcon,
+}
+
 const categoryStore = useCategoryStore();
-const categories = categoryStore.getFCategories.value;
 console.log("categories: ", categories);
-const error = categoryStore.getError;
-const isLoading = categoryStore.getIsLoading;
-const selectedCategory = categoryStore.getSelectedCategory;
+const isLoadingValue = useCategoryStore().getIsLoading;
 
 const loadingStore = useLoadingStore();
-loadingStore.registerLoading(isLoading);
+loadingStore.registerLoading(isLoadingValue);
 
 // const resourceStore = useResourceStore();
 const setSelectedCategory = (category: string) => {
