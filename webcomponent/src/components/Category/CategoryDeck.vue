@@ -1,3 +1,4 @@
+
 <script lang="ts" setup>
 import { default as Category } from "./Category.vue";
 import { ref, computed } from 'vue';
@@ -39,7 +40,7 @@ async function loadCategory() {
   }
 }
 
- function useCategoryStore() {
+function useCategoryStore() {
   const getFCategories = computed(() => categories.value)
   const getIsLoading = computed(() => isLoading.value)
   const getError = computed(() => error.value)

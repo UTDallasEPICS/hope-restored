@@ -1,18 +1,35 @@
 <script lang="ts" setup>
 import { MagnifyingGlassCircleIcon } from "@heroicons/vue/24/solid";
 import { useResourceStore } from "../Resource/resourceStore";
-import { useCategoryStore } from "../Category/categoryStore";
-import { useSearchStore } from "./searchStore";
-import {ref, watch} from 'vue'
+import  useCategoryStore  from "../Category/CategoryDeck.vue";
+import {ref, watch, computed} from 'vue'
 const searchStore = useSearchStore();
-const categoryStore = useCategoryStore();
+const categoryStore = new useCategoryStore();
 const resourceStore = useResourceStore();
+const searchTerm = ref("");
 const searchResources = () => {
   emit("searchResources");
   searchStore.setSearchTerm(search.value);
   resourceStore.loadResourcesBySearchTerm(search.value);
   categoryStore.clearSelectedCategory();
 };
+function useSearchStore() {
+  const getSearchTerm = computed(() => searchTerm.value);
+
+  function setSearchTerm(value: string) {
+    searchTerm.value = value;
+  }
+
+  function clearSearchTerm() {
+    searchTerm.value = "";
+  }
+
+  return {
+    getSearchTerm,
+    setSearchTerm,
+    clearSearchTerm,
+  };
+}
 const emit = defineEmits(["searchResources"]);
 const search = ref("");
 const location = ref("");
