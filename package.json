@@ -3,9 +3,7 @@
   "private": true,
   "scripts": {
     "build": "nuxt build",
-    "dev": "cd admin && nuxt dev",
     "admin": "cd admin && nuxt dev",
-    "dev-vue": "cd webcomponent && npm run dev",
     "public": "cd webcomponent && npm run dev",
     "generate": "nuxt generate",
     "preview": "nuxt preview",

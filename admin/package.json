@@ -4,8 +4,6 @@
   "scripts": {
     "build": "nuxt build",
     "dev": "cd admin && nuxt dev",
-    "build-vue": "cd webcomponent && vite build --config vite.config.wordpress.ts",
-    "dev-vue": "cd webcomponent && vite --config vite.config.wordpress.ts ",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
