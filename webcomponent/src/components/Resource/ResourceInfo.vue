@@ -5,6 +5,7 @@ import {
   UserGroupIcon,
   CheckIcon,
   CurrencyDollarIcon,
+  MapPinIcon
 } from "@heroicons/vue/24/solid";
 import ResourceTag from "./ResourceTag.vue";
 export interface ResourceInfoProps {
@@ -15,6 +16,7 @@ export interface ResourceInfoProps {
   demographics: string[];
   eligibility: string;
   cost: string;
+  locations: string[]
 }
 defineProps<ResourceInfoProps>();
 </script>
@@ -47,6 +49,12 @@ defineProps<ResourceInfoProps>();
           category="Cost"
           :icon="CurrencyDollarIcon"
           :tags="[cost]"
+          :onTagClicked="() => {}"
+        />
+        <ResourceTag
+          category="Locations"
+          :icon="MapPinIcon"
+          :tags="locations"
           :onTagClicked="() => {}"
         />
       </div>

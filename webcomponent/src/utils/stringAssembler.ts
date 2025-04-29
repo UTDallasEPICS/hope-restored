@@ -9,6 +9,10 @@ export function locationToString(location: LocationDB): string {
   locationString += `, ${location.city}, ${location.state} ${location.postalCode}`;
   return locationString;
 }
+export function locationToCityString(location: LocationDB): string {
+    let locationString = `${location.city}`;
+    return locationString;
+}
 
 type PhoneNumberDB = Prisma.PhoneNumberGetPayload<{}>;
 export function phoneNumberToString(phoneNumber: PhoneNumberDB): string {

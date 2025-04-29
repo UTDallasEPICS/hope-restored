@@ -51,6 +51,7 @@ const getIndex = (index: number) => {
             :phoneNumbers="card.phoneNumbers"
             :emails="card.emails"
             :addresses="card.addresses"
+            :cities="card.cities"
             :languages="card.languages"
             :eligibility="card.eligibility"
             :cost="card.cost"

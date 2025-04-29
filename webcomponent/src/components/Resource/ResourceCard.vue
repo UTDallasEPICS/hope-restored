@@ -24,6 +24,7 @@ export interface ResourceProps {
   phoneNumbers: string[];
   emails: string[];
   addresses: string[];
+  cities: string[];
   link: string;
   createdAt: Date;
   updatedAt: Date;
@@ -107,6 +108,7 @@ const isPublicView = compareURLs(
           :demographics="demographics"
           :eligibility="eligibility"
           :cost="cost"
+          :locations="cities"
         />
         <div class="flex items-center flex-row gap-x-2 pt-2">
           <button
