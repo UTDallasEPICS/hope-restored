@@ -27,7 +27,7 @@ export class SearchManyResourceUseCase {
         FROM resource
         ${
           search
-            ? Prisma.sql`WHERE description @@@ ${search} OR name @@@ ${search}`
+            ? Prisma.sql`WHERE description LIKE '%' || ${search} || '%' OR name LIKE '%' || ${search} || '%'`
             : Prisma.empty
         }
         ORDER BY ${
@@ -41,6 +41,7 @@ export class SearchManyResourceUseCase {
         ${skip ? Prisma.sql`OFFSET ${skip}` : Prisma.empty};
         `;
     try {
+      console.log(queryRaw);
       return await prisma.$queryRaw(queryRaw);
     } catch (error) {
       console.log(error);
