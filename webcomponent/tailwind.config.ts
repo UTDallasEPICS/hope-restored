@@ -30,5 +30,8 @@ export default {
     //   },
     },
   },
+  #map: {
+    height: 180px; 
+  },
   plugins: [],
 };
