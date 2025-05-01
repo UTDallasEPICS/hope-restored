@@ -2,6 +2,7 @@
 import { Disclosure, DisclosureButton, DisclosurePanel } from "@headlessui/vue";
 import { ChevronDownIcon } from "@heroicons/vue/20/solid";
 import { defineProps } from "vue";
+import ClickToCopy  from "../ClickToCopy.vue"
 export interface ResourceNextStepProps {
   icon: any;
   flavorText: string;
@@ -34,7 +35,9 @@ defineProps<ResourceNextStepProps>();
         <DisclosurePanel>
           <ul class="flex flex-auto flex-col gap-y-2">
             <li v-for="item in items" :key="item">
-              <span class="hover:underline">{{ item }}</span>
+                <ClickToCopy
+                    :text="item"
+                />
             </li>
           </ul>
         </DisclosurePanel>

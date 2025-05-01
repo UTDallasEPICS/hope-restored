@@ -11,7 +11,7 @@ const copyToClipboard = (textToCopy) => {
 
 </script>
 <template>
-    <button @click="copyToClipboard(text)">
+    <button class="hover:underline" @click="copyToClipboard(text)">
       {{ text }}
     </button>
 </template>
