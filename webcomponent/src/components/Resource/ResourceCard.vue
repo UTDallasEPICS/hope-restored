@@ -128,8 +128,8 @@ const isPublicView = compareURLs(
           />
         </div>
       </div>
-      <div class="flex w-1 bg-black-neutral my-2 rounded"></div>
-      <div class="flex flex-none w-[20rem] flex-col justify-between px-4">
+      <div class="flex w-1 my-2 rounded"></div><!-- bg-black-neutral my-2 rounded -->
+      <div class="flex flex-none w-[20rem] flex-col justify-between px-4 border-l-1">
         <div
           class="flex flex-col gap-y-2 justify-start pt-1 pb-4"
           v-if="isPublicView"
