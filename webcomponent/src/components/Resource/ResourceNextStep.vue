@@ -13,9 +13,8 @@ const props = defineProps<ResourceNextStepProps>();
 function splitInfoAndValues(list: string[]): { value: string; info: string }[] {
   return list.map(item => {
     const infoMatch = item.match(/\[(.*?)\]/);
-    const info: string = infoMatch ? infoMatch[1].trim() : '';
+    const info: string = infoMatch ? " ["+infoMatch[1]+"]" : '';
     const value: string = item.replace(/\s*\[.*?\]\s*/g, '').trim();
-
     return { value, info };
   });
 }
@@ -48,10 +47,10 @@ const splitItems = splitInfoAndValues(props.items);
         <DisclosurePanel>
           <ul class="flex flex-auto flex-col gap-y-2">
             <li v-for="item in splitItems" :key="item.value">
-                <ClickToCopy
+                <ClickToCopy class="text-hrm-green"
                     :text="item.value"
                 />
-                <span> [{{item.info}}]</span>
+                <span>{{item.info}}</span>
             </li>
           </ul>
         </DisclosurePanel>
