@@ -12,7 +12,7 @@
         ]"
       >
         <div class="flex flex-row gap-x-2">
-          <span class="text-gray-900">Sort by:</span>
+          <span class="text-white-neutral">Sort by:</span>
           <span
             class="block truncate underline font-semibold underline-offset-4 text-white-neutral"
             >{{ selectedSortOption.name }}</span
