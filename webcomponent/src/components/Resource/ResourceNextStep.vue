@@ -8,7 +8,20 @@ export interface ResourceNextStepProps {
   flavorText: string;
   items: string[];
 }
-defineProps<ResourceNextStepProps>();
+const props = defineProps<ResourceNextStepProps>();
+
+function splitInfoAndValues(list: string[]): { value: string; info: string }[] {
+  return list.map(item => {
+    const infoMatch = item.match(/\[(.*?)\]/);
+    const info: string = infoMatch ? infoMatch[1].trim() : '';
+    const value: string = item.replace(/\s*\[.*?\]\s*/g, '').trim();
+
+    return { value, info };
+  });
+}
+
+const splitItems = splitInfoAndValues(props.items);
+
 </script>
 
 <template>
@@ -34,10 +47,11 @@ defineProps<ResourceNextStepProps>();
       >
         <DisclosurePanel>
           <ul class="flex flex-auto flex-col gap-y-2">
-            <li v-for="item in items" :key="item">
+            <li v-for="item in splitItems" :key="item.value">
                 <ClickToCopy
-                    :text="item"
+                    :text="item.value"
                 />
+                <span> [{{item.info}}]</span>
             </li>
           </ul>
         </DisclosurePanel>
