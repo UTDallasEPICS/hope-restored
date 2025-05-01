@@ -5,8 +5,13 @@ export interface ClickToCopyProps {
 }
 defineProps<ClickToCopyProps>();
 
-const copyToClipboard = (textToCopy) => {
-
+async function copyToClipboard(textToCopy) {
+try {
+    await navigator.clipboard.writeText(textToCopy);
+    alert('Copied to clipboard!');
+  } catch (err) {
+        console.error('Copy failed:', err);
+  }
 };
 
 </script>
