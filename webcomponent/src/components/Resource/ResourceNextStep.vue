@@ -34,7 +34,7 @@ defineProps<ResourceNextStepProps>();
         <DisclosurePanel>
           <ul class="flex flex-auto flex-col gap-y-2">
             <li v-for="item in items" :key="item">
-              <span>{{ item }}</span>
+              <span class="hover:underline">{{ item }}</span>
             </li>
           </ul>
         </DisclosurePanel>
