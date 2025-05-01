@@ -28,13 +28,13 @@ watch(
 </script>
 
 <template>
-  <form @submit.prevent="searchResources" class="flex flex-row flex-auto">
+  <form @submit.prevent="searchResources" class="flex flex-row flex-auto ">
     <input
       v-model="search"
       id="search"
       type="text"
       placeholder="What are you looking for today?"
-      class="border p-2 rounded-md flex-1"
+      class="border p-2 rounded-md flex-1 text-white-neutral"
     />
     <!--TODO: Add location filtering-->
     <!-- <input
@@ -44,7 +44,7 @@ watch(
       placeholder="Enter your zip code"
       class="border p-2 rounded-md ml-2 flex-1"
     /> -->
-    <button type="submit" class="p-2 ml-2 text-white-neutral bg-hrm-dark-green">
+    <button type="submit" class="p-2 ml-2 text-white-neutral bg-hrm-dark-green rounded-md hover:bg-hrm-green ">
       <MagnifyingGlassCircleIcon class="w-6 h-6" />
     </button>
   </form>
