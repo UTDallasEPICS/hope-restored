@@ -9,7 +9,6 @@ export interface ResourceNextStepProps {
   items: {value: string, annotation: string}[];
 }
 defineProps<ResourceNextStepProps>();
-
 </script>
 
 <template>
@@ -36,8 +35,9 @@ defineProps<ResourceNextStepProps>();
         <DisclosurePanel>
           <ul class="flex flex-auto flex-col gap-y-2">
             <li v-for="item in items" :key="item.value">
-                <ClickToCopy v-tooltip.left="'Copy'" class="text-hrm-dark-green"
+                <ClickToCopy class="text-hrm-dark-green"
                     :text="item.value"
+                    tooltipPosition="left"
                 />
                 <span>{{item.annotation}}</span>
             </li>

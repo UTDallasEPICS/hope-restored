@@ -58,7 +58,7 @@ const changePage = (page) => {
       @click="changePage(page)"
       :class="[
         'px-3 py-2 rounded hover:underline hover:text-hrm-green hover:rounded-md decoration-2 underline-offset-4',
-        page === currentPage ? 'bg-hrm-dark-green text-white hover:bg-hrm-green hover:text-white' : '',
+        page === currentPage ? 'bg-hrm-green text-white hover:bg-hrm-dark-green hover:text-white' : '',
       ]"
     >
       {{ page }}
