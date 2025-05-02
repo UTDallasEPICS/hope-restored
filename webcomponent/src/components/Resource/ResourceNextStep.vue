@@ -6,20 +6,9 @@ import ClickToCopy  from "../ClickToCopy.vue"
 export interface ResourceNextStepProps {
   icon: any;
   flavorText: string;
-  items: string[];
+  items: {value: string, annotation: string}[];
 }
-const props = defineProps<ResourceNextStepProps>();
-
-function splitInfoAndValues(list: string[]): { value: string; info: string }[] {
-  return list.map(item => {
-    const infoMatch = item.match(/\[(.*?)\]/);
-    const info: string = infoMatch ? " ["+infoMatch[1]+"]" : '';
-    const value: string = item.replace(/\s*\[.*?\]\s*/g, '').trim();
-    return { value, info };
-  });
-}
-
-const splitItems = splitInfoAndValues(props.items);
+defineProps<ResourceNextStepProps>();
 
 </script>
 
@@ -46,11 +35,11 @@ const splitItems = splitInfoAndValues(props.items);
       >
         <DisclosurePanel>
           <ul class="flex flex-auto flex-col gap-y-2">
-            <li v-for="item in splitItems" :key="item.value">
+            <li v-for="item in items" :key="item.value">
                 <ClickToCopy class="text-hrm-green"
                     :text="item.value"
                 />
-                <span>{{item.info}}</span>
+                <span>{{item.annotation}}</span>
             </li>
           </ul>
         </DisclosurePanel>

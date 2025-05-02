@@ -81,6 +81,35 @@ const isPublicView = compareURLs(
   import.meta.env.VITE_EXTERNAL_VIEWER_URL
    
 );
+
+function splitAnnotationFromValue(item:string): { value: string; annotation: string } {
+    let annotation = '';
+    let value = item;
+
+    // Extract name in square brackets first
+    const squareMatch = item.match(/\[(.*?)\]/);
+    if (squareMatch) {
+        annotation = ' ['+squareMatch[1].trim()+']';
+      value = value.replace(squareMatch[0], '');
+    }
+
+    // Extract name in parentheses only if square brackets not found
+    const parenMatch = !annotation && item.match(/\((.*?)\)/);
+    if (parenMatch) {
+        annotation = ' ('+parenMatch[1].trim()+')';
+      value = value.replace(parenMatch[0], '');
+    }
+
+    // Clean up the value by trimming whitespace
+    value = value.trim();
+
+    return { value, annotation };
+}
+
+function splitAnnotationsFromValues(list: string[]): { value: string; annotation: string }[] {
+  return list.map(item => splitAnnotationFromValue(item));
+}
+
 </script>
 
 <template>
@@ -102,7 +131,7 @@ const isPublicView = compareURLs(
       <div class="flex flex-auto flex-col justify-between">
         <ResourceInfo
           :index="index"
-          :title="title"
+          :title="splitAnnotationFromValue(title)"
           :description="description"
           :languages="languages"
           :demographics="demographics"
@@ -138,19 +167,19 @@ const isPublicView = compareURLs(
             v-if="phoneNumbers.length > 0"
             :icon="PhoneIcon"
             flavorText="Call a number"
-            :items="phoneNumbers"
+            :items="splitAnnotationsFromValues(phoneNumbers)"
           />
           <ResourceNextStep
             v-if="emails.length > 0"
             :icon="EnvelopeIcon"
             flavorText="Send an email"
-            :items="emails"
+            :items="splitAnnotationsFromValues(emails)"
           />
           <ResourceNextStep
             v-if="addresses.length > 0"
             :icon="MapPinIcon"
             flavorText="Go to an address"
-            :items="addresses"
+            :items="splitAnnotationsFromValues(addresses)"
           />
         </div>
         <div v-if="isPublicView && link">
