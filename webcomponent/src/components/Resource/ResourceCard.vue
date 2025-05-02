@@ -157,7 +157,7 @@ function splitAnnotationsFromValues(list: string[]): { value: string; annotation
           />
         </div>
       </div>
-      <div class="flex w-1 my-2 rounded"></div><!-- bg-black-neutral my-2 rounded -->
+      <div class="flex w-1 my-2 rounded"></div>
       <div class="flex flex-none w-[20rem] flex-col justify-between px-4 border-l-1 border-gray-400">
         <div
           class="flex flex-col gap-y-2 justify-start pt-1 pb-4"
@@ -183,7 +183,7 @@ function splitAnnotationsFromValues(list: string[]): { value: string; annotation
           />
         </div>
         <div v-if="isPublicView && link">
-          <button class="initial bg-hrm-dark-green hover:bg-hrm-green text-white-neutral font-semibold py-2 px-4 border border-gray-400 rounded shadow">
+          <button class="initial bg-hrm-green hover:bg-hrm-dark-green text-white-neutral font-semibold py-2 px-4 border border-gray-400 rounded shadow">
             <a
                 :href="link.startsWith('http') ? link : `https://${link}`"
                 target="_blank"

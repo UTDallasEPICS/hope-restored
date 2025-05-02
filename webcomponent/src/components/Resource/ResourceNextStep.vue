@@ -15,7 +15,7 @@ defineProps<ResourceNextStepProps>();
 <template>
   <Disclosure v-slot="{ open }">
     <div class="flex flex-col">
-      <DisclosureButton class="flex flex-initial flex-row justify-between">
+      <DisclosureButton class="flex flex-initial flex-row justify-between hover:text-hrm-green">
         <div class="flex flex-auto flex-row items-center gap-x-2">
           <component :is="icon" class="w-4 h-4" />
           <span>{{ flavorText }}</span>
@@ -36,7 +36,7 @@ defineProps<ResourceNextStepProps>();
         <DisclosurePanel>
           <ul class="flex flex-auto flex-col gap-y-2">
             <li v-for="item in items" :key="item.value">
-                <ClickToCopy class="text-hrm-dark-green"
+                <ClickToCopy v-tooltip.left="'Copy'" class="text-hrm-dark-green"
                     :text="item.value"
                 />
                 <span>{{item.annotation}}</span>

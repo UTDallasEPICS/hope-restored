@@ -16,7 +16,7 @@ try {
 
 </script>
 <template>
-    <button class="hover:underline hover:text-hrm-green" @click="copyToClipboard(text)">
+    <button class="hover:underline hover:text-hrm-dark-green text-hrm-green" @click="copyToClipboard(text)">
       {{ text }}
     </button>
 </template>
