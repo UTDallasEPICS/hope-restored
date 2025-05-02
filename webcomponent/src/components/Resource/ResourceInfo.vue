@@ -25,7 +25,7 @@ defineProps<ResourceInfoProps>();
   <div class="flex flex-auto flex-row justify-start">
     <div class="flex flex-auto flex-col">
         <div class="flex flex-auto flex-row gap-x-2">
-            <h2 class="text-hrm-green">{{ index }}. {{ title.value }} </h2>
+            <h2 class="text-hrm-dark-green">{{ index }}. {{ title.value }} </h2>
             <h2>{{ title.annotation }}</h2>
         </div>
       <p>{{ description }}</p>
