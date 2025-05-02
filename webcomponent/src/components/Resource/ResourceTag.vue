@@ -17,7 +17,7 @@ defineProps<ResourceTagProps>();
     </div>
     <ul
       v-if="tags.length > 0"
-      class="flex flex-auto flex-row items-center text-hrm-green"
+      class="flex flex-auto flex-row items-center text-hrm-dark-green"
     >
       <li v-for="(tag, index) in tags" :key="tag">
         <span v-if="index != 0">, </span>
@@ -26,7 +26,7 @@ defineProps<ResourceTagProps>();
         </span>
       </li>
     </ul>
-    <span v-else class="flex flex-auto flex-row items-center text-hrm-green">
+    <span v-else class="flex flex-auto flex-row items-center text-hrm-dark-green">
       N/A
     </span>
   </div>

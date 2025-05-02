@@ -47,7 +47,7 @@ const splitItems = splitInfoAndValues(props.items);
         <DisclosurePanel>
           <ul class="flex flex-auto flex-col gap-y-2">
             <li v-for="item in splitItems" :key="item.value">
-                <ClickToCopy class="text-hrm-green"
+                <ClickToCopy class="text-hrm-dark-green"
                     :text="item.value"
                 />
                 <span>{{item.info}}</span>
