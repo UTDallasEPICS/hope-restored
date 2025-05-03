@@ -33,9 +33,9 @@ const changePage = (page) => {
     <button
       v-if="currentPage > 1"
       @click="changePage(currentPage - 1)"
-      class="px-3 py-2"
+      class="px-2 py-2 rounded-md hover:text-white hover:bg-hrm-green"
     >
-      <ChevronLeftIcon class="h-5 w-5" />
+      <ChevronLeftIcon class="h-5 w-5 " />
     </button>
 
     <!-- First Page Button -->
@@ -57,8 +57,8 @@ const changePage = (page) => {
       :key="page"
       @click="changePage(page)"
       :class="[
-        'px-3 py-2 rounded hover:underline decoration-2 underline-offset-4',
-        page === currentPage ? 'bg-hrm-dark-green text-white' : '',
+        'px-3 py-2 rounded hover:underline hover:text-hrm-green hover:rounded-md decoration-2 underline-offset-4',
+        page === currentPage ? 'bg-hrm-green text-white hover:bg-hrm-dark-green hover:text-white' : '',
       ]"
     >
       {{ page }}
@@ -72,7 +72,7 @@ const changePage = (page) => {
     <button
       v-if="currentPage < totalPages - 4"
       @click="changePage(totalPages)"
-      class="px-3 py-2 rounded hover:underline decoration-2 underline-offset-4"
+      class="px-3 py-2 rounded hover:underline hover:text-hrm-green decoration-2 underline-offset-4"
     >
       {{ totalPages }}
     </button>
@@ -81,7 +81,7 @@ const changePage = (page) => {
     <button
       v-if="currentPage < totalPages"
       @click="changePage(currentPage + 1)"
-      class="px-3 py-2 rounded"
+      class="px-2 py-2 rounded-md hover:text-white hover:bg-hrm-green"
     >
       <ChevronRightIcon class="h-5 w-5" />
     </button>

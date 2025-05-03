@@ -32,7 +32,7 @@
             type="checkbox"
             :id="getItemId(group.title, item.label)"
             :checked="item.isChecked"
-            class="form-checkbox h-5 w-5 text-blue-600 rounded"
+            class="form-checkbox h-5 w-5 accent-hrm-green rounded"
             @change="filterStore.toggleFilter(group.title, item.label)"
           />
           <label

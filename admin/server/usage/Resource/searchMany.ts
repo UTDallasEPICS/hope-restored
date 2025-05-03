@@ -18,21 +18,24 @@ export class SearchManyResourceUseCase {
     const { field, order } = sortBy;
     search = search.trim();
     if (search) search = removeStopWords(search) || search;
-    const queryRaw = Prisma.sql`SELECT id
-        ${
+    const queryRaw = Prisma.sql`SELECT resource.id
+        ${ //add other fields? also relevance doesn't cuurently work
           field === "relevance"
-            ? Prisma.sql`, paradedb.score(id)`
+            ? Prisma.empty //replace with bm25() search?
             : Prisma.empty
         }
         FROM resource
+        LEFT JOIN location ON resource.id=location.resourceId
         ${
           search
-            ? Prisma.sql`WHERE description LIKE '%' || ${search} || '%' OR name LIKE '%' || ${search} || '%'`
+            ? Prisma.sql`WHERE description LIKE '%' || ${search} || '%' OR name LIKE '%' || ${search} || '%'
+            OR addressLine1 LIKE '%' || ${search} || '%' OR addressLine2 LIKE '%' || ${search} || '%' 
+            OR city LIKE '%' || ${search} || '%' OR state LIKE '%' || ${search} || '%' OR postalCode LIKE '%' || ${search} || '%'`  
             : Prisma.empty
         }
         ORDER BY ${
           field === "relevance"
-            ? Prisma.sql`paradedb.score(id) ${Prisma.raw(order)}`
+            ? Prisma.sql`${Prisma.raw(order)}`
             : Prisma.sql`${Prisma.raw(field.toLowerCase())} ${Prisma.raw(
                 order
               )}`

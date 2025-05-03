@@ -10,7 +10,7 @@ import {
 import ResourceTag from "./ResourceTag.vue";
 export interface ResourceInfoProps {
   index: number;
-  title: string;
+  title: {value: string, annotation: string};
   description: string;
   languages: string[];
   demographics: string[];
@@ -24,7 +24,11 @@ defineProps<ResourceInfoProps>();
 <template>
   <div class="flex flex-auto flex-row justify-start">
     <div class="flex flex-auto flex-col">
-      <h2 class="text-hrm-dark-green">{{ index }}. {{ title }}</h2>
+        <div class="flex flex-auto flex-row gap-x-2">
+            <h2>{{ index }}.</h2>
+            <h2 class="text-hrm-green">{{ title.value }}</h2>
+            <h2>{{ title.annotation }}</h2>
+        </div>
       <p>{{ description }}</p>
       <div class="flex flex-auto flex-col justify-start">
         <ResourceTag
