@@ -73,7 +73,7 @@ model Demographic{
 
 model PhoneNumber {
   id Int                    @id @default(autoincrement()) // Primary key with auto-increment
-  number String             @unique
+  number String             // @unique
   name String?              // Optional name of the person associated with the phone number
   description String?       // Optional description of the phone number
   resourceId Int

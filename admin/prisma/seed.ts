@@ -48,8 +48,8 @@ function read_Resources(): Promise<CreateResourceInput[]> {
   const fs = require("fs");
   const csv = require("csv-parser");
   const resources: CreateResourceInput[] = [];
-  const uniqueNamesSet = new Set<string>();
-  const uniquePhoneNumbersSet = new Set<string>();
+ // const uniqueNamesSet = new Set<string>();
+ // const uniquePhoneNumbersSet = new Set<string>();
 
   return new Promise((resolve, reject) => {
     fs.readdirSync(RESOURCES_PATH).forEach((fileName: string) => {
@@ -58,17 +58,53 @@ function read_Resources(): Promise<CreateResourceInput[]> {
       .pipe(csv())
       .on("data", (data: any) => {
         const name = data["Name"];
-        const phoneNumbers = data["Phone"] ? data["Phone"].split(",") : [];
+        //const phoneNumbers = data["Phone"] ? data["Phone"].split(",") : [];
+
+
+        let phoneNumbers;
+
+        if(data["Phone"] != "")
+          {
+            const phoneNumberList = data["Phone"].split(",");
+            
+            phoneNumbers = phoneNumberList.map((number: string) => {
+              
+              
+              let phoneNumberName = "";
+            let onlyPhoneNumber = number.trim();
+
+            if(number.includes("["))
+            {
+              let index1 = number.indexOf("[");
+              let index2 = number.indexOf("]");
+
+              //get location name
+              phoneNumberName = number.substring(index1, index2 + 1).trim();
+
+              onlyPhoneNumber = number.slice(0, index1) + number.slice(index2 + 1);;
+            }  
+
+              //const filteredPhoneNumber = onlyPhoneNumber.split(",");
+
+              return  {
+                name: phoneNumberName.trim() || undefined,
+                number: onlyPhoneNumber?.trim() || "",
+              };
+              
+
+            });
+
+        }
 
         // Check if the name and phone numbers are unique
         // Temporary fix. Need to remove duplicate name in file
         // For phone, need to make many-to-many relationship in Prisma
-        const isNameUnique = !uniqueNamesSet.has(name);
-        const arePhoneNumbersUnique = phoneNumbers.every(
-          (phone: any) => !uniquePhoneNumbersSet.has(phone)
-        );
+ //       const isNameUnique = !uniqueNamesSet.has(name);
+ //       const arePhoneNumbersUnique = phoneNumbers.every(
+ //         (phone: any) => !uniquePhoneNumbersSet.has(phone)
+ //       );
 
-        if (isNameUnique && arePhoneNumbersUnique) {
+ //       if (isNameUnique && arePhoneNumbersUnique) {
 
             const fullAddress = data["Addresses"];
 
@@ -117,18 +153,20 @@ function read_Resources(): Promise<CreateResourceInput[]> {
             description: data["Description"],
             externalLink: data["Links"] ? data["Links"] : undefined,
             languages: ["English"],
-            phoneNumbers: phoneNumbers,
+            phoneNumbers: phoneNumbers ?? [],
             emails: data["Emails"] ? data["Emails"].split(",") : undefined,
             groupName: data["Type"] ? data["Type"] : "Others",
             locations: location ?? [],
           };
 
-          uniqueNamesSet.add(name);
-          phoneNumbers.forEach((phone: any) =>
-            uniquePhoneNumbersSet.add(phone)
-          );
+      //    uniqueNamesSet.add(name);
+      //    phoneNumbers.forEach((phone: any) =>
+      //      uniquePhoneNumbersSet.add(phone)
+      //    );
           resources.push(resource);
-        }
+ //       }
+
+        // break
       })
       .on("end", () => {
         resolve(resources);
@@ -246,7 +284,7 @@ seed()
     await prisma.$disconnect();
   });
   
-
+/*
 const RESOURCES: CreateResourceInput[] = [
   {
     name: "Food Bank Assistance",
@@ -431,3 +469,5 @@ const RESOURCES: CreateResourceInput[] = [
     groupName: "Health Services",
   },
 ];
+
+*/
