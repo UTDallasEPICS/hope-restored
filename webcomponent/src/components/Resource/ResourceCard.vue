@@ -103,9 +103,12 @@ function splitAnnotationFromValue(item:string): { value: string; annotation: str
     }
     
 
-    //removes () from string
+    //removes empty () from string
     value = value.replace(/\(\s*\)/g, '');
     
+    //should remove empty [] from string (NOT TESTED)
+    //value = value.replace(/\[\s*\]/g, '');
+
     // Clean up the value by trimming whitespace
     value = value.trim();
 
