@@ -83,23 +83,29 @@ const isPublicView = compareURLs(
 );
 
 function splitAnnotationFromValue(item:string): { value: string; annotation: string } {
+    
+
     let annotation = '';
     let value = item;
 
     // Extract name in square brackets first
-    const squareMatch = item.match(/\[(.*?)\]/);
+    const squareMatch = value.match(/\[(.*?)\]/);
     if (squareMatch) {
         annotation = ' ['+squareMatch[1].trim()+']';
       value = value.replace(squareMatch[0], '');
     }
 
     // Extract name in parentheses only if square brackets not found
-    const parenMatch = !annotation && item.match(/\((.*?)\)/);
+    const parenMatch = !annotation && value.match(/\((.*?)\)/);
     if (parenMatch) {
         annotation = ' ('+parenMatch[1].trim()+')';
       value = value.replace(parenMatch[0], '');
     }
+    
 
+    //removes () from string
+    value = value.replace(/\(\s*\)/g, '');
+    
     // Clean up the value by trimming whitespace
     value = value.trim();
 
