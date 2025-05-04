@@ -1,5 +1,7 @@
 <script lang="ts" setup>
-import { defineProps } from "vue";
+import { defineProps, ref } from "vue";
+import PopUp from './PopUp.vue';
+const showPopup = ref(false)
 export interface ClickToCopyProps {
   text: string;
   tooltipPosition: string | null;
@@ -9,7 +11,6 @@ const props = defineProps<ClickToCopyProps>();
 async function copyToClipboard(textToCopy:string) {
 try {
     await navigator.clipboard.writeText(textToCopy);
-    alert('Copied to clipboard!');
   } catch (err) {
         console.error('Copy failed:', err);
   }
@@ -33,8 +34,11 @@ function getTooltipPosition(){
 const tooltipPosition = getTooltipPosition();
 </script>
 <template>
+  <PopUp v-model:visible="showPopup">
+    <p class='text-center'>Copied to Clipboard</p>
+  </PopUp>
     <div class="relative group inline-block">
-        <button class="hover:underline hover:text-hrm-dark-green text-hrm-green" @click="copyToClipboard(text)">
+        <button class="hover:underline hover:text-hrm-dark-green text-hrm-green" @click="copyToClipboard(text); showPopup=true">
         {{ text }}
         </button>
         <div class="absolute bg-hrm-dark-green text-white text-sm whitespace-nowrap p-2 rounded z-10

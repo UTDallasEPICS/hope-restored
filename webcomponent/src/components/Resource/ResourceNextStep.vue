@@ -2,6 +2,7 @@
 import { Disclosure, DisclosureButton, DisclosurePanel } from "@headlessui/vue";
 import { ChevronDownIcon } from "@heroicons/vue/20/solid";
 import { defineProps } from "vue";
+import PopUp from '../PopUp.vue'
 import ClickToCopy  from "../ClickToCopy.vue"
 export interface ResourceNextStepProps {
   icon: any;
