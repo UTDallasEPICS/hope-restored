@@ -1,10 +1,11 @@
 <script lang="ts" setup>
 import { defineProps, ref } from "vue";
 import PopUp from './PopUp.vue';
+import WrapWithTooltip from './ToolTip.vue'
 const showPopup = ref(false)
 export interface ClickToCopyProps {
   text: string;
-  tooltipPosition: string | null;
+  tooltipPosition: string;
 }
 const props = defineProps<ClickToCopyProps>();
 
@@ -16,36 +17,24 @@ try {
   }
 };
 
-function getTooltipPosition(){
-    switch (props.tooltipPosition) {
-        case 'top':
-            return 'bottom-full left-0 mb-2';
-        case 'bottom':
-            return 'top-full left-0 mt-2';
-        case 'left':
-            return 'top-1/2 right-full transform -translate-y-1/2 mr-2';
-        case 'right':
-            return 'top-1/2 left-full transform -translate-y-1/2 ml-2';
-        default:
-            return '';
-    }
-};
 
-const tooltipPosition = getTooltipPosition();
 </script>
 <template>
-  <PopUp v-model:visible="showPopup">
-    <p class='text-center'>Copied to Clipboard</p>
-  </PopUp>
-    <div class="relative group inline-block">
+    <PopUp 
+        v-model:visible="showPopup" 
+        :timeout=4000
+        styling="bg-black rounded-lg shadow-lg shadow-gray-700 border-4 border-hrm-green text-white-neutral p-6 max-w-xs w-1/2 z-30 scale-90"
+        closeButtonStyling="hover:text-gray-400"
+        >
+        <p class='text-center'>Copied to Clipboard</p>
+    </PopUp>
+    <WrapWithTooltip 
+        text="Copy Text" 
+        :relativePosition="tooltipPosition"
+        styling="bg-hrm-dark-green text-white text-sm whitespace-nowrap p-2 rounded z-10"
+    >
         <button class="hover:underline hover:text-hrm-dark-green text-hrm-green" @click="copyToClipboard(text); showPopup=true">
-        {{ text }}
+            {{ text }}
         </button>
-        <div class="absolute bg-hrm-dark-green text-white text-sm whitespace-nowrap p-2 rounded z-10
-                    opacity-0 group-hover:opacity-100 transition-opacity duration-300
-                    pointer-events-none"
-             :class="tooltipPosition">
-        Copy Text
-        </div>
-    </div>
+    </WrapWithTooltip>
 </template>
