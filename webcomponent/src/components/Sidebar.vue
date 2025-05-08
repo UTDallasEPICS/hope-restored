@@ -29,24 +29,18 @@
         v-show="!visible"
         :class="closedStyling"
     >
-        <!-- <ToolTip    
-            text="Edit Search Settings" 
-            relativePosition="right"
-            styling="bg-hrm-dark-green text-white text-sm whitespace-nowrap p-2 rounded z-10"
-        > -->
-            <button
-                @click="open"
-                :class=buttonStyling
+        <button
+            @click="open"
+            :class=buttonStyling
+        >
+            <ToolTip    
+                text="Edit Search Settings" 
+                relativePosition="right"
+                styling="bg-hrm-dark-green text-white text-sm whitespace-nowrap p-2 rounded z-10"
             >
-                <ToolTip    
-                    text="Edit Search Settings" 
-                    relativePosition="right"
-                    styling="bg-hrm-dark-green text-white text-sm whitespace-nowrap p-2 rounded z-10"
-                >
-                    <ChevronDoubleRightIcon class="w-5 h-5"/>
-                </ToolTip>
-            </button>
-        
+                <ChevronDoubleRightIcon class="w-5 h-5"/>
+            </ToolTip>
+        </button>
     </div>
 
     <!-- Sidebar when opened -->

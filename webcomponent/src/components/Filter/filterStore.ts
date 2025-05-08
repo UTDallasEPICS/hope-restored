@@ -1,5 +1,7 @@
 import { ref, computed } from "vue";
 import FilterService from "./request";
+import { useCategoryStore } from "../Category/categoryStore";
+import { map } from "cypress/types/bluebird";
 export interface FilterItem {
   label: string;
   isChecked: boolean;
@@ -11,6 +13,14 @@ export interface FilterGroup {
 const filterGroups = ref<FilterGroup[]>([]);
 const isLoading = ref(false);
 const error = ref(null);
+const categoryStore = useCategoryStore();
+const categoryObjs = categoryStore.getFCategories.value;
+const categories = categoryObjs.map(category => category.title);
+function filterItemFromString(str : string) : FilterItem {
+    let item : FilterItem = { label: str, isChecked: false }
+    return item;
+}
+const categoryListItems = categories.map(categoryTitle => filterItemFromString(categoryTitle))
 loadFilter();
 
 async function loadFilter() {
@@ -34,7 +44,11 @@ async function loadFilter() {
         { label: "Paid", isChecked: false },
       ],
     };
-    filterGroups.value = [languageGroup, costGroup];
+    const categoryGroup: FilterGroup = {
+        title: "Categories",
+        items: categoryListItems,
+    };
+    filterGroups.value = [languageGroup, costGroup, categoryGroup];
   } catch (err: any) {
     error.value = err.message;
   } finally {

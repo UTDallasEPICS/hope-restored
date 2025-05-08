@@ -5,13 +5,12 @@ import PublicLandingModal from "../components/PublicLandingModal.vue";
 import CategoryDeck from "../components/Category/CategoryDeck.vue";
 import SideBar from "../components/Sidebar.vue"
 import { ref } from "vue";
-const sidebarVisible = ref(true)
+const sidebarVisible = ref(false)
 
 </script>
 
 <template>
   <div class="flex h-screen overflow-hidden fixed">
-    <!-- Sidebar -->
     <SideBar 
         v-model:visible="sidebarVisible" 
         styling="flex-row[3] flex-shrink-0 border-r-2 border-hrm-green bg-white shadow-lg shadow-gray-400 z-20"
@@ -22,11 +21,8 @@ const sidebarVisible = ref(true)
         :sidebarWidth=64
     >
 
-        <!-- <div class="w-64 flex-row[3] flex-shrink-0 border-r-2 border-hrm-green bg-white shadow-lg shadow-gray-400">
-            <p class="p-4 bg-hrm-green text-white-neutral text-center">Search Options</p> -->
-            <FilterDeck class="border-b-2 border-gray-200"/>
-            <CategoryDeck />
-        <!-- </div> -->
+        <FilterDeck class="border-b-2 border-gray-200"/>
+        <!-- <CategoryDeck /> -->
     </SideBar>
 
     <!-- Main Content -->
