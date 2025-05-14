@@ -5,7 +5,7 @@ import SorterListBox from "./Filter/SorterListBox.vue";
 </script>
 
 <template>
-  <nav class="block w-full bg-black-neutral shadow-md sticky top-0 z-10 p-4">
+  <nav class="block w-full bg-black-neutral shadow-md sticky top-0 z-10 p-4 shadow-lg shadow-gray-700">
     <div class="flex gap-x-10 flex-auto">
       <img
         src="/HRM-Logo-350x-300x300.jpg"

@@ -61,7 +61,7 @@ const getIndex = (index: number) => {
           />
         </div>
         
-        <div v-else-if="!isLoading" class="text-gray-600">
+        <div v-else-if="!isLoading" class="text-gray-600 p-8">
           <p class="text-2xl font-semibold">No results found.</p>
           <span class="block mt-2 text-base">You can try the following:</span>
           <ul class="list-disc list-inside mt-2 text-base">
