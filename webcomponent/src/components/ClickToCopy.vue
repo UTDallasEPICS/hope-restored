@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { defineProps, ref } from "vue";
 import PopUp from './PopUp.vue';
-const showPopup = ref(false)
+const showPopup = ref(false);
 export interface ClickToCopyProps {
   text: string;
   tooltipPosition: string | null;
