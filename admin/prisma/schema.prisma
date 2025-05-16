@@ -111,7 +111,6 @@ model Location {
 }
 
 //The rest is from Inventory Tracking
-
 model ItemCategory {
   id    Int    @id @default(autoincrement())
   name  String @unique
@@ -121,15 +120,14 @@ model ItemCategory {
 
 model ItemStyle {
   id         Int    @id @default(autoincrement())
-  name       String
-
+  name       String @unique
 
   inventory Inventory[]
 }
 
 model Size {
   id       Int    @id @default(autoincrement())
-  sizeCode String  // E.g., 'M', 'L', 'XL'
+  sizeCode String @unique // E.g., 'M', 'L', 'XL'
 
   inventory Inventory[]
 }
@@ -142,17 +140,20 @@ model Gender {
 }
 
 model Inventory {
-  barcode     String  @id  // Use barcode as primary key
+  //id          Int   @id @default(autoincrement())
+  barcode     String  @id @unique// Use barcode as primary key
   quantity    Int     @default(0)
   lastUpdated DateTime @default(now())
 
-  categoryId Int
-  styleId    Int
-  sizeId     Int
-  genderId   Int
+  categoryId Int? // Can be set to NULL
+  styleId    Int?
+  sizeId     Int?
+  genderId   Int?
 
-  category ItemCategory @relation(fields: [categoryId], references: [id])
-  style    ItemStyle    @relation(fields: [styleId], references: [id])
-  size     Size         @relation(fields: [sizeId], references: [id])
-  gender   Gender       @relation(fields: [genderId], references: [id])
+  // related by id's, but deleting an entry in the inventory will not delete the corresponding entries in the other tables
+  category ItemCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  style    ItemStyle?    @relation(fields: [styleId], references: [id], onDelete: SetNull)
+  size     Size?         @relation(fields: [sizeId], references: [id], onDelete: SetNull)
+  gender   Gender?       @relation(fields: [genderId], references: [id], onDelete: SetNull)
+
 }
