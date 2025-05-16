@@ -6,7 +6,7 @@
           <!-- <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQrkEWxs5zaMTeYj-qwtpxMkFhJtT4yieFiuQ&s" style="width:170px; height:auto;"> -->
           <ul>
           <li class="title">Hope Restored Missions</li>
-          <li><nuxt-link to="/InventoryHomepage">Home</nuxt-link></li>
+          <li><nuxt-link to="/Home">Home</nuxt-link></li>
           <li><nuxt-link to="/inventory">Inventory</nuxt-link></li>
           <li><nuxt-link to="/scanner">Scanner</nuxt-link></li>
         </ul>

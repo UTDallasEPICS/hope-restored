@@ -36,7 +36,7 @@ const handleSubmit = async () => {
     console.log('Username:', username.value);
     console.log('Password:', password.value);
 
-    router.push('/inventoryHomepage');
+    router.push('/Home');
 };
 </script>
 
