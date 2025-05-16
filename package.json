@@ -2,13 +2,15 @@
   "name": "nuxt-app",
   "private": true,
   "scripts": {
-    "build": "nuxt build",
     "admin": "cd admin && npm run dev",
+    "both": "node ./scripts/runAdminAndPublic",
+    "cpenv": "node ./scripts/cpenv.js",
+    "installDeps": "npm install && cd webcomponent && npm install && cd ../admin && npm install",
+    "prismaMigrate": "cd admin && npx prisma migrate dev",
+    "prismaResetMigrations": "cd admin && npx prisma migrate reset",
+    "prismaStudio": "cd admin && npx prisma studio",
     "public": "cd webcomponent && npm run dev",
-    "generate": "nuxt generate",
-    "preview": "nuxt preview",
-    "postinstall": "nuxt prepare",
-    "seed": "tsx prisma/seed.ts"
+    "setup": "npm run cpenv && npm run installDeps && npm run prismaMigrate"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
