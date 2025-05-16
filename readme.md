@@ -164,10 +164,10 @@ root/
 
 1. Run the setup script
 
-```bash
-# Make sure you are in the root directory when you call this
-npm run setup
-```
+   ```bash
+   # Make sure you are in the root directory when you call this
+   npm run setup
+   ```
 
 2. Replace placeholder values in the ``.env`` files
 - API keys and any other secrets or environment variables (Currently, the project does not have any secrets)
@@ -177,38 +177,38 @@ npm run setup
 
 1. Run the following command (in the root directory) to start the development server and admin application
 
-```bash
-# Serve with hot reload at localhost:3000 for the private application (Inventory Tracking)
-npm run admin
-```
+   ```bash
+   # Serve with hot reload at localhost:3000 for the private application (Inventory Tracking)
+   npm run admin
+   ```
 
 2. Run the following command (in the root directory) to start the web-component (public-facing application for community information)
 
-```bash
-# Serve with hot reload at localhost:4000 for the public application (Community Information)
-# Note: The admin application needs to finish running first before the
-# public frontend since the data is being fetched from the private backend
-# Just refresh the public frontend page if you see a connection error
-npm run public
-```
+   ```bash
+   # Serve with hot reload at localhost:4000 for the public application (Community Information)
+   # Note: The admin application needs to finish running first before the
+   # public frontend since the data is being fetched from the private backend
+   # Just refresh the public frontend page if you see a connection error
+   npm run public
+   ```
 
 ## Other Dev Scripts
 #### Note: To use these, you must be in the root directory
 (See the ``scripts`` section of ``package.json`` in the root directory for a more comprehensive list)
 
 - To view Prisma Studio, you can use the following command:
-```bash
-# Tip: You can use Prisma Studio to view and edit data in the database
-npm run prismaStudio
-```
+   ```bash
+  # Tip: You can use Prisma Studio to view and edit data in the database
+  npm run prismaStudio
+  ```
 
 - To reset your Prisma migrations, you can use the following command:
-```bash
-npm run prismaResetMigrations
-```
+  ```bash
+  npm run prismaResetMigrations
+  ```
 
 - To run the admin **and** public apps with less typing, you can use the following command:
-```bash
-npm run prismaResetMigrations
-```
+  ```bash
+  npm run prismaResetMigrations
+  ```
 
