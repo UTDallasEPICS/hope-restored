@@ -1,6 +1,6 @@
 import { fileURLToPath } from 'node:url'
 import { mergeConfig, defineConfig, configDefaults } from 'vitest/config'
-import viteConfig from './vite.config'
+import { default as viteConfig } from './vite.config.wordpress.js'
 
 export default mergeConfig(
   viteConfig,

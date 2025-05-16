@@ -19,25 +19,32 @@
                         <label for="category">Category:</label>
                         <!-- <input v-model="newItem.category" id="category" required /> -->
                         <select v-model="newItem.category" id="category" required>
-                            <option value="Blouses">Blouses</option>
-                            <option value="Shirts">Shirts</option>
+                            <option disabled value="">Select a category</option>
                             <option value="Tops">Tops</option>
-                            <option value="Dresses">Dresses</option>
-                            <option value="Dress Pants / Slacks">Dress Pants / Slacks</option>
                             <option value="Suits">Suits</option>
-                            <option value="Jeans">Jeans</option>
+                            <option value="Pants">Pants</option>
                             <option value="Shorts">Shorts</option>
                             <option value="Socks">Socks</option>
                             <option value="Underwear">Underwear</option>
-                            <option value="Shoes / Boots">Shoes / Boots</option>
-                            <option value="Sweater / Sweatshirt">Sweater / Sweatshirt</option>
-                            <option value="Coats / Jackets / Hoodies">Coats / Jackets / Hoodies</option>
+                            <option value="Shoes">Shoes</option>
+                            <option value="OuterWear">OuterWear</option>
                         </select>
                     </div>
                     <div class="form-group">
                         <label for="style">Style:</label>
                         <!-- <input v-model="newItem.style" id="style" required /> -->
+                        <select v-model="newItem.style" id="style" :disabled="!newItem.category" required>
+                            <option disabled value="">Select a style</option>
+                            <option v-for="style in filteredStyles" :key="style" :value="style">
+                                {{ style }}
+                            </option>
+                        </select>
+
+
+
+                    <!--<input v-model="newItem.style" id="style" required />
                         <select v-model="newItem.style" id="style" required>
+                            <option disabled value="">Select a style</option>
                             <option value="Long Sleeve">Long Sleeve</option>
                             <option value="Short Sleeve">Short Sleeve</option>
                             <option value="T-Shirt">T-Shirt</option>
@@ -46,19 +53,37 @@
                             <option value="Canvas">Canvas</option>
                             <option value="Leather">Leather</option>
                             <option value="Misc.">Miscellaneous</option>
-                        </select>
+                        </select>-->    
+                    
                     </div>
                     <div class="form-group">
                         <label for="gender">Gender:</label>
                         <!-- <input v-model="newItem.gender" id="gender" required /> -->
                         <select v-model="newItem.gender" id="gender" required>
+                            <option disabled value="">Select a gender</option>
                             <option value="Male">Male</option>
                             <option value="Female">Female</option>
                         </select>
                     </div>
                     <div class="form-group">
                         <label for="size">Size:</label>
-                        <input v-model="newItem.size" id="size" required />
+                        <!--<input v-model="newItem.size" id="size" required />-->
+
+
+                        <select v-model="newItem.size" id="size" :disabled="!newItem.category" required>
+                            <option disabled value="">Select a size</option>
+                           <!--<option v-for="style in filteredStyles" :key="style" :value="style">
+                                {{ style }}
+                            </option>--> 
+                            <!--<option value="">Select Size</option>-->
+                            <option value="S">Small</option>
+                            <option value="M">Medium</option>
+                            <option value="L">Large</option>
+                            <option value="XL">Extra Large</option>
+
+                        </select>
+
+
                     </div>
                     <div class="form-group">
                         <label for="quantity">Quantity:</label>
@@ -86,6 +111,82 @@
             </div>
         </div>
 
+        <!-- Add to existing item modal -->
+        <div v-if="showAddQuantityModal" class="modal-overlay">
+            <div class="modal-content">
+                <h2>Add Inventory Item</h2>
+                <h2>Item Barcode: {{ editedItem.barcode }}</h2>
+                <form @submit.prevent="updateItem">
+                    <div class="form-group">
+                        <label for="quantity">Quantity:</label>
+                        <input type="number"
+                               v-model.number="editedItem.quantity"
+                               id="quantity"
+                               required
+                               min="1" />
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" @click="editItem(editedItem)" class="save-button">
+                            <i class="fas fa-save"></i> Save
+                        </button>
+                        <button type="button"
+                                @click="showAddQuantityModal = false"
+                                class="cancel-button">
+                            <i class="fas fa-times"></i> Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Remove from existing item modal -->
+        <div v-if="showReduceQuantityModal" class="modal-overlay">
+            <div class="modal-content">
+                <h2>Remove Inventory Item</h2>
+                <h2>Item Barcode: {{ editedItem.barcode }}</h2>
+                <form @submit.prevent="updateItem">
+                    <div class="form-group">
+                        <label for="quantity">Quantity:</label>
+                        <input type="number"
+                               v-model.number="editedItem.quantity"
+                               id="quantity"
+                               required
+                               min="0"
+                               :max="editedItem.quantity" />
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" @click="editItem({ barcode: editedItem.barcode, quantity: editedItem.quantity * -1 })" class="save-button">
+                            <i class="fas fa-save"></i> Save
+                        </button>
+                        <button type="button"
+                                @click="showReduceQuantityModal = false"
+                                class="cancel-button">
+                            <i class="fas fa-times"></i> Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div v-if="showInvalidQuantityPopup" class="modal-overlay">
+            <div class="modal-content">
+                <h1>Invalid Action</h1>
+                <p>You cannot remove that quantity because you do not have enough existing quantity in the inventory.</p>
+                <form>
+                    <div class="form-actions">
+                        <button type="button" @click="showInvalidQuantityPopup = false" class="save-button">
+                            <i class="fas fa-save"></i> Ok
+                        </button>
+                        <button type="button"
+                            @click="showInvalidQuantityPopup = false"
+                            class="cancel-button">
+                            <i class="fas fa-times"></i> Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
         <!-- Filter and Sort Section -->
         <div class="filter-sort-section">
             <div class="search-input">
@@ -104,7 +205,7 @@
         </div>
 
         <!-- Inventory Table Section -->
-        <section id="inventory">
+        <div id="inventory" class="inventory_table_container">
             <table>
                 <thead>
                     <tr>
@@ -116,24 +217,36 @@
                         <th>Size</th>
                         <th>Quantity</th>
                         <th>Location</th>
+                        <th>Add</th>
+                        <th>Remove</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr v-for="item in sortedAndFilteredInventory" :key="item.id">
-                        <td>{{ item.id }}</td>
+                    <tr v-for="item in sortedAndFilteredInventory" :key="item.barcode">
+                        <td>{{ item.barcode }}</td>
                         <td>
-                            <QRCode :value="item.id.toString()" :size="50" />
+                            <QRCode :value="item.barcode.toString()" :size="50" />
                         </td>
-                        <td>{{ item.category }}</td>
-                        <td>{{ item.style }}</td>
-                        <td>{{ item.gender }}</td>
-                        <td>{{ item.size }}</td>
+                        <td>{{ item.category.name }}</td>
+                        <td>{{ item.style.name }}</td>
+                        <td>{{ item.gender.name }}</td>
+                        <td>{{ item.size.sizeCode }}</td>
                         <td>{{ item.quantity }}</td>
                         <td>{{ item.location }}</td>
+                        <td>
+                            <button @click="openAddQuantityModal({ barcode: item.barcode, quantity: item.quantity })" class="add-item-button">
+                                <i class="fas fa-plus"></i> Add
+                            </button>
+                        </td>
+                        <td>
+                            <button @click="openReduceQuantityModal({ barcode: item.barcode, quantity: item.quantity })" class="remove-item-button">
+                                <i class="fas fa-plus"></i> Remove
+                            </button>
+                        </td>
                     </tr>
                 </tbody>
             </table>
-        </section>
+        </div>
 
         <!-- Charts Section -->
         <section id="charts" class="charts-section">
@@ -145,16 +258,36 @@
 
 <script setup lang="ts">
     import { ref, computed, onMounted } from 'vue';
-    import { useRuntimeConfig } from '#app';
+    import { useFetch, useRuntimeConfig } from 'nuxt/app';
     import QRCode from 'qrcode.vue';
-    import ItemsPerCategoryChart from '~/components/ItemsPerCategoryChart.vue';
-    import ItemsPerLocationChart from '~/components/ItemsPerLocationChart.vue';
+    import ItemsPerCategoryChart from '../components/Inventory/ItemsPerCategoryChart.vue';
+    import ItemsPerLocationChart from '../components/Inventory/ItemsPerLocationChart.vue';
+    //import { RefSymbol } from '@vue/reactivity';
     
     const inventory = ref([]);
+    //inventory.value = await getInventory();
     const searchQuery = ref('');
     const selectedSort = ref('alphabetical');
     const config = useRuntimeConfig();
     const showAddItemModal = ref(false);
+    const showAddQuantityModal = ref(false);
+    const showReduceQuantityModal = ref(false);
+    const showInvalidQuantityPopup = ref(false);
+    const editedItem = ref({ barcode: null, quantity: null });
+    
+    // making the drop down dynamic
+
+    const styleOptions: Record<string, string[]> = {
+        Tops: ["Long Sleeve", "Short Sleeve", "T-Shirt"],
+        OuterWear: ["Jackets", "Hoodies", "Coats"],
+        Pants: ["Jeans", "Sweat Pants", "Cargos"],
+        Suits: ["Blazer", "Business"],
+        // Jeans: ["Casual"],
+        Shorts: ["Cargo", "Athletic"],
+        Socks: ["Misc."],
+        Underwear: ["Misc."],
+        Shoes: ["Boots", "Canvas", "Leather", "Athletic"]
+    }    
 
     const newItem = ref({
         category: '',
@@ -163,41 +296,141 @@
         size: '',
         quantity: 1,
         location: '',
+        lastUpdated: '',
     });
 
+    function openAddQuantityModal(item) {
+        editedItem.value = item;
+        showAddQuantityModal.value = true;
+    }
+
+    function openReduceQuantityModal(item) {
+        editedItem.value = item;
+        showReduceQuantityModal.value = true;
+    }
+
+    function openInvalidQuantityPopup() {
+        showInvalidQuantityPopup.value = true;
+    }
+
+    async function editItem(editedItem) {
+        let item = null;
+
+        if (editedItem.barcode && editedItem.quantity){
+            item = await $fetch('/api/inventory/:id', {  // update entry in database; call [id].put.ts
+                method: 'PUT',
+                body: { // data for database entry
+                    barcode: editedItem.barcode,
+                    quantity: editedItem.quantity,
+                },
+            });
+        }
+
+        showAddQuantityModal.value = false;
+        showReduceQuantityModal.value = false;
+        async function checkAndDelete() {
+            const quantity = await getItem(editedItem.barcode); // Wait for the quantity
+            console.log(quantity);
+            if (quantity == 0) { 
+                deleteEntry(editedItem.barcode);
+                getInventory();
+            }
+            else if (quantity < 0) {
+                openInvalidQuantityPopup();
+                if (editedItem.barcode && editedItem.quantity){
+                    item = await $fetch('/api/inventory/:id', {  // update entry in database; call [id].put.ts
+                        method: 'PUT',
+                        body: { // data for database entry
+                            barcode: editedItem.barcode,
+                            quantity: -editedItem.quantity,
+                        },
+                    });
+                }
+                getInventory();
+            }
+        }
+
+        // delete item from inventory if quantity == 0
+        checkAndDelete();
+
+        getInventory();
+    }
+
     // Fetch inventory data
-    onMounted(async () => {
+    //onMounted(async () => { // Fetches data when the page (component) is initially loaded
+    async function getInventory() {
         try {
-            inventory.value = await $fetch('/api/inventory/', {
-                baseURL: config.public.apiBase,
+            //inventory.value = await $fetch('/api/inventory/');
+            inventory.value = await $fetch('/api/inventory/', { // get inventory data; call index.get.ts
+                //baseURL: config.public.apiBase,
+                method: 'GET'
             });
         } catch (error) {
             console.error('Fetch error:', error);
         }
-    });
+    };
+
+    onMounted(getInventory);
+
+    // Fetch inventory item
+    async function getItem(id) {
+        try {
+            console.log(id);
+            const item = await $fetch(`/api/inventory/${id}`, { // get inventory data; call [id].get.ts
+                method: 'GET'
+            });
+
+            //console.log("Fetching from get item API!");
+            console.log(item?.quantity);
+            //return item;
+            return item?.quantity;
+        } catch (error) {
+            console.error('Fetch error:', error);
+        }
+    };
+
+    // Call the server-side API to delete this item from the database
+    async function deleteEntry(barcode) {
+        const response = await $fetch('/api/inventory/', {  // post entry to database; call index.delete.ts
+            method: 'DELETE',
+            body: { // data for database entry
+                barcode: barcode
+            },
+        });
+
+        console.log("Response from API:", response); // Log API response
+    }
 
     // Computed property to filter and sort inventory based on search query and sort option
     const sortedAndFilteredInventory = computed(() => {
-        let filtered = inventory.value;
+        let filtered = inventory.value; //.value accesses the actual array inside the inventory variable
+        console.log(filtered);
 
         // Filter by search query
         if (searchQuery.value) {
             const query = searchQuery.value.toLowerCase();
-            filtered = filtered.filter((item) =>
-                Object.values(item).some((value) =>
-                    value.toString().toLowerCase().includes(query)
-                )
+            filtered = filtered.filter((item) =>    // loops through inventory items
+                Object.values(item).some((value) => { // checks if any of the fields contain the query value
+                    if (value && typeof value === 'object') { // checks if the value is an object (nested structure)
+                        return Object.values(value).some((nestedValue) => // checks if any of the nested fields contain the query value
+                            nestedValue.toString().toLowerCase().includes(query) // checks if nested value contains the query
+                        );
+                    }
+                    return value?.toString().toLowerCase().includes(query); // checks if value contains the query
+                })
             );
         }
 
         // Sort based on selected option
         return filtered.slice().sort((a, b) => {
             if (selectedSort.value === 'alphabetical') {
-                return a.category.localeCompare(b.category); // Alphabetical by category
+                return a.category.name.localeCompare(b.category.name); // Alphabetical by category
             } else if (selectedSort.value === 'recent') {
-                return b.id - a.id; // Assuming higher ID means more recent
+                //return b.barcode - a.barcode; // Assuming higher barcode means more recent
+                return new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime(); // Most recent first (must convert to Date format for comparison)
             } else if (selectedSort.value === 'dateAdded') {
-                return new Date(b.dateAdded).getTime() - new Date(a.dateAdded).getTime(); // Sort by dateAdded if available
+                //return new Date(b.dateAdded).getTime() - new Date(a.dateAdded).getTime(); // Sort by dateAdded if available
+                return new Date(a.lastUpdated).getTime() - new Date(b.lastUpdated).getTime(); // Oldest first (must convert to Date format for comparison)
             }
             return 0;
         });
@@ -206,9 +439,9 @@
     // Function to add a new item to the inventory
     const addItem = async () => {
         // Generate a new ID
-        const newId = inventory.value.length
-            ? Math.max(...inventory.value.map((item) => item.id)) + 1
-            : 1;
+        const newId = inventory.value.length;
+        //    ? Math.max(...inventory.value.map((item) => item.id)) + 1
+        //    : 1;
 
         // Create a new item object
         const item = {
@@ -217,9 +450,11 @@
             quantity: Number(newItem.value.quantity),
         };
 
+        console.log("ID: " + item.id);
+
         // Add the new item to the inventory list
-        inventory.value.push(item);
-        console.log(inventory);
+        //inventory.value.push(item);
+        console.log("This is the inventory: " + inventory.value);
 
         // Reset the newItem form
         newItem.value = {
@@ -229,34 +464,44 @@
             size: '',
             quantity: 1,
             location: '',
+            lastUpdated: '',
         };
 
         // Close the modal
         showAddItemModal.value = false;
 
+        insertEntry();
+
         // Call the server-side API to insert this item into the database
-        try {
-            const response = await fetch('/api/insertEntry', {
+        async function insertEntry() {
+            const response = await $fetch('/api/inventory/', {  // post entry to database; call index.post.ts
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
+                body: { // data for database entry
                     id: item.id,
                     category: item.category,
                     style: item.style,
                     gender: item.gender,
                     size: item.size,
                     quantity: item.quantity,
-                }),
+                },
             });
 
-            const result = await response.json();
-            console.log(result.message); // "Item added successfully"
-        } catch (error) {
-            console.error('Error adding item to the database:', error);
+            console.log("Response from API:", response); // Log API response
+
+            // Refresh inventory after insertion completes
+            await getInventory();
         }
     };
+
+    const filteredStyles = computed(() => {
+        return styleOptions[newItem.value.category] || [];
+    })
+
+
+    watch(() => newItem.value.category, () => {
+        newItem.value.style = '';        
+    })
+
 </script>
 
 <style scoped>
@@ -266,6 +511,9 @@
         padding: 2em;
         background-color: #f0f2f5; /* Light gray background */
         min-height: 100vh;
+        max-height: 300px; /* Adjust as needed */
+        overflow-y: auto; /* Vertical scroll */
+        overflow-x: auto; /* Horizontal scroll if needed */
     }
 
     /* Heading Styling */
@@ -298,8 +546,27 @@
         gap: 0.5em;
     }
 
+    .remove-item-button {
+        padding: 0.5em 1.5em;
+        background-color: #f44336; /* Red */
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 1em;
+        text-transform: uppercase;
+        transition: background-color 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5em;
+    }
+
         .add-item-button:hover {
             background-color: #43a047;
+        }
+
+        .remove-item-button:hover {
+            background-color: #e53935;
         }
 
     /* Modal Styling */
@@ -421,6 +688,12 @@
             border: 1px solid #ddd;
         }
 
+    #inventory {
+        max-height: 500px;
+        overflow-y: auto;
+        border: 1px solid #ddd;
+    }
+
     /* Inventory Table */
     #inventory table {
         width: 100%;
@@ -428,7 +701,7 @@
         table-layout: fixed;
         background-color: #fff;
         border-radius: 8px;
-        overflow: hidden;
+        /*overflow: hidden;*/
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
 
@@ -445,6 +718,13 @@
         font-weight: bold;
     }
 
+    thead {
+        position: sticky;
+        top: 0;
+        background-color: #fff; /* Ensures the background is white so it covers content */
+        z-index: 2; /* Keeps header on top */
+    }
+    
     #inventory tr:nth-child(even) {
         background-color: #f9f9f9;
     }

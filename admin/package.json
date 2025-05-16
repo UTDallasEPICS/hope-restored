@@ -1,25 +1,42 @@
 {
   "name": "nuxt-app",
   "private": true,
-  "type": "module",
   "scripts": {
     "build": "nuxt build",
     "dev": "nuxt dev",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
-    "postinstall": "nuxt prepare"
+    "postinstall": "nuxt prepare",
+    "seed": "tsx prisma/seed.ts"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
-    "@nuxtjs/tailwindcss": "6.13.1",
-    "@prisma/client": "6.4.1",
-    "@prisma/nuxt": "0.3.0",
-    "@sidebase/nuxt-auth": "0.10.0",
-    "next-auth": "~4.21.1",
-    "nuxt": "^3.15.4",
-    "vue": "latest",
-    "vue-router": "latest"
+    "@fortawesome/fontawesome-free": "^6.7.0",
+    "@headlessui/vue": "^1.7.23",
+    "@heroicons/vue": "^2.1.5",
+    "@prisma/client": "^5.21.1",
+    "chart.js": "^3.9.1",
+    "csv-parser": "^3.0.0",
+    "jsbarcode": "^3.11.6",
+    "nuxt": "^3.14.159",
+    "paradedb": "^0.14.0",
+    "qrcode.vue": "^3.6.0",
+    "quagga": "^0.12.1",
+    "vite": "^5.4.14",
+    "vue": "^3.2.0",
+    "vue-chartjs": "^4.1.2",
+    "vue3-qr-reader": "^1.0.0"
   },
   "devDependencies": {
-    "prisma": "6.4.1"
+    "@nuxtjs/tailwindcss": "^6.12.1",
+    "@sidebase/nuxt-auth": "^0.6.7",
+    "@types/node": "^22.7.5",
+    "prisma": "^5.22.0",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.3",
+    "vue-tsc": "^2.1.6"
   }
 }
