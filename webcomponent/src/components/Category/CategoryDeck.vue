@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { default as Category } from "./Category.vue";
-import { useResourceStore } from "../Resource/resourceStore";
+// import { useResourceStore } from "../Resource/resourceStore";
 import { useCategoryStore } from "./categoryStore";
 import { useLoadingStore } from "../Loader/loadingStore";
 
@@ -16,7 +16,8 @@ defineProps({
 });
 
 const categoryStore = useCategoryStore();
-const categories = categoryStore.getFCategories;
+const categories = categoryStore.getFCategories.value;
+console.log("categories: ", categories);
 const error = categoryStore.getError;
 const isLoading = categoryStore.getIsLoading;
 const selectedCategory = categoryStore.getSelectedCategory;
@@ -24,23 +25,26 @@ const selectedCategory = categoryStore.getSelectedCategory;
 const loadingStore = useLoadingStore();
 loadingStore.registerLoading(isLoading);
 
-const resourceStore = useResourceStore();
-const setSelectedCategory = (category) => {
+// const resourceStore = useResourceStore();
+const setSelectedCategory = (category: string) => {
   emit("selectCategory", category);
   categoryStore.setSelectedCategory(category);
-  resourceStore.loadResourcesByCategory(category);
+//   resourceStore.loadResourcesByCategory(category);
 };
 const emit = defineEmits(["selectCategory"]);
 </script>
 
 <template>
   <div
-    class="flex flex-row flex-auto text-white-neutral"
+    class="flex flex-col flex-auto text-black-neutral p-4"
     :style="{ fontSize: itemSize }"
     :class="
       wrap ? 'flex-wrap justify-center gap-y-10' : 'flex-nowrap justify-between'
     "
   >
+
+    <p>Categories:</p>
+    <br>
     <p v-if="isLoading">Loading...</p>
     <Category
       v-else-if="categories.length"
@@ -53,7 +57,7 @@ const emit = defineEmits(["selectCategory"]);
       @selectCategory="setSelectedCategory"
       class="flex flex-auto basis-2"
     />
-    <p v-else>No categories found.</p>
+    <p v-else if>No categories found.</p>
     <p v-if="error">{{ error }}</p>
   </div>
 </template>

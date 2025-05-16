@@ -10,7 +10,7 @@ const prisma = new PrismaClient();
 async function seed() {
   const usage = new CreateResourceUseCase();
 
-  let resources = await read_collin_college();
+  let resources = await read_Resources();
   for (const resource of resources) {
     console.log("Seeding resource:", resource.name, resource.phoneNumbers);
     await usage.execute(resource);
@@ -41,48 +41,132 @@ async function seed() {
   console.log("Seeding completed!");
 }
 
-const COLLIN_COLLEGE_PATH =
-  "static/client_files/collin-college/collin_college.csv";
+const RESOURCES_PATH = "static/client_files/Resources";
+//const COLLIN_COLLEGE_PATH = "static/client_files/collin-college/collin_college.csv";
 
-function read_collin_college(): Promise<CreateResourceInput[]> {
+function read_Resources(): Promise<CreateResourceInput[]> {
   const fs = require("fs");
   const csv = require("csv-parser");
   const resources: CreateResourceInput[] = [];
-  const uniqueNamesSet = new Set<string>();
-  const uniquePhoneNumbersSet = new Set<string>();
+ // const uniqueNamesSet = new Set<string>();
+ // const uniquePhoneNumbersSet = new Set<string>();
 
   return new Promise((resolve, reject) => {
-    fs.createReadStream(COLLIN_COLLEGE_PATH)
+    fs.readdirSync(RESOURCES_PATH).forEach((fileName: string) => {
+
+    fs.createReadStream(RESOURCES_PATH + "/" + fileName)
       .pipe(csv())
       .on("data", (data: any) => {
         const name = data["Name"];
-        const phoneNumbers = data["Phone"] ? data["Phone"].split(",") : [];
+        //const phoneNumbers = data["Phone"] ? data["Phone"].split(",") : [];
+
+
+        let phoneNumbers;
+
+        if(data["Phone"] != "")
+          {
+            const phoneNumberList = data["Phone"].split(",");
+            
+            phoneNumbers = phoneNumberList.map((number: string) => {
+              
+              
+              let phoneNumberName = "";
+            let onlyPhoneNumber = number.trim();
+
+            if(number.includes("["))
+            {
+              let index1 = number.indexOf("[");
+              let index2 = number.indexOf("]");
+
+              //get location name
+              phoneNumberName = number.substring(index1, index2 + 1).trim();
+
+              onlyPhoneNumber = number.slice(0, index1) + number.slice(index2 + 1);;
+            }  
+
+              //const filteredPhoneNumber = onlyPhoneNumber.split(",");
+
+              return  {
+                name: phoneNumberName.trim() || undefined,
+                number: onlyPhoneNumber?.trim() || "",
+              };
+              
+
+            });
+
+        }
 
         // Check if the name and phone numbers are unique
         // Temporary fix. Need to remove duplicate name in file
         // For phone, need to make many-to-many relationship in Prisma
-        const isNameUnique = !uniqueNamesSet.has(name);
-        const arePhoneNumbersUnique = phoneNumbers.every(
-          (phone: any) => !uniquePhoneNumbersSet.has(phone)
-        );
+ //       const isNameUnique = !uniqueNamesSet.has(name);
+ //       const arePhoneNumbersUnique = phoneNumbers.every(
+ //         (phone: any) => !uniquePhoneNumbersSet.has(phone)
+ //       );
 
-        if (isNameUnique && arePhoneNumbersUnique) {
+ //       if (isNameUnique && arePhoneNumbersUnique) {
+
+            const fullAddress = data["Addresses"];
+
+            let location;
+  
+            if(fullAddress != "")
+            {
+              const addresses = fullAddress.split("::");
+              
+              location = addresses.map((address: string) => {
+                
+                
+                let locationName = "";
+              let modifiedAddress = address.trim();
+
+              if(address.includes("["))
+              {
+                let index1 = address.indexOf("[");
+                let index2 = address.indexOf("]");
+
+                //get location name
+                locationName = address.substring(index1, index2 + 1).trim();
+
+                modifiedAddress = address.substring(index2 + 1).trim();
+              }  
+
+                const addressParts = modifiedAddress.split(",");
+  
+                return  {
+                  locationName: locationName.trim() || "",
+                  city: addressParts[0]?.trim() || "",
+                  state: addressParts[1]?.trim() || "",
+                  postalCode: addressParts[2]?.trim() || "",
+                  addressLine1: addressParts[3]?.trim() || "",
+                  addressLine2: addressParts[4]?.trim() || "",
+                };
+                
+  
+              });
+
+          }
+          
+          
           const resource = {
             name: name,
             description: data["Description"],
             externalLink: data["Links"] ? data["Links"] : undefined,
             languages: ["English"],
-            phoneNumbers: phoneNumbers,
+            phoneNumbers: phoneNumbers ?? [],
             emails: data["Emails"] ? data["Emails"].split(",") : undefined,
             groupName: data["Type"] ? data["Type"] : "Others",
+            locations: location ?? [],
           };
 
-          uniqueNamesSet.add(name);
-          phoneNumbers.forEach((phone: any) =>
-            uniquePhoneNumbersSet.add(phone)
-          );
+      //    uniqueNamesSet.add(name);
+      //    phoneNumbers.forEach((phone: any) =>
+      //      uniquePhoneNumbersSet.add(phone)
+      //    );
           resources.push(resource);
-        }
+ //       }
+
+        // break
       })
       .on("end", () => {
         resolve(resources);
@@ -90,6 +174,9 @@ function read_collin_college(): Promise<CreateResourceInput[]> {
       .on("error", (error: Error) => {
         reject(error);
       });
+
+    });
+
   });
 
    /*
@@ -197,7 +284,7 @@ seed()
     await prisma.$disconnect();
   });
   
-
+/*
 const RESOURCES: CreateResourceInput[] = [
   {
     name: "Food Bank Assistance",
@@ -382,3 +469,5 @@ const RESOURCES: CreateResourceInput[] = [
     groupName: "Health Services",
   },
 ];
+
+*/

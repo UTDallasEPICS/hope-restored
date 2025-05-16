@@ -4,8 +4,6 @@
   "scripts": {
     "build": "nuxt build",
     "dev": "nuxt dev",
-    "build-vue": "vite build --config vite.config.wordpress.ts",
-    "dev-vue": "vite --config vite.config.wordpress.ts ",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
@@ -23,6 +21,7 @@
     "csv-parser": "^3.0.0",
     "jsbarcode": "^3.11.6",
     "nuxt": "^3.14.159",
+    "paradedb": "^0.14.0",
     "qrcode.vue": "^3.6.0",
     "quagga": "^0.12.1",
     "vite": "^5.4.14",
@@ -30,15 +29,11 @@
     "vue-chartjs": "^4.1.2",
     "vue3-qr-reader": "^1.0.0"
   },
-  
   "devDependencies": {
     "@nuxtjs/tailwindcss": "^6.12.1",
     "@sidebase/nuxt-auth": "^0.6.7",
     "@types/node": "^22.7.5",
-    "autoprefixer": "^10.4.20",
-    "postcss": "^8.4.47",
     "prisma": "^5.22.0",
-    "tailwindcss": "^3.4.14",
     "ts-node": "^10.9.2",
     "tsx": "^4.19.2",
     "typescript": "^5.6.3",

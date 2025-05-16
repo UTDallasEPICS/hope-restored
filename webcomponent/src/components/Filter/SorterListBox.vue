@@ -7,14 +7,14 @@
     >
       <ListboxButton
         :class="[
-          'flex flex-row items-center gap-x-2',
+          'flex flex-row items-center gap-x-2 text-white-neutral',
           open ? 'justify-between' : 'self-end',
         ]"
       >
         <div class="flex flex-row gap-x-2">
-          <span class="text-gray-900">Sort by:</span>
+          <span class="text-white-neutral">Sort by:</span>
           <span
-            class="block truncate underline font-semibold underline-offset-4"
+            class="block truncate underline font-semibold underline-offset-4 text-white-neutral"
             >{{ selectedSortOption.name }}</span
           >
         </div>
@@ -32,7 +32,7 @@
           leave-to-class="opacity-0"
         >
           <ListboxOptions
-            class="absolute top-2 right-0 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm"
+            class="absolute top-2 right-0 overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm"
             as="ul"
           >
             <ListboxOption

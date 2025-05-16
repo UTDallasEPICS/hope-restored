@@ -10,7 +10,7 @@ import {
   MapPinIcon,
   PhoneIcon,
 } from "@heroicons/vue/24/solid";
-import { compareURLs } from "../../utils/originChecker";
+import { compareURLs } from "../../utils/originChecker.ts";
 import ResourceMoreDetail from "./ResourceMoreDetail.vue";
 export interface ResourceProps {
   id: number;
@@ -24,6 +24,7 @@ export interface ResourceProps {
   phoneNumbers: string[];
   emails: string[];
   addresses: string[];
+  cities: string[];
   link: string;
   createdAt: Date;
   updatedAt: Date;
@@ -78,8 +79,46 @@ function onPopupClose() {
 const isPublicView = compareURLs(
   window?.location.href,
   import.meta.env.VITE_EXTERNAL_VIEWER_URL
-  // Ignore the red squiggly line. This is a valid import statement.
+   
 );
+
+function splitAnnotationFromValue(item:string): { value: string; annotation: string } {
+    
+
+    let annotation = '';
+    let value = item;
+
+    // Extract name in square brackets first
+    const squareMatch = value.match(/\[(.*?)\]/);
+    if (squareMatch) {
+        annotation = ' ['+squareMatch[1].trim()+']';
+      value = value.replace(squareMatch[0], '');
+    }
+
+    // Extract name in parentheses only if square brackets not found
+    const parenMatch = !annotation && value.match(/\((.*?)\)/);
+    if (parenMatch) {
+        annotation = ' ('+parenMatch[1].trim()+')';
+      value = value.replace(parenMatch[0], '');
+    }
+    
+
+    //removes empty () from string
+    value = value.replace(/\(\s*\)/g, '');
+    
+    //should remove empty [] from string (NOT TESTED)
+    //value = value.replace(/\[\s*\]/g, '');
+
+    // Clean up the value by trimming whitespace
+    value = value.trim();
+
+    return { value, annotation };
+}
+
+function splitAnnotationsFromValues(list: string[]): { value: string; annotation: string }[] {
+  return list.map(item => splitAnnotationFromValue(item));
+}
+
 </script>
 
 <template>
@@ -96,23 +135,25 @@ const isPublicView = compareURLs(
       :resource="props"
     />
     <div
-      class="flex flex-none flex-row p-4 items-stretch border-b-2 border-black-neutral gap-y-10"
+      class="flex flex-none flex-row p-4 items-stretch border-b-2 border-black-neutral gap-y-10 gap-x-2"
     >
       <div class="flex flex-auto flex-col justify-between">
         <ResourceInfo
           :index="index"
-          :title="title"
+          :title="splitAnnotationFromValue(title)"
           :description="description"
           :languages="languages"
           :demographics="demographics"
           :eligibility="eligibility"
           :cost="cost"
+          :locations="cities"
         />
         <div class="flex items-center flex-row gap-x-2 pt-2">
           <button
             class="flex flex-row items-center bg-white hover:bg-gray-100 text-gray-800 font-semibold py-2 px-4 border border-gray-400 rounded shadow"
-            @click="$refs.resourceMoreDetailRef?.openModal()"
-          >
+            >
+            <!-- @click="$refs.resourceMoreDetailRef?.openModal()" -->
+        
             <span class="uppercase">View details</span>
           </button>
           <ResourceActionBar
@@ -125,8 +166,8 @@ const isPublicView = compareURLs(
           />
         </div>
       </div>
-      <div class="flex w-1 bg-black-neutral my-2 rounded"></div>
-      <div class="flex flex-none w-[20rem] flex-col justify-between px-4">
+      <div class="flex w-1 my-2 rounded"></div>
+      <div class="flex flex-none w-[20rem] flex-col justify-between px-4 border-l-1 border-gray-400">
         <div
           class="flex flex-col gap-y-2 justify-start pt-1 pb-4"
           v-if="isPublicView"
@@ -135,32 +176,30 @@ const isPublicView = compareURLs(
             v-if="phoneNumbers.length > 0"
             :icon="PhoneIcon"
             flavorText="Call a number"
-            :items="phoneNumbers"
+            :items="splitAnnotationsFromValues(phoneNumbers)"
           />
           <ResourceNextStep
             v-if="emails.length > 0"
             :icon="EnvelopeIcon"
             flavorText="Send an email"
-            :items="emails"
+            :items="splitAnnotationsFromValues(emails)"
           />
           <ResourceNextStep
             v-if="addresses.length > 0"
             :icon="MapPinIcon"
             flavorText="Go to an address"
-            :items="addresses"
+            :items="splitAnnotationsFromValues(addresses)"
           />
         </div>
         <div v-if="isPublicView && link">
-          <button
-            class="initial bg-hrm-dark-green hover:bg-hrm-green text-white-neutral font-semibold py-2 px-4 border border-gray-400 rounded shadow"
-          >
+          <button class="initial bg-hrm-green hover:bg-hrm-dark-green text-white-neutral font-semibold py-2 px-4 border border-gray-400 rounded shadow">
             <a
-              :href="link"
-              target="_blank"
-              rel="noopener"
-              class="flex flex-row justify-center items-center gap-x-4"
+                :href="link.startsWith('http') ? link : `https://${link}`"
+                target="_blank"
+                rel="noopener"
+                class="flex flex-row justify-center items-center gap-x-4"
             >
-              <span class="uppercase">Apply on their website</span>
+              <span class="uppercase">Visit their website</span>
               <ArrowTopRightOnSquareIcon class="w-4 h-4" />
             </a>
           </button>

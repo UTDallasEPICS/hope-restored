@@ -4,7 +4,6 @@ datasource db {
 }
 generator client {
   provider = "prisma-client-js"
-  previewFeatures = ["fullTextSearch"]
 }
 
 model User {
@@ -74,7 +73,7 @@ model Demographic{
 
 model PhoneNumber {
   id Int                    @id @default(autoincrement()) // Primary key with auto-increment
-  number String             @unique
+  number String             // @unique
   name String?              // Optional name of the person associated with the phone number
   description String?       // Optional description of the phone number
   resourceId Int
@@ -96,8 +95,9 @@ model Email {
 
 model Location {
   id           Int       @id @default(autoincrement()) // Primary key
-  addressLine1 String    @unique
+  addressLine1 String    //@unique
   addressLine2 String
+  locationName         String?    // name of the location if there are multiple locations
   city         String
   state        String
   postalCode   String    // Changed from PostalLink Int to String for clarity

@@ -13,18 +13,25 @@ export type CreateResourceInput = {
   languages?: string[];
   locations?: Address[];
   emails?: string[];
-  phoneNumbers?: string[];
+  phoneNumbers?: Phone[];
   externalLink?: string;
   eligibility?: string;
   cost?: number;
 };
 
 export type Address = {
+  name?: string;
   addressLine1: string;
   addressLine2: string;
   city: string;
   state: string;
   postalCode: string;
+};
+
+
+export type Phone = {
+  name?: string;
+  number: string;
 };
 
 export class CreateResourceUseCase {
@@ -89,7 +96,12 @@ export class CreateResourceUseCase {
     if (phoneNumbers) {
       resourceData.phoneNumbers = {
         createMany: {
-          data: phoneNumbers.map((phoneNumber) => ({ number: phoneNumber })),
+          data: phoneNumbers.map((phoneNumber) => ({ 
+            
+            number: phoneNumber.number,
+            name: phoneNumber.name,
+            
+           })),
         },
       };
     }
@@ -102,7 +114,7 @@ export class CreateResourceUseCase {
       };
     }
 
-    //console.log("resourceData", resourceData.emails);
+    console.log("resourceData: %s", resourceData.name);
 
     const resource = await prisma.resource.create({
       data: resourceData,

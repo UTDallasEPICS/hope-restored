@@ -1,12 +1,13 @@
 import { ref, computed, watch } from "vue";
 import ResourceService from "./request";
-import { type ResourceDB } from "~/server/db/constants";
+import { type ResourceDB } from "../../server/db/constants.ts";
 import { type ResourceProps } from "./ResourceCard.vue";
 import {
   locationToString,
+  locationToCityString,
   phoneNumberToString,
   emailToString,
-} from "~/utils/stringAssembler";
+} from "../../utils/stringAssembler.ts";
 import { useFilterStore, type FilterGroup } from "../Filter/filterStore";
 
 const filterStore = useFilterStore();
@@ -131,9 +132,10 @@ function toResourceProps(resource: ResourceDB): ResourceProps {
     title: resource.name,
     description: resource.description,
     link: resource.externalLink ? resource.externalLink : "",
-    demographics: resource.demographics.map((demographic) => demographic.name),
-    languages: resource.languages.map((language) => language.name),
+    demographics: resource.demographics.map((demographic: { name: string; }) => demographic.name),
+    languages: resource.languages.map((language: { name: string; }) => language.name),
     addresses: resource.locations.map((location) => locationToString(location)),
+    cities: resource.locations.map((location) => locationToCityString(location)),
     phoneNumbers: resource.phoneNumbers.map((phoneNumber) =>
       phoneNumberToString(phoneNumber)
     ),

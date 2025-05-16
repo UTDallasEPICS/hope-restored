@@ -7,14 +7,16 @@ async function fetchLanguages(): Promise<string[]> {
       }
     );
     if (!response.ok) {
-      throw new Error(`Error fetching language: ${response.statusText}`);
+        throw new Error(`Error fetching language: ${response.statusText}`);
     }
+    
     const data = await response.json();
+    console.log(data)
     return data.map((language: any) => language.name);
-  } catch (error) {
-    console.error(error);
-    throw error;
-  }
+    } catch (error) {
+        console.error(error);
+        throw error;
+    }
 }
 
 export default {

@@ -2,10 +2,12 @@
 import { Disclosure, DisclosureButton, DisclosurePanel } from "@headlessui/vue";
 import { ChevronDownIcon } from "@heroicons/vue/20/solid";
 import { defineProps } from "vue";
+import PopUp from '../PopUp.vue'
+import ClickToCopy  from "../ClickToCopy.vue"
 export interface ResourceNextStepProps {
   icon: any;
   flavorText: string;
-  items: string[];
+  items: {value: string, annotation: string}[];
 }
 defineProps<ResourceNextStepProps>();
 </script>
@@ -13,7 +15,7 @@ defineProps<ResourceNextStepProps>();
 <template>
   <Disclosure v-slot="{ open }">
     <div class="flex flex-col">
-      <DisclosureButton class="flex flex-initial flex-row justify-between">
+      <DisclosureButton class="flex flex-initial flex-row justify-between hover:text-hrm-green">
         <div class="flex flex-auto flex-row items-center gap-x-2">
           <component :is="icon" class="w-4 h-4" />
           <span>{{ flavorText }}</span>
@@ -33,8 +35,12 @@ defineProps<ResourceNextStepProps>();
       >
         <DisclosurePanel>
           <ul class="flex flex-auto flex-col gap-y-2">
-            <li v-for="item in items" :key="item">
-              <span>{{ item }}</span>
+            <li v-for="item in items" :key="item.value">
+                <ClickToCopy class="text-hrm-dark-green"
+                    :text="item.value"
+                    tooltipPosition="left"
+                />
+                <span>{{item.annotation}}</span>
             </li>
           </ul>
         </DisclosurePanel>
