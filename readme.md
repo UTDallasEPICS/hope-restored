@@ -81,7 +81,9 @@ Hope Restored Missions receives donations from local businesses, churches, and i
 
 Auth0 provides authentication and authorization services for the application. It allows users to log in using their Google account or a custom username and password. Auth0 also provides user management and security features. This service is used in private view. Each user will have dedicated permissions based on the roles given to them by the admin. Roles modify what a user can do/see (similar to Discord’s role system; EX, can they see Inventory tracking? Can they view archived resources? etc.)
 
-### Map API ????
+### Map API 
+
+Leaflet provides interactive map functionality for the website. It is an open-source JavaScript library that allows developers to display customizable maps, add location markers, and overlay data directly on the map. This is useful for features like displaying physical resource locations, tracking site assets, or helping users visualize spatial data. Leaflet is lightweight, mobile-friendly, and highly customizable—ideal for embedding dynamic, responsive maps into the site. It enhances the user experience by adding visual and spatial context to key information.
 
 ## Tech Stack
 
