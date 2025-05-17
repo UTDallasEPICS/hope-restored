@@ -50,8 +50,7 @@ Hope Restored Missions receives donations from local businesses, churches, and i
 ### Private View
 
 - The private view shall follow the color scheme of the Hope Restored Mission website
-- The private view shall be a standalone website  
-[insert more here]
+- The private view shall be a standalone website
 
 #### Resources:
 - The admin/volunteer shall be able to search resources
