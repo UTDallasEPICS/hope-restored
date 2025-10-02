@@ -22,7 +22,7 @@
             <div class="feature">
                 <i class="fas fa-hands-helping"></i>
                 <h3>Community Support</h3>
-                <p>Join our efforts to provide aid to those in need.</p>
+                <p>Join our efforts to help and provide aid to those in need.</p>
             </div>
             <div class="feature">
                 <i class="fas fa-chart-line"></i>
@@ -37,7 +37,7 @@
         </section>
 
         <!-- Charts Section -->
-        <!-- TEMPORARILY DISABLED 
+        <!-- TEMPORARILY DISABLED.
             <section id="charts" class="charts-section">
             <DonationsChart />
             <InventoryDistributionChart />
