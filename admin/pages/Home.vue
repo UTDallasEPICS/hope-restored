@@ -37,10 +37,13 @@
         </section>
 
         <!-- Charts Section -->
-        <section id="charts" class="charts-section">
+        <!-- TEMPORARILY DISABLED 
+            <section id="charts" class="charts-section">
             <DonationsChart />
             <InventoryDistributionChart />
         </section>
+        -->
+        
     </div>
 </template>
 
