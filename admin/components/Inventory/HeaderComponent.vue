@@ -9,6 +9,7 @@
           <li><nuxt-link to="/Home">Home</nuxt-link></li>
           <li><nuxt-link to="/inventory">Inventory</nuxt-link></li>
           <li><nuxt-link to="/scanner">Scanner</nuxt-link></li>
+          <li><nuxt-link to="/reports">Reports</nuxt-link></li>
         </ul>
         <hr>
       </nav>
