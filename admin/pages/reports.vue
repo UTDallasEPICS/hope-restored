@@ -20,43 +20,19 @@
         </div>
     </div>
 </template>
-
 <script>
 export default {
-  name: "PopupExample",
-  data() {
-    return {
-      showPopup: false
-    };
-  },
-  methods: {
-    closePopup() {
-      this.showPopup = false;
-    },
-    doAction(actionName) {
-      alert(`You clicked ${actionName}`);
-      this.closePopup();
-    }
-  }
-};
+    name: 'ReportsLandingPage'
+}
 </script>
 
 <style scoped>
-/* Basic styling for popup */
-.popup-overlay {
-  position: fixed;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  background: rgba(0,0,0,0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
+.reports-landing {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f5f6fa;
 }
 
-.popup {
-  background: white;
-  padding: 20px;
-  border-radius: 10px;
-  text-align: center;
-}
 </style>
