@@ -13,13 +13,14 @@
     "setup": "npm run cpenv && npm run installDeps && npm run prismaMigrate"
   },
   "prisma": {
-    "seed": "tsx prisma/seed.ts"
+    "seed": "tsx prisma/seed.ts",
+    "schema": "admin/prisma/schema.prisma"
   },
   "dependencies": {
     "@fortawesome/fontawesome-free": "^6.7.0",
     "@headlessui/vue": "^1.7.23",
     "@heroicons/vue": "^2.2.0",
-    "@prisma/client": "^6.15.0",
+    "@prisma/client": "^6.17.1",
     "@tailwindcss/postcss": "^4.0.17",
     "chart.js": "^3.9.1",
     "cors": "^2.8.5",
@@ -29,9 +30,9 @@
     "pinia": "^3.0.1",
     "postcss": "^8.5.3",
     "qrcode.vue": "^3.6.0",
-    "quagga": "^0.12.1",
+    "quagga": "^0.6.16",
     "tailwindcss": "^4.0.17",
-    "vite": "^5.4.14",
+    "vite": "^7.1.9",
     "vue": "^3.2.0",
     "vue-chartjs": "^4.1.2",
     "vue3-qr-reader": "^1.0.0"
@@ -40,7 +41,7 @@
     "@nuxtjs/tailwindcss": "^6.12.1",
     "@sidebase/nuxt-auth": "^0.6.7",
     "@types/node": "^22.7.5",
-    "prisma": "^6.15.0",
+    "prisma": "^6.17.1",
     "ts-node": "^10.9.2",
     "tsx": "^4.19.2",
     "typescript": "^5.6.3",

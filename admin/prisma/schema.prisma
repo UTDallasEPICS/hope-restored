@@ -157,3 +157,17 @@ model Inventory {
   gender   Gender?       @relation(fields: [genderId], references: [id], onDelete: SetNull)
 
 }
+
+model Additions {
+  id        Int      @id @default(autoincrement())
+  category  String
+  dateAdded DateTime 
+  quantity  Int
+}
+
+model Removals {
+  id        Int      @id @default(autoincrement())
+  category  String
+  dateRemoved DateTime 
+  quantity  Int
+}

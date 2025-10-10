@@ -1,39 +1,7 @@
 <!-- pages/reports.vue -->
 <template>
     <div class="reports-container">
-        <h1>Reports</h1>
-
-        <!-- Choose Monthly Report -->
-        <section class="choose-monthly-report">
-            <button @click="ChooseMonthlyReport = true" class="monthly-reports-button">
-                <i class="fas fa-plus"></i> Monthly Report
-            </button>
-        </section>
-
-        <!-- Monthly Report Modal -->
-        <div v-if="ChooseMonthlyReport" class = "modal-overlay">
-            <div>
-                
-            </div> 
-
-        </div>
-
-        <!-- Choose Weekly Report -->
-        <section class="choose-weekly-report">
-            <button @click="ChooseWeeklyReport = true" class="weekly-reports-button">
-                <i class="fas fa-plus"></i> Weekly Report
-            </button>
-        </section>
-
-        <!-- Choose Daily Report -->
-        <section class="choose-daily-report">
-            <button @click="ChooseDailyReport = true" class="daily-reports-button">
-                <i class="fas fa-plus"></i> Daily Report
-            </button>
-        </section>
- 
-
-    
+        <h1>  </h1>
     </div>
 </template>
 <script>
