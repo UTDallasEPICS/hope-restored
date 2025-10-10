@@ -1,7 +1,59 @@
 <!-- pages/reports.vue -->
 <template>
     <div class="reports-container">
+<<<<<<< HEAD
+        <h1>Reports</h1>
+
+        <!-- Choose Monthly Report -->
+        <section class="choose-monthly-report">
+            <button @click="ChooseMonthlyReport = true" class="monthly-reports-button">
+                <i class="fas fa-plus"></i> Monthly Report
+            </button>
+        </section>
+
+        <!-- Monthly Report Modal -->
+        <div v-if="ChooseMonthlyReport" class = "modal-overlay">
+            <div>
+                
+            </div> 
+
+        </div>
+
+        <!-- Choose Weekly Report -->
+        <section class="choose-weekly-report">
+            <button @click="ChooseWeeklyReport = true" class="weekly-reports-button">
+                <i class="fas fa-plus"></i> Weekly Report
+            </button>
+        </section>
+
+        <!-- Choose Daily Report -->
+        <section class="choose-daily-report">
+            <button @click="ChooseDailyReport = true" class="daily-reports-button">
+                <i class="fas fa-plus"></i> Daily Report
+            </button>
+        </section>
+ 
+
+    
+=======
         <h1>  </h1>
+
+        <!-- Main button that opens the popup -->
+        <button @click="showPopup = true">Open Popup</button>
+
+        <!-- Popup (modal) -->
+        <div v-if="showPopup" class="popup-overlay">
+            <div class="popup">
+                <h2>This is a popup</h2>
+                <p>Choose an action:</p>
+
+                <!-- Buttons inside popup -->
+                <button @click="doAction('Action 1')">Action 1</button>
+                <button @click="doAction('Action 2')">Action 2</button>
+                <button @click="closePopup">Close</button>
+            </div>
+        </div>
+>>>>>>> 9064a00c1f6086a55c36a3dddcfd0afda8e5565a
     </div>
 </template>
 <script>
