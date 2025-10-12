@@ -158,6 +158,13 @@ model Inventory {
 
 }
 
+model InventoryRecords {
+  id        Int      @id @default(autoincrement())
+  date     DateTime 
+  category  String
+  quantity  Int
+}
+
 model Additions {
   id        Int      @id @default(autoincrement())
   category  String
