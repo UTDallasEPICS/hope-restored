@@ -36,7 +36,9 @@
 
       <!-- Checkout button -->
       <div class="checkout-button">
-        <button class="checkout-btn" @click="openCheckoutConfirm">Checkout</button>
+        <button class="checkout-btn" @click="openCheckoutConfirm">
+          Checkout
+        </button>
       </div>
     </div>
 
@@ -100,171 +102,144 @@
   </div>
 </template>
 
-<script>
-export default {
-  name: "CheckoutLandingPage",
-  data() {
-    return {
-      categories: [
-        "Shirts",
-        "Jackets",
-        "Pants",
-        "Underwear",
-        "Shoes",
-        "Snack Packs",
-        "Hygiene Packs",
-      ],
-      // first row is header-like "Items / Quantity"
-      items: [
-        { name: "Shirts", quantity: 0 },
-        { name: "Jackets", quantity: 0 },
-        { name: "Pants", quantity: 0 },
-        { name: "Underwear", quantity: 0 },
-        { name: "Shoes", quantity: 0 },
-        { name: "Snack Packs", quantity: 0 },
-        { name: "Hygiene Packs", quantity: 0 },
-      ],
+<script setup>
+import { ref, computed } from "vue";
+import { useFetch, useRouter } from "#app";
 
-      // modal state
-      showEnterModal: false,
-      showConfirmAddModal: false,
-      showCheckoutConfirm: false,
-      showRemovedModal: false,
+const router = useRouter();
 
-      // selected category & entry
-      selectedCategory: "",
-      enteredQuantity: null,
-    };
-  },
-  computed: {
-    // prepare removed list (only items with quantity > 0)
-    removedList() {
-      // skip header row at index 0
-      return this.items
-        .slice(1)
-        .filter((it) => Number(it.quantity) > 0)
-        .map((it) => `${it.quantity} ${it.name}`);
-    },
-  },
-  methods: {
-    navTo(path) {
-      // Reset the checkout table quantities when navigating away
-      this.resetQuantities();
-      // navigate using router if available
-      if (this.$router) {
-        // attempt to push path
-        this.$router.push(path).catch(() => {});
-      } else {
-        // fallback: change location
-        window.location.href = path;
-      }
-    },
+// categories and items
+const categories = [
+  "Shirts",
+  "Jackets",
+  "Pants",
+  "Underwear",
+  "Shoes",
+  "Snack Packs",
+  "Hygiene Packs",
+];
 
-    openEnterQuantity(category) {
-      this.selectedCategory = category;
-      this.enteredQuantity = null;
-      this.showEnterModal = true;
-      this.showConfirmAddModal = false;
-      this.showCheckoutConfirm = false;
-      this.showRemovedModal = false;
-      this.$nextTick(() => {
-        // focus on input if present
-        const input = document.querySelector(".modal input[type='number']");
-        if (input) input.focus();
-      });
-    },
+const items = ref(
+  categories.map((cat) => ({ name: cat, quantity: 0 }))
+);
 
-    onAddFromEnter() {
-      // Validate enteredQuantity
-      const q = Number(this.enteredQuantity);
-      if (!Number.isFinite(q) || q < 0) {
-        // clamp to 0 or show a minimal alert - keep UI simple
-        this.enteredQuantity = 0;
-      }
-      // close enter and open confirm
-      this.showEnterModal = false;
-      this.showConfirmAddModal = true;
-    },
+// modal and state variables
+const showEnterModal = ref(false);
+const showConfirmAddModal = ref(false);
+const showCheckoutConfirm = ref(false);
+const showRemovedModal = ref(false);
 
-    cancelConfirmAdd() {
-      // close confirm, reopen enter with previous value
-      this.showConfirmAddModal = false;
-      this.showEnterModal = true;
-      this.$nextTick(() => {
-        const input = document.querySelector(".modal input[type='number']");
-        if (input) input.focus();
-      });
-    },
+const selectedCategory = ref("");
+const enteredQuantity = ref(null);
 
-    confirmAdd() {
-      // find item by name and add enteredQuantity
-      const q = Number(this.enteredQuantity) || 0;
-      const idx = this.items.findIndex((it) => it.name === this.selectedCategory);
-      if (idx !== -1) {
-        // ensure numeric
-        const current = Number(this.items[idx].quantity) || 0;
-        this.items[idx].quantity = current + q;
-      }
-      // close modals and reset selection
-      this.showConfirmAddModal = false;
-      this.selectedCategory = "";
-      this.enteredQuantity = null;
-    },
+// computed removed items list
+const removedList = computed(() =>
+  items.value.filter((it) => Number(it.quantity) > 0)
+             .map((it) => `${it.quantity} ${it.name}`)
+);
 
-    openCheckoutConfirm() {
-      this.showCheckoutConfirm = true;
-      this.showEnterModal = false;
-      this.showConfirmAddModal = false;
-      this.showRemovedModal = false;
-    },
+// open modal for entering quantity
+function openEnterQuantity(category) {
+  selectedCategory.value = category;
+  enteredQuantity.value = null;
+  showEnterModal.value = true;
+  showConfirmAddModal.value = false;
+  showCheckoutConfirm.value = false;
+  showRemovedModal.value = false;
+}
 
-    confirmCheckout() {
-      this.showCheckoutConfirm = false;
-      // open removed modal
-      this.showRemovedModal = true;
-    },
+// when Add is clicked in quantity modal
+function onAddFromEnter() {
+  const q = Number(enteredQuantity.value);
+  if (!Number.isFinite(q) || q < 0) {
+    enteredQuantity.value = 0;
+  }
+  showEnterModal.value = false;
+  showConfirmAddModal.value = true;
+}
 
-    newCheckout() {
-      // reset table, close removed modal
-      this.resetQuantities();
-      this.showRemovedModal = false;
-    },
+function cancelConfirmAdd() {
+  showConfirmAddModal.value = false;
+  showEnterModal.value = true;
+}
 
-    goToInventory() {
-      // reset and navigate to inventory page
-      this.resetQuantities();
-      this.showRemovedModal = false;
-      if (this.$router) {
-        this.$router.push("/inventory").catch(() => {});
-      } else {
-        window.location.href = "/inventory";
-      }
-    },
+function confirmAdd() {
+  const q = Number(enteredQuantity.value) || 0;
+  const idx = items.value.findIndex(
+    (it) => it.name === selectedCategory.value
+  );
+  if (idx !== -1) {
+    const current = Number(items.value[idx].quantity) || 0;
+    items.value[idx].quantity = current + q;
+  }
+  showConfirmAddModal.value = false;
+  selectedCategory.value = "";
+  enteredQuantity.value = null;
+}
 
-    resetQuantities() {
-      // keep header at index 0 untouched; set quantities to 0
-      this.items = this.items.map((it, idx) =>
-        idx === 0 ? it : { ...it, quantity: 0 }
-      );
-      // close any modals
-      this.showEnterModal = false;
-      this.showConfirmAddModal = false;
-      this.showCheckoutConfirm = false;
-      this.showRemovedModal = false;
-      this.selectedCategory = "";
-      this.enteredQuantity = null;
-    },
+function openCheckoutConfirm() {
+  showCheckoutConfirm.value = true;
+  showEnterModal.value = false;
+  showConfirmAddModal.value = false;
+  showRemovedModal.value = false;
+}
 
-    closeAllModals() {
-      this.showEnterModal = false;
-      this.showConfirmAddModal = false;
-      this.showCheckoutConfirm = false;
-      this.showRemovedModal = false;
-      this.selectedCategory = "";
-      this.enteredQuantity = null;
-    },
-  },
-};
+// ✅ This now updates the Prisma database through your API route
+async function confirmCheckout() {
+  showCheckoutConfirm.value = false;
+
+  // Only send nonzero items
+  const removals = items.value
+    .filter((it) => it.quantity > 0)
+    .map((it) => ({
+      category: it.name,
+      quantity: it.quantity,
+    }));
+
+  if (removals.length === 0) {
+    alert("No items selected for checkout.");
+    return;
+  }
+
+  try {
+    const { data, error } = await useFetch("/api/checkout", {
+      method: "POST",
+      body: { removals },
+    });
+
+    if (error.value) {
+      console.error(error.value);
+      alert("Checkout failed. Please try again.");
+      return;
+    }
+
+    console.log("Checkout successful:", data.value);
+    showRemovedModal.value = true;
+  } catch (err) {
+    console.error("Checkout request failed:", err);
+    alert("Error during checkout.");
+  }
+}
+
+function newCheckout() {
+  items.value = categories.map((cat) => ({ name: cat, quantity: 0 }));
+  showRemovedModal.value = false;
+}
+
+function goToInventory() {
+  items.value = categories.map((cat) => ({ name: cat, quantity: 0 }));
+  showRemovedModal.value = false;
+  router.push("/inventory");
+}
+
+function closeAllModals() {
+  showEnterModal.value = false;
+  showConfirmAddModal.value = false;
+  showCheckoutConfirm.value = false;
+  showRemovedModal.value = false;
+  selectedCategory.value = "";
+  enteredQuantity.value = null;
+}
 </script>
 
 <style scoped>
@@ -274,25 +249,6 @@ export default {
   display: flex;
   flex-direction: column;
   font-family: Arial, Helvetica, sans-serif;
-}
-
-.navbar {
-  display: flex;
-  background: #e8eaed;
-  padding: 10px 20px;
-  border-bottom: 2px solid #cfd2d6;
-  align-items: center;
-}
-
-.nav-item {
-  margin-right: 30px;
-  font-weight: 500;
-  cursor: pointer;
-}
-
-.nav-item.active {
-  border-bottom: 3px solid #007bff;
-  font-weight: bold;
 }
 
 .content {
@@ -429,7 +385,6 @@ h2 {
   margin-top: 14px;
 }
 
-/* Buttons */
 .btn {
   padding: 8px 14px;
   border-radius: 6px;
