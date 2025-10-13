@@ -13,7 +13,7 @@
     "setup": "npm run cpenv && npm run installDeps && npm run prismaMigrate"
   },
   "prisma": {
-    "seed": "tsx prisma/seed.ts",
+    "seed": "tsx ./admin/prisma/seed.ts",
     "schema": "admin/prisma/schema.prisma"
   },
   "dependencies": {
