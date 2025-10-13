@@ -1,43 +1,14 @@
 <!-- pages/inventory.vue -->
 <template>
     <div class="inventory-container">
-        <h1>Pick a Category</h1>
-    
+        <h1>Inventory</h1>
+
         <!-- Manual Add Section -->
         <section class="add-item-section">
-            <div class="category-grid" role="list" aria-label="Quick add categories">
-                <button
-                    v-for="cat in ['Shirts','Pants','Jackets','Underwear','Shoes','Snack Packs','Hygiene Packs']"
-                    :key="cat"
-                    type="button"
-                    class="category-button"
-                    :aria-pressed="newItem.category === cat"
-                    :class="{ active: newItem.category === cat }"
-                    @click="openQuickPopup(cat)">
-                    <i class="fas fa-plus" aria-hidden="true"></i>
-                    <span class="label">{{ cat }}</span>
-                </button>
-            </div>
+            <button @click="showAddItemModal = true" class="add-item-button">
+                <i class="fas fa-plus"></i> Add New Item
+            </button>
         </section>
-        
-
-        <!--Pick Category Section-->
-        
-        <!--Shirt Button-->
-        
-        
-        <!--Pants Button-->
-
-        <!--Jacket Button-->
-
-        <!--Underwear Button-->
-
-        <!--Shoes Button-->
-
-        <!--Snack Packs Button-->
-
-        <!--Hygiene Packs Button-->
-
 
         <!-- Add Item Modal -->
         <div v-if="showAddItemModal" class="modal-overlay">
@@ -168,20 +139,6 @@
             </div>
         </div>
 
-        <!-- Generic Quick Popup for any category -->
-        <div v-if="showQuickPopup" class="modal-overlay">
-            <div class="modal-content shirt-popup" style="max-width:320px; position:relative;">
-                <button type="button" class="popup-close-x" aria-label="Close" @click="closeQuickPopup">×</button>
-                <h2>Enter Quantity for {{ quickPopupCategory }}:</h2>
-                <div class="form-group">
-                    <input type="number" v-model.number="quickQuantity" min="1" />
-                </div>
-                <div class="form-actions" style="justify-content:center; flex-direction:column; gap:0.5rem;">
-                    <button type="button" @click="addQuick" class="save-button">ADD</button>
-                </div>
-            </div>
-        </div>
-
         <!-- Remove from existing item modal -->
         <div v-if="showReduceQuantityModal" class="modal-overlay">
             <div class="modal-content">
@@ -230,7 +187,7 @@
             </div>
         </div>
 
-        <!-- Filter and Sort Section DISABLED TEMPORARILY
+        <!-- Filter and Sort Section -->
         <div class="filter-sort-section">
             <div class="search-input">
                 <input v-model="searchQuery"
@@ -246,27 +203,56 @@
                 </select>
             </div>
         </div>
-        -->
 
         <!-- Inventory Table Section -->
         <div id="inventory" class="inventory_table_container">
             <table>
                 <thead>
                     <tr>
+                        <th>#</th>
+                        <th>QR Code</th>
                         <th>Category</th>
+                        <th>Style</th>
+                        <th>Gender</th>
+                        <th>Size</th>
                         <th>Quantity</th>
+                        <th>Location</th>
+                        <th>Add</th>
+                        <th>Remove</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr v-for="item in sortedAndFilteredInventory" :key="item.barcode">
-                        <td>{{ item.category?.name ?? '—' }}</td>
+                        <td>{{ item.barcode }}</td>
+                        <td>
+                            <QRCode :value="item.barcode.toString()" :size="50" />
+                        </td>
+                        <td>{{ item.category.name }}</td>
+                        <td>{{ item.style.name }}</td>
+                        <td>{{ item.gender.name }}</td>
+                        <td>{{ item.size.sizeCode }}</td>
                         <td>{{ item.quantity }}</td>
+                        <td>{{ item.location }}</td>
+                        <td>
+                            <button @click="openAddQuantityModal({ barcode: item.barcode, quantity: item.quantity })" class="add-item-button">
+                                <i class="fas fa-plus"></i> Add
+                            </button>
+                        </td>
+                        <td>
+                            <button @click="openReduceQuantityModal({ barcode: item.barcode, quantity: item.quantity })" class="remove-item-button">
+                                <i class="fas fa-plus"></i> Remove
+                            </button>
+                        </td>
                     </tr>
                 </tbody>
             </table>
         </div>
 
-    
+        <!-- Charts Section -->
+        <section id="charts" class="charts-section">
+            <ItemsPerCategoryChart :inventory="inventory" />
+            <ItemsPerLocationChart :inventory="inventory" />
+        </section>
     </div>
 </template>
 
@@ -274,7 +260,8 @@
     import { ref, computed, onMounted } from 'vue';
     import { useFetch, useRuntimeConfig } from 'nuxt/app';
     import QRCode from 'qrcode.vue';
-    
+    import ItemsPerCategoryChart from '../components/Inventory/ItemsPerCategoryChart.vue';
+    import ItemsPerLocationChart from '../components/Inventory/ItemsPerLocationChart.vue';
     //import { RefSymbol } from '@vue/reactivity';
     
     const inventory = ref([]);
@@ -286,12 +273,6 @@
     const showAddQuantityModal = ref(false);
     const showReduceQuantityModal = ref(false);
     const showInvalidQuantityPopup = ref(false);
-    const showShirtsPopup = ref(false);
-    const shirtsQuantity = ref(1);
-    // Generic quick popup for all categories
-    const showQuickPopup = ref(false);
-    const quickPopupCategory = ref('');
-    const quickQuantity = ref(1);
     const editedItem = ref({ barcode: null, quantity: null });
     
     // making the drop down dynamic
@@ -317,51 +298,6 @@
         location: '',
         lastUpdated: '',
     });
-
-    // Open Add modal for a specific category and preselect it
-    function openAddModal(category: string) {
-        newItem.value.category = category;
-        showAddItemModal.value = true;
-    }
-
-    function openShirtsPopup() {
-        // backward compatibility (still available but delegates to generic)
-        openQuickPopup('Shirts');
-    }
-
-    function openQuickPopup(category: string) {
-        quickPopupCategory.value = category;
-        quickQuantity.value = 1;
-        showQuickPopup.value = true;
-    }
-
-    function closeQuickPopup() {
-        showQuickPopup.value = false;
-    }
-
-    async function addQuick() {
-        const payload = {
-            category: quickPopupCategory.value,
-            style: 'Misc.',
-            gender: 'Unisex',
-            size: 'M',
-            quantity: Number(quickQuantity.value || 0),
-        };
-
-        if (!payload.quantity || payload.quantity <= 0) return;
-
-        try {
-            await $fetch('/api/inventory/', {
-                method: 'POST',
-                body: payload,
-            });
-            await getInventory();
-        } catch (err) {
-            console.error('Error adding item:', err);
-        } finally {
-            closeQuickPopup();
-        }
-    }
 
     function openAddQuantityModal(item) {
         editedItem.value = item;
@@ -590,7 +526,8 @@
 
     /* Add Item Section */
     .add-item-section {
-        display: block;
+        display: flex;
+        justify-content: flex-end;
         margin-bottom: 1em;
     }
 
@@ -608,81 +545,6 @@
         align-items: center;
         gap: 0.5em;
     }
-
-    /* Category grid for quick-add buttons */
-    .category-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-        gap: 0.6rem;
-        align-items: stretch;
-        grid-auto-rows: 1fr;
-    }
-
-    .category-button {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        gap: 0.4rem;
-        /* Make buttons square */
-        aspect-ratio: 1 / 1;
-        width: 100%;
-        padding: 0.6rem;
-        border-radius: 8px;
-    border: 1px solid rgba(0,0,0,0.08);
-    background: #fff;
-    color: #000;
-        font-weight: 600;
-        cursor: pointer;
-        transition: transform 120ms ease, box-shadow 120ms ease, background 120ms ease;
-    }
-
-    .category-button .label {
-        display: inline-block;
-        font-size: 1.1rem;
-        text-align: center;
-        line-height: 1.1;
-        padding: 0 6px;
-        word-break: break-word;
-    }
-
-    .category-button:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 8px 18px rgba(0,0,0,0.06);
-        border-color: rgba(0,0,0,0.12);
-        background: linear-gradient(180deg, #ffffff, #f7f7f7);
-    }
-
-    .category-button:active {
-        transform: translateY(-1px) scale(0.995);
-        box-shadow: 0 4px 8px rgba(0,0,0,0.05);
-        background: linear-gradient(180deg, #f9f9f9, #f0f0f0);
-    }
-
-    /* Shirts popup close X */
-    .popup-close-x {
-        position: absolute;
-        top: 8px;
-        right: 8px;
-        width: 32px;
-        height: 32px;
-        border-radius: 50%;
-        background: rgba(0,0,0,0.06);
-        border: none;
-        color: #333;
-        font-size: 18px;
-        line-height: 1;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-    }
-
-    .popup-close-x:hover {
-        background: rgba(0,0,0,0.12);
-    }
-
-    
 
     .remove-item-button {
         padding: 0.5em 1.5em;

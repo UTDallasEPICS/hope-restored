@@ -22,6 +22,10 @@ export default defineEventHandler(async (event) => {
       case "Shirts":
         categoryCode = "01";
         break;
+      case "Pants":
+        // map client 'Pants' to pants/dress pants code
+        categoryCode = "04";
+        break;
       case "Tops":
         categoryCode = "02";
         break;
@@ -49,11 +53,26 @@ export default defineEventHandler(async (event) => {
       case "Shoes / Boots":
         categoryCode = "10";
         break;
+      case "Shoes":
+        // client may send 'Shoes'
+        categoryCode = "10";
+        break;
       case "Sweater / Sweatshirt":
         categoryCode = "11";
         break;
       case "Coats / Jackets / Hoodies":
         categoryCode = "12";
+        break;
+      case "Jackets":
+        // client may send 'Jackets'
+        categoryCode = "12";
+        break;
+      case "Snack Packs":
+        // non-clothing categories - assign unique codes
+        categoryCode = "20";
+        break;
+      case "Hygiene Packs":
+        categoryCode = "21";
         break;
     }
 
@@ -102,6 +121,9 @@ export default defineEventHandler(async (event) => {
         break;
       case "Female":
         genderCode = "01";
+        break;
+      case "Unisex":
+        genderCode = "02";
         break;
     }
 
