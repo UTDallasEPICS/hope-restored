@@ -12,7 +12,10 @@ async function clearAdditions() {
 
   await prisma.additions.deleteMany();
 
-  console.log("All records deleted from Additions table successfully!");
+  // Reset the auto-increment sequence for Additions
+  await prisma.$executeRawUnsafe(`DELETE FROM sqlite_sequence WHERE name='Additions';`);
+
+  console.log("All records deleted and ID reset for Additions table successfully!");
 }
 
 clearAdditions()

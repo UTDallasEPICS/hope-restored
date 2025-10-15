@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client'
 import { defineEventHandler, readBody } from 'h3'
+import { DateTime } from "luxon";
 
 const prisma = new PrismaClient()
 
@@ -12,9 +13,11 @@ export default defineEventHandler(async (event) => {
       throw new Error('Invalid request body. Expected an array of removals.')
     }
 
-    // Use midnight (local time)
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
+    const todayCST = DateTime.now()
+      .setZone("America/Chicago")
+      .startOf("day");
+
+    const today = todayCST.toJSDate();
 
     for (const { category, quantity } of removals) {
       // Add entry to Removals
