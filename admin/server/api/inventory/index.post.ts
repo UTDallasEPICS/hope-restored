@@ -22,6 +22,10 @@ export default defineEventHandler(async (event) => {
       case "Shirts":
         categoryCode = "01";
         break;
+      case "Pants":
+        // map client 'Pants' to pants/dress pants code
+        categoryCode = "04";
+        break;
       case "Tops":
         categoryCode = "02";
         break;
@@ -49,11 +53,26 @@ export default defineEventHandler(async (event) => {
       case "Shoes / Boots":
         categoryCode = "10";
         break;
+      case "Shoes":
+        // client may send 'Shoes'
+        categoryCode = "10";
+        break;
       case "Sweater / Sweatshirt":
         categoryCode = "11";
         break;
       case "Coats / Jackets / Hoodies":
         categoryCode = "12";
+        break;
+      case "Jackets":
+        // client may send 'Jackets'
+        categoryCode = "12";
+        break;
+      case "Snack Packs":
+        // non-clothing categories - assign unique codes
+        categoryCode = "20";
+        break;
+      case "Hygiene Packs":
+        categoryCode = "21";
         break;
     }
 
@@ -103,6 +122,9 @@ export default defineEventHandler(async (event) => {
       case "Female":
         genderCode = "01";
         break;
+      case "Unisex":
+        genderCode = "02";
+        break;
     }
 
     const itemCode = categoryCode + styleCode + sizeCode + genderCode;
@@ -141,26 +163,45 @@ export default defineEventHandler(async (event) => {
     
     const barcode = generateQRCode(); // generate qr code (barcode)
 
-      // Insert a new entry in the inventory table, if it doesn't already exist. Otherwise, increment the quantity field
-      await prisma.inventory.upsert({
-        where: {
-          barcode: barcode,
-        },
-        update: {
-          quantity: {
-            increment: entry.quantity,
+      // NOTE: InventoryRecords is the source of truth for available stock.
+      // We no longer upsert the Inventory table on quick adds here; instead
+      // we create an InventoryRecords entry (and an Additions history row).
+      // Record the addition in the Additions table (keeps a history of added quantity)
+      // Record the addition in the Additions table (keeps a history of added quantity)
+      let additionRecord = null;
+      try {
+        additionRecord = await prisma.additions.create({
+          data: {
+            category: entry.category,
+            dateAdded: new Date(),
+            quantity: entry.quantity,
+          },
+          select: {
+            category: true,
+            quantity: true,
+            dateAdded: true,
           }
-        },
-        create: {
-          barcode: barcode, // change to QRCode!!!
-          quantity: entry.quantity,
-          categoryId: category.id, // 2 digits in barcode
-          styleId: style.id,       // 2 digits in barcode
-          sizeId: size.id,         // 2 digits in barcode
-          genderId: gender.id,     // 2 digits in barcode
-        },
-      });
+        });
+
+        // Also create an InventoryRecords entry to represent available stock (used/consumed by checkout)
+        try {
+          await prisma.inventoryRecords.create({
+            data: {
+              date: new Date(),
+              category: entry.category,
+              quantity: entry.quantity,
+            }
+          });
+        } catch (recErr) {
+          console.error('Error recording inventory record:', recErr);
+        }
+      } catch (addErr) {
+        // If logging the addition fails, don't block the main operation but log the issue
+        console.error('Error recording addition:', addErr);
+      }
+
       console.log('Data inserted successfully!');
+      return { success: true, addition: additionRecord };
   }
   catch (error) {
     // If there's an error, log it and return an error message
