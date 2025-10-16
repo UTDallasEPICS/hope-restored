@@ -486,17 +486,29 @@
         }
 
         // Sort based on selected option
-        return filtered.slice().sort((a, b) => {
-            if (selectedSort.value === 'alphabetical') {
-                return a.category.name.localeCompare(b.category.name); // Alphabetical by category
-            } else if (selectedSort.value === 'recent') {
-                //return b.barcode - a.barcode; // Assuming higher barcode means more recent
-                return new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime(); // Most recent first (must convert to Date format for comparison)
+        return filtered.slice().sort((a: any, b: any) => {
+            if (selectedSort.value === 'recent') {
+                // Most recent first (must convert to Date format for comparison)
+                return new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime();
             } else if (selectedSort.value === 'dateAdded') {
-                //return new Date(b.dateAdded).getTime() - new Date(a.dateAdded).getTime(); // Sort by dateAdded if available
-                return new Date(a.lastUpdated).getTime() - new Date(b.lastUpdated).getTime(); // Oldest first (must convert to Date format for comparison)
+                // Oldest first
+                return new Date(a.lastUpdated).getTime() - new Date(b.lastUpdated).getTime();
             }
-            return 0;
+
+            // Default/custom ordering: Shirts, Pants, Jackets, Underwear, Shoes, Snack Packs, Hygiene Packs
+            const order = ['Shirts', 'Pants', 'Jackets', 'Underwear', 'Shoes', 'Snack Packs', 'Hygiene Packs'];
+            const idx = (name: string) => {
+                if (!name) return order.length;
+                const i = order.indexOf(name);
+                return i === -1 ? order.length : i;
+            };
+
+            const aName = a?.category?.name ?? '';
+            const bName = b?.category?.name ?? '';
+            const diff = idx(aName) - idx(bName);
+            if (diff !== 0) return diff;
+            // fallback: alphabetical within same category or for unknown categories
+            return aName.localeCompare(bName);
         });
     });
 

@@ -1,21 +1,451 @@
 <template>
-    <div class="checkout-landing">
-        <!-- Blank body for landing page -->
+  <div class="checkout-page">
+    <!-- Main content -->
+    <div class="content">
+      <h2>Pick a Category:</h2>
+
+      <!-- Category buttons -->
+      <div class="category-buttons">
+        <button
+          v-for="category in categories"
+          :key="category"
+          class="category-btn"
+          @click="openEnterQuantity(category)"
+        >
+          {{ category }}
+        </button>
+      </div>
+
+      <!-- Items table -->
+      <div class="items-section">
+        <table class="items-table">
+          <thead>
+            <tr>
+              <th>Items</th>
+              <th>Quantity</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="item in items" :key="item.name">
+              <td>{{ item.name }}</td>
+              <td>{{ item.quantity }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Checkout button -->
+      <div class="checkout-button">
+        <button class="checkout-btn" @click="openCheckoutConfirm">
+          Checkout
+        </button>
+      </div>
     </div>
+
+    <!-- Enter Quantity Modal -->
+    <div v-if="showEnterModal" class="modal-overlay" @keydown.esc="closeAllModals" tabindex="0">
+      <div class="modal">
+        <button class="modal-close" @click="closeAllModals">✕</button>
+        <h3>Enter {{ selectedCategory }} Quantity:</h3>
+        <input
+          type="number"
+          min="0"
+          v-model.number="enteredQuantity"
+          placeholder="Enter number"
+          @keyup.enter="onAddFromEnter"
+        />
+        <div class="modal-actions">
+          <button class="btn primary" @click="onAddFromEnter">Add</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Confirm Add Modal -->
+    <div v-if="showConfirmAddModal" class="modal-overlay">
+      <div class="modal">
+        <h3>Add {{ enteredQuantity }} {{ selectedCategory }}?</h3>
+        <p>Confirm Yes/No</p>
+        <div class="modal-actions">
+          <button class="btn danger" @click="confirmAdd">Yes</button>
+          <button class="btn" @click="cancelConfirmAdd">No</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Checkout Confirm Modal -->
+    <div v-if="showCheckoutConfirm" class="modal-overlay">
+      <div class="modal">
+        <h3>Check Out?</h3>
+        <p>Confirm Yes/No</p>
+        <div class="modal-actions">
+          <button class="btn danger" @click="confirmCheckout">Yes</button>
+          <button class="btn" @click="showCheckoutConfirm = false">No</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Removed from Inventory Modal -->
+    <div v-if="showRemovedModal" class="modal-overlay">
+      <div class="modal">
+        <h3>Removed from Inventory:</h3>
+        <ul class="removed-list" v-if="removedListServer.length">
+          <li v-for="(line, idx) in removedListServer" :key="idx">{{ line }}</li>
+        </ul>
+        <ul class="removed-list" v-else-if="removedList.length">
+          <li v-for="(line, idx) in removedList" :key="idx">{{ line }}</li>
+        </ul>
+        <p v-else>No items removed.</p>
+
+        <div class="modal-actions vertical">
+          <button class="btn primary" @click="newCheckout">NEW CHECKOUT</button>
+          <button class="btn" @click="goToInventory">GO TO INVENTORY</button>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
-<script>
-export default {
-    name: 'CheckoutLandingPage'
+<script setup>
+import { ref, computed } from "vue";
+import { useFetch, useRouter } from "#app";
+
+const router = useRouter();
+
+// categories and items
+const categories = [
+  "Shirts",
+  "Jackets",
+  "Pants",
+  "Underwear",
+  "Shoes",
+  "Snack Packs",
+  "Hygiene Packs",
+];
+
+const items = ref(
+  categories.map((cat) => ({ name: cat, quantity: 0 }))
+);
+
+// modal and state variables
+const showEnterModal = ref(false);
+const showConfirmAddModal = ref(false);
+const showCheckoutConfirm = ref(false);
+const showRemovedModal = ref(false);
+
+const removedListServer = ref([]);
+
+const selectedCategory = ref("");
+const enteredQuantity = ref(null);
+
+// computed removed items list
+const removedList = computed(() =>
+  items.value.filter((it) => Number(it.quantity) > 0)
+             .map((it) => `${it.quantity} ${it.name}`)
+);
+
+// open modal for entering quantity
+function openEnterQuantity(category) {
+  selectedCategory.value = category;
+  enteredQuantity.value = null;
+  showEnterModal.value = true;
+  showConfirmAddModal.value = false;
+  showCheckoutConfirm.value = false;
+  showRemovedModal.value = false;
+}
+
+// when Add is clicked in quantity modal
+function onAddFromEnter() {
+  const q = Number(enteredQuantity.value);
+  if (!Number.isFinite(q) || q < 0) {
+    enteredQuantity.value = 0;
+  }
+  showEnterModal.value = false;
+  showConfirmAddModal.value = true;
+}
+
+function cancelConfirmAdd() {
+  showConfirmAddModal.value = false;
+  showEnterModal.value = true;
+}
+
+function confirmAdd() {
+  const q = Number(enteredQuantity.value) || 0;
+  const idx = items.value.findIndex(
+    (it) => it.name === selectedCategory.value
+  );
+  if (idx !== -1) {
+    const current = Number(items.value[idx].quantity) || 0;
+    items.value[idx].quantity = current + q;
+  }
+  showConfirmAddModal.value = false;
+  selectedCategory.value = "";
+  enteredQuantity.value = null;
+}
+
+function openCheckoutConfirm() {
+  showCheckoutConfirm.value = true;
+  showEnterModal.value = false;
+  showConfirmAddModal.value = false;
+  showRemovedModal.value = false;
+}
+
+// ✅ This now updates the Prisma database through your API route
+async function confirmCheckout() {
+  showCheckoutConfirm.value = false;
+
+  // Only send nonzero items
+  const removals = items.value
+    .filter((it) => it.quantity > 0)
+    .map((it) => ({
+      category: it.name,
+      quantity: it.quantity,
+    }));
+
+  if (removals.length === 0) {
+    alert("No items selected for checkout.");
+    return;
+  }
+
+    try {
+      const { data, error } = await useFetch("/api/checkout", {
+        method: "POST",
+        body: { removals },
+      });
+
+      if (error.value) {
+        console.error(error.value);
+        alert("Checkout failed. Please try again.");
+        return;
+      }
+
+      const resp = data.value;
+      if (!resp) {
+        alert('No response from server');
+        return;
+      }
+
+      if (!resp.success) {
+        console.error('Checkout failed:', resp);
+        const msg = resp.error || 'Checkout failed';
+        if (resp.details) {
+          const details = Array.isArray(resp.details)
+            ? resp.details.map(d => `${d.category}: requested ${d.requested}, available ${d.available}`).join('\n')
+            : JSON.stringify(resp.details);
+          alert(msg + '\n' + details);
+        } else {
+          alert(msg);
+        }
+        return;
+      }
+
+      // success
+      removedListServer.value = resp.lines || [];
+      console.log("Checkout successful:", resp);
+      showRemovedModal.value = true;
+    } catch (err) {
+      console.error("Checkout request failed:", err);
+      alert("Error during checkout.");
+    }
+}
+
+function newCheckout() {
+  items.value = categories.map((cat) => ({ name: cat, quantity: 0 }));
+  showRemovedModal.value = false;
+}
+
+function goToInventory() {
+  items.value = categories.map((cat) => ({ name: cat, quantity: 0 }));
+  showRemovedModal.value = false;
+  router.push("/inventory");
+}
+
+function closeAllModals() {
+  showEnterModal.value = false;
+  showConfirmAddModal.value = false;
+  showCheckoutConfirm.value = false;
+  showRemovedModal.value = false;
+  selectedCategory.value = "";
+  enteredQuantity.value = null;
 }
 </script>
 
 <style scoped>
-.checkout-landing {
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #f5f6fa;
+.checkout-page {
+  background: #f5f6fa;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.content {
+  flex: 1;
+  padding: 30px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+h2 {
+  margin-bottom: 12px;
+}
+
+.category-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 22px;
+}
+
+.category-btn {
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 10px 14px;
+  cursor: pointer;
+  font-weight: 500;
+  min-width: 110px;
+  text-align: center;
+}
+
+.category-btn:hover {
+  background: #f0f0f0;
+}
+
+.items-section {
+  background: #ddd;
+  padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+}
+
+.items-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+}
+
+.items-table th,
+.items-table td {
+  border: 1px solid #ccc;
+  padding: 10px 12px;
+  text-align: left;
+}
+
+.items-table th {
+  background: #f5f5f5;
+}
+
+.checkout-button {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.checkout-btn {
+  background: #c0392b;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.checkout-btn:hover {
+  background: #a93226;
+}
+
+/* Modal styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(20, 20, 20, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 60;
+}
+
+.modal {
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  min-width: 320px;
+  max-width: 480px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
+  position: relative;
+}
+
+.modal-close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  border: none;
+  background: transparent;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.modal input[type="number"] {
+  width: 100%;
+  padding: 8px 10px;
+  margin-top: 10px;
+  margin-bottom: 10px;
+  box-sizing: border-box;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+.modal-actions.vertical {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.btn {
+  padding: 8px 14px;
+  border-radius: 6px;
+  border: 1px solid #bbb;
+  cursor: pointer;
+  background: #f5f5f5;
+}
+
+.btn.primary {
+  background: #007bff;
+  color: white;
+  border: none;
+}
+
+.btn.danger {
+  background: #c0392b;
+  color: white;
+  border: none;
+}
+
+.removed-list {
+  color: #c0392b;
+  margin: 10px 0 0 18px;
+}
+
+/* responsive */
+@media (max-width: 520px) {
+  .category-btn {
+    min-width: 90px;
+    padding: 8px 10px;
+  }
+  .modal {
+    width: 92%;
+    padding: 14px;
+  }
 }
 </style>
