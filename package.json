@@ -13,7 +13,7 @@
     "setup": "npm run cpenv && npm run installDeps && npm run prismaMigrate"
   },
   "prisma": {
-    "seed": "tsx prisma/seed.ts",
+    "seed": "tsx ./admin/prisma/seed.ts",
     "schema": "admin/prisma/schema.prisma"
   },
   "dependencies": {
@@ -26,6 +26,7 @@
     "cors": "^2.8.5",
     "csv-parser": "^3.0.0",
     "jsbarcode": "^3.11.6",
+    "luxon": "^3.7.2",
     "nuxt": "^3.16.0",
     "pinia": "^3.0.1",
     "postcss": "^8.5.3",
@@ -40,6 +41,7 @@
   "devDependencies": {
     "@nuxtjs/tailwindcss": "^6.12.1",
     "@sidebase/nuxt-auth": "^0.6.7",
+    "@types/luxon": "^3.7.1",
     "@types/node": "^22.7.5",
     "prisma": "^6.17.1",
     "ts-node": "^10.9.2",

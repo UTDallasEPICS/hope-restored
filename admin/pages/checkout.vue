@@ -88,10 +88,7 @@
     <div v-if="showRemovedModal" class="modal-overlay">
       <div class="modal">
         <h3>Removed from Inventory:</h3>
-        <ul class="removed-list" v-if="removedListServer.length">
-          <li v-for="(line, idx) in removedListServer" :key="idx">{{ line }}</li>
-        </ul>
-        <ul class="removed-list" v-else-if="removedList.length">
+        <ul class="removed-list" v-if="removedList.length">
           <li v-for="(line, idx) in removedList" :key="idx">{{ line }}</li>
         </ul>
         <p v-else>No items removed.</p>
@@ -131,8 +128,6 @@ const showEnterModal = ref(false);
 const showConfirmAddModal = ref(false);
 const showCheckoutConfirm = ref(false);
 const showRemovedModal = ref(false);
-
-const removedListServer = ref([]);
 
 const selectedCategory = ref("");
 const enteredQuantity = ref(null);
@@ -206,46 +201,24 @@ async function confirmCheckout() {
     return;
   }
 
-    try {
-      const { data, error } = await useFetch("/api/checkout", {
-        method: "POST",
-        body: { removals },
-      });
+  try {
+    const { data, error } = await useFetch("/api/checkout", {
+      method: "POST",
+      body: { removals },
+    });
 
-      if (error.value) {
-        console.error(error.value);
-        alert("Checkout failed. Please try again.");
-        return;
-      }
-
-      const resp = data.value;
-      if (!resp) {
-        alert('No response from server');
-        return;
-      }
-
-      if (!resp.success) {
-        console.error('Checkout failed:', resp);
-        const msg = resp.error || 'Checkout failed';
-        if (resp.details) {
-          const details = Array.isArray(resp.details)
-            ? resp.details.map(d => `${d.category}: requested ${d.requested}, available ${d.available}`).join('\n')
-            : JSON.stringify(resp.details);
-          alert(msg + '\n' + details);
-        } else {
-          alert(msg);
-        }
-        return;
-      }
-
-      // success
-      removedListServer.value = resp.lines || [];
-      console.log("Checkout successful:", resp);
-      showRemovedModal.value = true;
-    } catch (err) {
-      console.error("Checkout request failed:", err);
-      alert("Error during checkout.");
+    if (error.value) {
+      console.error(error.value);
+      alert("Checkout failed. Please try again.");
+      return;
     }
+
+    console.log("Checkout successful:", data.value);
+    showRemovedModal.value = true;
+  } catch (err) {
+    console.error("Checkout request failed:", err);
+    alert("Error during checkout.");
+  }
 }
 
 function newCheckout() {
