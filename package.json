@@ -2,7 +2,7 @@
   "name": "nuxt-app",
   "private": true,
   "scripts": {
-  "admin": "npm --prefix admin run dev",
+    "admin": "npm --prefix admin run dev",
     "both": "node ./scripts/runAdminAndPublic",
     "cpenv": "node ./scripts/cpenv.js",
     "installDeps": "npm install && cd webcomponent && npm install && cd ../admin && npm install",
