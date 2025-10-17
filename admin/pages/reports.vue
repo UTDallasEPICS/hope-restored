@@ -280,122 +280,6 @@ const currentMonthYearInCST = computed(() => {
 
 const showAmendData = ref(false);
 
-/*
-export default {
-    name: 'ReportsLandingPage',
-    data() {
-        return {
-            // Controls the "Previous Reports" chooser modal
-            showPreviousReportsModal: false,
-
-            // Individual report modals
-            ChooseMonthlyReport: false,
-            ChooseWeeklyReport: false,
-            ChooseDailyReport: false,
-            // Calendar state (shared by daily and weekly views)
-            today: new Date(),
-            currentMonth: new Date().getMonth(),
-            currentYear: new Date().getFullYear(),
-            selectedDate: null,
-        }
-    },
-    methods: {
-        closePreviousReportsModal() {
-            this.showPreviousReportsModal = false;
-        },
-        openMonthlyFromPrevious() {
-            this.showPreviousReportsModal = false;
-            this.ChooseMonthlyReport = true;
-        },
-        openWeeklyFromPrevious() {
-            this.showPreviousReportsModal = false;
-            this.ChooseWeeklyReport = true;
-        },
-        openDailyFromPrevious() {
-            this.showPreviousReportsModal = false;
-            this.ChooseDailyReport = true;
-        }
-        ,
-        // Calendar helpers
-        prevMonth() {
-            if (this.currentMonth === 0) {
-                this.currentMonth = 11;
-                this.currentYear -= 1;
-            } else {
-                this.currentMonth -= 1;
-            }
-        },
-        nextMonth() {
-            if (this.currentMonth === 11) {
-                this.currentMonth = 0;
-                this.currentYear += 1;
-            } else {
-                this.currentMonth += 1;
-            }
-        },
-        // Select a specific date for daily report
-        selectDate(date) {
-            this.selectedDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-            // you can load report data here
-            // keep the daily modal open (or close chooser if it came from chooser)
-        },
-        // Select a week containing the clicked date (for weekly report)
-        selectWeek(date) {
-            // compute week start (Sunday) and end (Saturday)
-            const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-            const day = d.getDay();
-            const start = new Date(d);
-            start.setDate(d.getDate() - day);
-            const end = new Date(start);
-            end.setDate(start.getDate() + 6);
-            // store or load weekly report for the range start..end
-            this.selectedDate = { weekStart: start, weekEnd: end };
-        }
-    }
-    ,
-    computed: {
-        monthNames() {
-            return [
-                'January','February','March','April','May','June',
-                'July','August','September','October','November','December'
-            ];
-        },
-        weekDayNames() {
-            return ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-        },
-        visibleDays() {
-            // Build calendar grid: 6 rows x 7 days = 42 cells
-            const year = this.currentYear;
-            const month = this.currentMonth;
-
-            const firstOfMonth = new Date(year, month, 1);
-            const startDay = firstOfMonth.getDay(); // 0-6 (Sun-Sat)
-
-            // Determine the date that will be placed in the first cell
-            const gridStart = new Date(year, month, 1 - startDay);
-
-            const days = [];
-            for (let i = 0; i < 42; i++) {
-                const d = new Date(gridStart);
-                d.setDate(gridStart.getDate() + i);
-                const inMonth = d.getMonth() === month;
-                let isSelected = false;
-                if (this.selectedDate) {
-                    if (this.selectedDate instanceof Date) {
-                        isSelected = d.toDateString() === this.selectedDate.toDateString();
-                    } else if (this.selectedDate && this.selectedDate.weekStart) {
-                        // weekly selection: check if date is within week range
-                        isSelected = d >= this.selectedDate.weekStart && d <= this.selectedDate.weekEnd;
-                    }
-                }
-                days.push({ date: d, inMonth, key: d.toISOString(), isSelected });
-            }
-            return days;
-        }
-    }
-}
-*/
-
 function openAmendData() {
   showAmendData.value = true;
 }
@@ -403,7 +287,6 @@ function openAmendData() {
 function closeAllModals() {
   showAmendData.value = false;
 }
-*/
 
 function openAmendData() {
   showAmendData.value = true;
