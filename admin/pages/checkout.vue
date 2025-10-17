@@ -201,7 +201,6 @@ async function confirmCheckout() {
     return;
   }
 
-  try {
     const { data, error } = await useFetch("/api/checkout", {
       method: "POST",
       body: { removals },
@@ -213,12 +212,36 @@ async function confirmCheckout() {
       return;
     }
 
-    console.log("Checkout successful:", data.value);
+    const resp = data.value;
+    if (!resp) {
+      alert('No response from server');
+      return;
+    }
+
+    if (!resp.success) {
+      // Show server-sent details if available
+      console.error('Checkout failed:', resp);
+      const msg = resp.error || 'Checkout failed';
+      if (resp.details && Array.isArray(resp.details)) {
+        const details = resp.details.map(d => `${d.category}: requested ${d.requested}, available ${d.available}`).join('\n');
+        alert(msg + '\n' + details);
+      } else if (resp.details) {
+        alert(msg + '\n' + JSON.stringify(resp.details));
+      } else {
+        alert(msg);
+      }
+      return;
+    }
+
+    // Success: display removed lines and signal inventory refresh
+    removedListServer.value = resp.lines || [];
+    try {
+      const inventoryRefresh = useState('inventoryRefreshKey');
+      inventoryRefresh.value = Date.now();
+    } catch (e) {
+      // ignore if running in a non-Nuxt context
+    }
     showRemovedModal.value = true;
-  } catch (err) {
-    console.error("Checkout request failed:", err);
-    alert("Error during checkout.");
-  }
 }
 
 function newCheckout() {

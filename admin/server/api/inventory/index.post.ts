@@ -183,15 +183,38 @@ export default defineEventHandler(async (event) => {
           }
         });
 
-        // Also create an InventoryRecords entry to represent available stock (used/consumed by checkout)
+        // Also create or update an InventoryRecords entry to represent available stock (used/consumed by checkout)
         try {
-          await prisma.inventoryRecords.create({
-            data: {
-              date: new Date(),
-              category: entry.category,
-              quantity: entry.quantity,
+          const qty = Number(entry.quantity) || 0;
+          if (qty > 0) {
+            const now = new Date();
+            // use day-range (start <= date < nextDay) to find today's row for the category
+            const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            const nextDay = new Date(startOfDay);
+            nextDay.setDate(startOfDay.getDate() + 1);
+
+            const existing = await prisma.inventoryRecords.findFirst({
+              where: {
+                category: entry.category,
+                date: { gte: startOfDay, lt: nextDay },
+              },
+            });
+
+            if (existing) {
+              await prisma.inventoryRecords.update({
+                where: { id: existing.id },
+                data: { quantity: { increment: qty } },
+              });
+            } else {
+              await prisma.inventoryRecords.create({
+                data: {
+                  date: now,
+                  category: entry.category,
+                  quantity: qty,
+                },
+              });
             }
-          });
+          }
         } catch (recErr) {
           console.error('Error recording inventory record:', recErr);
         }
