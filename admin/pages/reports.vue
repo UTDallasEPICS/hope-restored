@@ -47,7 +47,25 @@
         <div v-if="ChooseMonthlyReport" class="modal-overlay" @click.self="ChooseMonthlyReport = false">
             <div class="modal-content">
                 <h2>Monthly Report</h2>
-                <p>Monthly report content goes here.</p>
+                <p>Select a month to view:</p>
+
+                <div class="calendar">
+                    <div class="calendar-header">
+                        <button @click="prevYear">‹</button>
+                        <div>{{ displayYear }}</div>
+                        <button @click="nextYear">›</button>
+                    </div>
+
+                    <div class="month-grid">
+                        <button v-for="(mName, idx) in monthNames" :key="mName"
+                                class="month-cell"
+                                :class="{ 'selected': selectedDate && selectedDate.year === displayYear && selectedDate.month === idx }"
+                                @click="selectMonth(idx)">
+                            {{ mName }}
+                        </button>
+                    </div>
+                </div>
+
                 <div class="form-actions">
                     <button class="cancel-button" @click="ChooseMonthlyReport = false">Close</button>
                 </div>
@@ -134,6 +152,8 @@ export default {
             currentMonth: new Date().getMonth(),
             currentYear: new Date().getFullYear(),
             selectedDate: null,
+            // Monthly view year display
+            displayYear: new Date().getFullYear(),
         }
     },
     methods: {
@@ -172,7 +192,13 @@ export default {
         },
         // Select a specific date for daily report
         selectDate(date) {
-            this.selectedDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+            const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+            // if already selected same day, deselect
+            if (this.selectedDate instanceof Date && this.selectedDate.toDateString() === d.toDateString()) {
+                this.selectedDate = null;
+                return;
+            }
+            this.selectedDate = d;
             // you can load report data here
             // keep the daily modal open (or close chooser if it came from chooser)
         },
@@ -183,10 +209,41 @@ export default {
             const day = d.getDay();
             const start = new Date(d);
             start.setDate(d.getDate() - day);
+            start.setHours(0,0,0,0);
             const end = new Date(start);
             end.setDate(start.getDate() + 6);
+            end.setHours(23,59,59,999);
+            // if same week already selected, deselect
+            if (this.selectedDate && this.selectedDate.weekStart) {
+                const existingStart = new Date(this.selectedDate.weekStart);
+                const existingEnd = new Date(this.selectedDate.weekEnd);
+                if (existingStart.toDateString() === start.toDateString() && existingEnd.toDateString() === end.toDateString()) {
+                    this.selectedDate = null;
+                    return;
+                }
+            }
             // store or load weekly report for the range start..end
             this.selectedDate = { weekStart: start, weekEnd: end };
+        }
+        ,
+        // Monthly navigation and selection
+        prevYear() {
+            this.displayYear -= 1;
+        },
+        nextYear() {
+            this.displayYear += 1;
+        },
+        selectMonth(monthIndex) {
+            // If current selectedDate is a month selection
+            if (this.selectedDate && this.selectedDate.year !== undefined && this.selectedDate.month !== undefined) {
+                if (this.selectedDate.year === this.displayYear && this.selectedDate.month === monthIndex) {
+                    // toggle off
+                    this.selectedDate = null;
+                    return;
+                }
+            }
+            // set month selection
+            this.selectedDate = { year: this.displayYear, month: monthIndex };
         }
     }
     ,
@@ -484,5 +541,26 @@ export default {
             background: #3f51b5;
             color: white;
             border-color: rgba(0,0,0,0.08);
+        }
+
+        /* Month grid (3 columns x 4 rows) */
+        .month-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.5em;
+            margin-top: 0.5em;
+        }
+        .month-cell {
+            padding: 0.75em 0.5em;
+            background: #fafafa;
+            border: 1px solid transparent;
+            border-radius: 6px;
+            cursor: pointer;
+            text-align: center;
+        }
+        .month-cell.selected {
+            background: #3f51b5;
+            color: #fff;
+            font-weight: 700;
         }
 </style>
