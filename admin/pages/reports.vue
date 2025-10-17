@@ -287,14 +287,6 @@ function openAmendData() {
 function closeAllModals() {
   showAmendData.value = false;
 }
-
-function openAmendData() {
-  showAmendData.value = true;
-}
-
-function closeAllModals() {
-  showAmendData.value = false;
-}
 </script>
 
 
