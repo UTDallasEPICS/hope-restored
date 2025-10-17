@@ -88,8 +88,8 @@
     <div v-if="showRemovedModal" class="modal-overlay">
       <div class="modal">
         <h3>Removed from Inventory:</h3>
-        <ul class="removed-list" v-if="removedList.length">
-          <li v-for="(line, idx) in removedList" :key="idx">{{ line }}</li>
+        <ul class="removed-list" v-if="removedListServer.length">
+          <li v-for="(line, idx) in removedListServer" :key="idx">{{ line }}</li>
         </ul>
         <p v-else>No items removed.</p>
 
@@ -132,11 +132,12 @@ const showRemovedModal = ref(false);
 const selectedCategory = ref("");
 const enteredQuantity = ref(null);
 
-// computed removed items list
+// computed removed items list (local preview) and server-provided removed lines
 const removedList = computed(() =>
   items.value.filter((it) => Number(it.quantity) > 0)
              .map((it) => `${it.quantity} ${it.name}`)
 );
+const removedListServer = ref([]);
 
 // open modal for entering quantity
 function openEnterQuantity(category) {
@@ -233,8 +234,13 @@ async function confirmCheckout() {
       return;
     }
 
-    // Success: display removed lines and signal inventory refresh
-    removedListServer.value = resp.lines || [];
+  // Success: display removed lines and signal inventory refresh
+  // Log response for debugging and fall back to local removedList if server didn't return lines
+  try {
+    console.log('checkout response:', resp);
+  } catch (e) {}
+  const serverLines = (resp.lines && Array.isArray(resp.lines) && resp.lines.length > 0) ? resp.lines : null;
+  removedListServer.value = serverLines || removedList.value || [];
     try {
       const inventoryRefresh = useState('inventoryRefreshKey');
       inventoryRefresh.value = Date.now();
@@ -247,11 +253,13 @@ async function confirmCheckout() {
 function newCheckout() {
   items.value = categories.map((cat) => ({ name: cat, quantity: 0 }));
   showRemovedModal.value = false;
+  removedListServer.value = [];
 }
 
 function goToInventory() {
   items.value = categories.map((cat) => ({ name: cat, quantity: 0 }));
   showRemovedModal.value = false;
+  removedListServer.value = [];
   router.push("/inventory");
 }
 
