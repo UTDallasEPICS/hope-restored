@@ -76,9 +76,13 @@
     <div v-if="showCheckoutConfirm" class="modal-overlay">
       <div class="modal">
         <h3>Check Out?</h3>
-        <p>Confirm Yes/No</p>
+        <p>You're about to remove the following items:</p>
+        <ul class="removed-list" v-if="removedList.length">
+          <li v-for="(line, idx) in removedList" :key="idx">{{ line }}</li>
+        </ul>
+        <p v-else>No items selected.</p>
         <div class="modal-actions">
-          <button class="btn danger" @click="confirmCheckout">Yes</button>
+          <button class="btn danger" :disabled="removedList.length === 0" @click="confirmCheckout">Yes</button>
           <button class="btn" @click="showCheckoutConfirm = false">No</button>
         </div>
       </div>
