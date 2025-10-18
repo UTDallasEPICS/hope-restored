@@ -18,9 +18,9 @@
 
                 <!-- Put the existing report buttons here -->
                 <div class="report-buttons">
-                    <section class="choose-monthly-report">
-                        <button @click="openMonthlyFromPrevious" class="monthly-reports-button">
-                            <i class="fas fa-plus"></i> Monthly Report
+                    <section class="choose-daily-report">
+                        <button @click="openDailyFromPrevious" class="daily-reports-button">
+                            <i class="fas fa-plus"></i> Daily Report
                         </button>
                     </section>
 
@@ -30,11 +30,13 @@
                         </button>
                     </section>
 
-                    <section class="choose-daily-report">
-                        <button @click="openDailyFromPrevious" class="daily-reports-button">
-                            <i class="fas fa-plus"></i> Daily Report
+                    <section class="choose-monthly-report">
+                        <button @click="openMonthlyFromPrevious" class="monthly-reports-button">
+                            <i class="fas fa-plus"></i> Monthly Report
                         </button>
                     </section>
+
+                    
                 </div>
 
                 <div class="form-actions" style="margin-top:1em;">
@@ -577,7 +579,7 @@ watchEffect(() => {
 
 .monthly-reports-button{
     padding: 0.5em 1.5em;
-    background-color: #af4c4c; /* Red */
+    background-color: #4c5baf; 
     color: #fff;
     border: none;
     border-radius: 4px;
@@ -598,7 +600,7 @@ watchEffect(() => {
 
 .weekly-reports-button{
     padding: 0.5em 1.5em;
-    background-color: #4caf53; /* Green */
+    background-color: #4c5baf; 
     color: #fff;
     border: none;
     border-radius: 4px;
@@ -619,7 +621,7 @@ watchEffect(() => {
 
 .daily-reports-button{
     padding: 0.5em 1.5em;
-    background-color: #4c5baf; /* Blue */
+    background-color: #4c5baf;
     color: #fff;
     border: none;
     border-radius: 4px;
@@ -723,10 +725,28 @@ watchEffect(() => {
     border-radius: 4px;
 }
 
+.report-buttons {
+    display: flex;
+    flex-direction: column;   /* stack vertically */
+    gap: 0.75rem;
+    align-items: stretch;     /* make children fill width if you want */
+    width: 100%;
+}
+
+.report-buttons > section {
+    width: 100%;
+}
+
+.report-buttons button {
+    width: 100%;              /* make each button full width inside its section */
+    justify-content: center;  /* center icon + text */
+}
+
+
 .form-actions {
     display: flex;
     justify-content: flex-end;
-    gap: 1em;
+    gap: 1rem;
 }
 
 .save-button,
