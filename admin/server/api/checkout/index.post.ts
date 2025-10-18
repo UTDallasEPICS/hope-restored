@@ -42,8 +42,13 @@ export default defineEventHandler(async (event) => {
 
   const resultLines: string[] = [];
 
+  // Helper to get today's date range (server local time / CDT)
+  const now = new Date();
+  const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+  const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0, 0);
+
   try {
-    // Pre-check: ensure requested quantities do not exceed available inventory
+    // Pre-check: ensure requested quantities do not exceed available inventory FOR TODAY ONLY
     // Build a map of requested totals per canonical category name to handle multiple lines for same category
     const requestedMap = new Map<string, number>();
     const lookupMap = new Map<string, { inputName: string; categoryName: string }>();
@@ -58,12 +63,18 @@ export default defineEventHandler(async (event) => {
     }
 
     const insufficient: Array<{ category: string; requested: number; available: number }> = [];
-    // Query available totals for all involved categories in parallel
+    // Query available totals for all involved categories in parallel (TODAY ONLY)
     const categoriesToCheck = Array.from(requestedMap.keys());
     if (categoriesToCheck.length > 0) {
       const aggs = await Promise.all(
         categoriesToCheck.map((cat) =>
-          prisma.inventoryRecords.aggregate({ where: { category: cat }, _sum: { quantity: true } })
+          prisma.inventoryRecords.aggregate({
+            where: {
+              category: cat,
+              date: { gte: startOfDay, lt: endOfDay },
+            },
+            _sum: { quantity: true },
+          })
         )
       );
 
@@ -87,16 +98,28 @@ export default defineEventHandler(async (event) => {
     await prisma.$transaction(async (tx) => {
       for (const [canonicalCategory, totalRequested] of requestedMap.entries()) {
         if (!canonicalCategory || totalRequested <= 0) continue;
-        // re-check availability inside transaction
-        const agg = await tx.inventoryRecords.aggregate({ where: { category: canonicalCategory }, _sum: { quantity: true } });
+        // re-check availability inside transaction (TODAY ONLY)
+        const agg = await tx.inventoryRecords.aggregate({
+          where: {
+            category: canonicalCategory,
+            date: { gte: startOfDay, lt: endOfDay },
+          },
+          _sum: { quantity: true },
+        });
         const available = agg._sum.quantity ?? 0;
         if (totalRequested > available) {
           throw new Error(`Insufficient inventory for ${canonicalCategory}: requested ${totalRequested}, available ${available}`);
         }
 
-        // Consume InventoryRecords FIFO (oldest first) until totalRequested satisfied
+        // Consume InventoryRecords FIFO (oldest first) from TODAY ONLY until totalRequested satisfied
         let needed = totalRequested;
-        const recordRows = await tx.inventoryRecords.findMany({ where: { category: canonicalCategory }, orderBy: { date: 'asc' } });
+        const recordRows = await tx.inventoryRecords.findMany({
+          where: {
+            category: canonicalCategory,
+            date: { gte: startOfDay, lt: endOfDay },
+          },
+          orderBy: { date: 'asc' },
+        });
         let totalRemoved = 0;
         for (const rec of recordRows) {
           if (needed <= 0) break;
@@ -138,8 +161,13 @@ export default defineEventHandler(async (event) => {
     });
 
     return { success: true, lines: resultLines };
-  } catch (err) {
+  } catch (err: any) {
     console.error('Checkout error:', err);
-    return { success: false, error: String(err) };
+    console.error('Error details:', {
+      message: err?.message,
+      stack: err?.stack,
+      name: err?.name,
+    });
+    return { success: false, error: String(err?.message || err) };
   }
 });

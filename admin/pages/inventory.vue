@@ -271,7 +271,7 @@
 </template>
 
 <script setup lang="ts">
-    import { ref, computed, onMounted } from 'vue';
+    import { ref, computed, onMounted, watch } from 'vue';
     import { useFetch, useRuntimeConfig } from 'nuxt/app';
     import QRCode from 'qrcode.vue';
     
@@ -422,17 +422,29 @@
 
     // Fetch inventory data
     //onMounted(async () => { // Fetches data when the page (component) is initially loaded
+    // Helper to get start/end of today in server local time
+    function getTodayRange() {
+        const now = new Date();
+        const start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+        const end = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0, 0);
+        return { start, end };
+    }
+
     async function getInventory() {
         try {
-            //inventory.value = await $fetch('/api/inventory/');
-            inventory.value = await $fetch('/api/inventory/', { // get inventory data; call index.get.ts
-                //baseURL: config.public.apiBase,
-                method: 'GET'
+            const { start, end } = getTodayRange();
+            // Fetch only today's InventoryRecords
+            inventory.value = await $fetch('/api/inventory/', {
+                method: 'GET',
+                params: {
+                    start: start.toISOString(),
+                    end: end.toISOString(),
+                },
             });
         } catch (error) {
             console.error('Fetch error:', error);
         }
-    };
+    }
 
     onMounted(getInventory);
 

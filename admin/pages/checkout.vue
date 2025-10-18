@@ -135,9 +135,23 @@ const items = ref(
 // available inventory totals by category (from /api/inventory)
 const availableMap = ref({});
 
+// Helper to get today's date range (server local time)
+function getTodayRange() {
+  const now = new Date();
+  const start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+  const end = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0, 0);
+  return { start, end };
+}
+
 async function loadInventory() {
   try {
-    const { data, error } = await useFetch('/api/inventory');
+    const { start, end } = getTodayRange();
+    const { data, error } = await useFetch('/api/inventory', {
+      params: {
+        start: start.toISOString(),
+        end: end.toISOString(),
+      },
+    });
     if (error?.value) {
       console.warn('Could not load inventory totals', error.value);
       return;
