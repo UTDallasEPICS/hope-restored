@@ -67,6 +67,7 @@
                 </div>
 
                 <div class="form-actions">
+                    <button class="save-button" @click="saveMonthly">Save</button>
                     <button class="cancel-button" @click="ChooseMonthlyReport = false">Close</button>
                 </div>
             </div>
@@ -97,6 +98,7 @@
                 </div>
 
                 <div class="form-actions">
+                    <button class="save-button" @click="saveWeekly">Save</button>
                     <button class="cancel-button" @click="ChooseWeeklyReport = false">Close</button>
                 </div>
             </div>
@@ -127,7 +129,46 @@
                 </div>
 
                 <div class="form-actions">
+                    <button class="save-button" @click="saveDaily">Save</button>
                     <button class="cancel-button" @click="ChooseDailyReport = false">Close</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Selected report results modal -->
+        <div v-if="viewingSelectedReport" class="modal-overlay" @click.self="viewingSelectedReport = false">
+            <div class="modal-content">
+                <h2>Report for: {{ selectedReportTitle }}</h2>
+
+                <div v-if="isLoadingSelected">Loading...</div>
+                <div v-else>
+                    <div v-if="selectedError" style="color: #b00020; margin-bottom: 1em;">{{ selectedError }}</div>
+                    <div v-else>
+                        <div id="reports-summary">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Category</th>
+                                        <th>Total</th>
+                                        <th>Added</th>
+                                        <th>Removed</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="r in selectedReportRows" :key="r.category">
+                                        <td>{{ r.category }}</td>
+                                        <td>{{ r.total }}</td>
+                                        <td>{{ r.added }}</td>
+                                        <td>{{ r.removed }}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-actions" style="margin-top:1em;">
+                    <button class="cancel-button" @click="viewingSelectedReport = false">Close</button>
                 </div>
             </div>
         </div>
@@ -195,6 +236,12 @@ export default {
             selectedDate: null,
             // Monthly view year display
             displayYear: new Date().getFullYear(),
+            // Selected-report popup
+            viewingSelectedReport: false,
+            selectedReportRows: [],
+            selectedReportTitle: '',
+            isLoadingSelected: false,
+            selectedError: null,
         }
     },
     methods: {
@@ -286,6 +333,92 @@ export default {
             // set month selection
             this.selectedDate = { year: this.displayYear, month: monthIndex };
         }
+        ,
+        // Placeholder save handlers for the modal Save buttons
+        async saveMonthly() {
+            if (!this.selectedDate || this.selectedDate.year === undefined || this.selectedDate.month === undefined) {
+                // nothing selected: do nothing (keep modal open)
+                return;
+            }
+            this.isLoadingSelected = true;
+            this.selectedError = null;
+            try {
+                const year = this.selectedDate.year;
+                const month = this.selectedDate.month + 1; // 1-based
+                const res = await fetch(`/api/reports/summary?year=${year}&month=${String(month).padStart(2,'0')}`);
+                if (!res.ok) throw new Error(`API error ${res.status}`);
+                const data = await res.json();
+                this.selectedReportRows = Array.isArray(data) ? data : this.mapApiResponseToRows(data);
+                this.selectedReportTitle = `${this.monthNames[this.selectedDate.month]} ${this.selectedDate.year}`;
+                this.viewingSelectedReport = true;
+                this.ChooseMonthlyReport = false;
+            } catch (err) {
+                // eslint-disable-next-line no-console
+                console.error('Failed to load monthly report', err);
+                this.selectedError = err.message || String(err);
+            } finally {
+                this.isLoadingSelected = false;
+            }
+        },
+        async saveWeekly() {
+            if (!this.selectedDate || !this.selectedDate.weekStart || !this.selectedDate.weekEnd) return;
+            this.isLoadingSelected = true;
+            this.selectedError = null;
+            try {
+                const start = this.selectedDate.weekStart.toISOString().slice(0,10);
+                const end = this.selectedDate.weekEnd.toISOString().slice(0,10);
+                const res = await fetch(`/api/reports/summary?start=${start}&end=${end}`);
+                if (!res.ok) throw new Error(`API error ${res.status}`);
+                const data = await res.json();
+                this.selectedReportRows = Array.isArray(data) ? data : this.mapApiResponseToRows(data);
+                this.selectedReportTitle = `Week of ${start}`;
+                this.viewingSelectedReport = true;
+                this.ChooseWeeklyReport = false;
+            } catch (err) {
+                // eslint-disable-next-line no-console
+                console.error('Failed to load weekly report', err);
+                this.selectedError = err.message || String(err);
+            } finally {
+                this.isLoadingSelected = false;
+            }
+        },
+        async saveDaily() {
+            if (!this.selectedDate || !(this.selectedDate instanceof Date)) return;
+            this.isLoadingSelected = true;
+            this.selectedError = null;
+            try {
+                const d = this.selectedDate.toISOString().slice(0,10);
+                const res = await fetch(`/api/reports/summary?date=${d}`);
+                if (!res.ok) throw new Error(`API error ${res.status}`);
+                const data = await res.json();
+                this.selectedReportRows = Array.isArray(data) ? data : this.mapApiResponseToRows(data);
+                this.selectedReportTitle = d;
+                this.viewingSelectedReport = true;
+                this.ChooseDailyReport = false;
+            } catch (err) {
+                // eslint-disable-next-line no-console
+                console.error('Failed to load daily report', err);
+                this.selectedError = err.message || String(err);
+            } finally {
+                this.isLoadingSelected = false;
+            }
+        },
+
+        // Normalize API shapes like object-by-category into an array of rows
+        mapApiResponseToRows(apiData) {
+            if (!apiData) return [];
+            if (Array.isArray(apiData)) return apiData;
+            // if keyed object { category: { total, added, removed }, ... }
+            return Object.keys(apiData).map(k => {
+                const v = apiData[k] || {};
+                return {
+                    category: k,
+                    total: v.total ?? v.count ?? 0,
+                    added: v.added ?? 0,
+                    removed: v.removed ?? 0,
+                };
+            });
+        },
     }
     ,
     computed: {
