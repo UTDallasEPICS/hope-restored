@@ -411,7 +411,7 @@ h2 {
   gap: 0.6rem;
   align-items: stretch;
   grid-auto-rows: 1fr;
-  margin-bottom: 22px;
+  margin-bottom: 1em;
 }
 
 .category-button {
@@ -465,7 +465,7 @@ h2 {
   background-color: #fff;
   border-radius: 8px;
   /*overflow: hidden;*/
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .items-table th,
