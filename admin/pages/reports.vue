@@ -149,14 +149,28 @@
         </div>
       </div>
 
-
-
-
-
-
-
-
-
+        <!-- Reports Summary Table Section -->
+        <h2 class="reports-section-title">Today's Data:</h2>
+        <div id="reports-summary" class="inventory_table_container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Category</th>
+                        <th>Total</th>
+                        <th>Added</th>
+                        <th>Removed</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-for="row in reportRows" :key="row.category">
+                        <td>{{ row.category }}</td>
+                        <td>{{ row.total }}</td>
+                        <td>{{ row.added }}</td>
+                        <td>{{ row.removed }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
 
 
 
@@ -319,7 +333,8 @@ export default {
 
 <script setup>
 // NOTE: We left the classic options API above; this small section is intentionally empty
-import { ref, computed } from 'vue';
+import { ref, computed, watchEffect } from 'vue';
+import { useFetch } from '#app';
 
 const currentDate = ref(new Date());
 
@@ -344,6 +359,20 @@ function openAmendData() {
 function closeAllModals() {
   showAmendData.value = false;
 }
+
+// Reports data (SSR-friendly): fetch at top-level so renders data immediately
+const reportRows = ref([]);
+const { data: summaryData, error: summaryError } = await useFetch('/api/reports/summary');
+
+watchEffect(() => {
+  if (summaryError?.value) {
+    // eslint-disable-next-line no-console
+    console.error('Failed to load report summary', summaryError.value);
+    reportRows.value = [];
+    } else if (summaryData?.value) {
+        reportRows.value = Array.isArray(summaryData.value) ? summaryData.value : [];
+    }
+});
 </script>
 
 
@@ -356,6 +385,47 @@ function closeAllModals() {
     max-height: 300px; /* Adjust as needed */
     overflow-y: auto; /* Vertical scroll */
     overflow-x: auto; /* Horizontal scroll if needed */
+}
+
+/* Reuse inventory table styles */
+#reports-summary table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+#reports-summary th,
+#reports-summary td {
+    padding: 12px;
+    border-bottom: 1px solid #ddd;
+    text-align: center;
+}
+
+#reports-summary th {
+    background-color: #3f51b5; /* Indigo */
+    color: #fff;
+    font-weight: bold;
+}
+
+#reports-summary tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+#reports-summary tr:hover {
+    background-color: #e0e0e0;
+}
+
+#reports-summary td {
+    color: #333;
+}
+
+.reports-section-title {
+    font-size: 1.8em;
+    color: #3f51b5; /* Indigo */
+    margin: 1em 0 0.5em;
 }
 
 .reports-landing {
