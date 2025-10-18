@@ -28,7 +28,10 @@
           <tbody>
             <tr v-for="item in items" :key="item.name">
               <td>{{ item.name }}</td>
-              <td>{{ item.quantity }}</td>
+              <td class="quantity-cell">
+                <span class="qty-val">{{ item.quantity }}</span>
+                <button v-if="item.quantity > 0" class="edit-inline-btn" @click.stop="editItem(item.name)">Edit</button>
+              </td>
             </tr>
           </tbody>
         </table>
@@ -45,8 +48,9 @@
     <!-- Enter Quantity Modal -->
     <div v-if="showEnterModal" class="modal-overlay" @keydown.esc="closeAllModals" tabindex="0">
       <div class="modal">
-        <button class="modal-close" @click="closeAllModals">✕</button>
-        <h3>Enter {{ selectedCategory }} Quantity:</h3>
+  <button class="modal-close" @click="closeAllModals">✕</button>
+  <h3 v-if="!editMode">Enter {{ selectedCategory }} Quantity:</h3>
+  <h3 v-else>Update quantity of {{ selectedCategory }}:</h3>
         <input
           type="number"
           min="0"
@@ -55,18 +59,19 @@
           @keyup.enter="onAddFromEnter"
         />
         <div class="modal-actions">
-          <button class="btn primary" @click="onAddFromEnter">Add</button>
+          <button class="btn primary" @click="onAddFromEnter">{{ editMode ? 'Update' : 'Add' }}</button>
         </div>
       </div>
     </div>
 
-    <!-- Confirm Add Modal -->
+    <!-- Confirm Add / Update Modal -->
     <div v-if="showConfirmAddModal" class="modal-overlay">
       <div class="modal">
-        <h3>Add {{ enteredQuantity }} {{ selectedCategory }}?</h3>
-        <p>Confirm Yes/No</p>
+        <h3 v-if="!editMode">Add {{ enteredQuantity }} {{ selectedCategory }}?</h3>
+        <h3 v-else>Update to {{ enteredQuantity }} {{ selectedCategory }}?</h3>
+        <p>Confirm {{ editMode ? 'Update' : 'Yes' }}/No</p>
         <div class="modal-actions">
-          <button class="btn danger" @click="confirmAdd">Yes</button>
+          <button class="btn danger" @click="confirmAdd">{{ editMode ? 'Update' : 'Yes' }}</button>
           <button class="btn" @click="cancelConfirmAdd">No</button>
         </div>
       </div>
@@ -107,8 +112,8 @@
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
-import { useFetch, useRouter } from "#app";
+import { ref, computed, onMounted, watch } from "vue";
+import { useFetch, useRouter, useState } from "#app";
 
 const router = useRouter();
 
@@ -127,11 +132,35 @@ const items = ref(
   categories.map((cat) => ({ name: cat, quantity: 0 }))
 );
 
+// available inventory totals by category (from /api/inventory)
+const availableMap = ref({});
+
+async function loadInventory() {
+  try {
+    const { data, error } = await useFetch('/api/inventory');
+    if (error?.value) {
+      console.warn('Could not load inventory totals', error.value);
+      return;
+    }
+    const rows = data?.value || [];
+    const map = {};
+    for (const r of rows) {
+      // server returns { category: { name }, quantity }
+      const name = (r?.category && r.category.name) || r?.category || '';
+      map[name] = Number(r.quantity) || 0;
+    }
+    availableMap.value = map;
+  } catch (e) {
+    console.warn('Error loading inventory', e);
+  }
+}
+
 // modal and state variables
 const showEnterModal = ref(false);
 const showConfirmAddModal = ref(false);
 const showCheckoutConfirm = ref(false);
 const showRemovedModal = ref(false);
+const editMode = ref(false);
 
 const selectedCategory = ref("");
 const enteredQuantity = ref(null);
@@ -147,11 +176,28 @@ const removedListServer = ref([]);
 function openEnterQuantity(category) {
   selectedCategory.value = category;
   enteredQuantity.value = null;
+  editMode.value = false;
   showEnterModal.value = true;
   showConfirmAddModal.value = false;
   showCheckoutConfirm.value = false;
   showRemovedModal.value = false;
 }
+
+// Open modal to edit an existing cart entry (replace quantity)
+function editItem(category) {
+  selectedCategory.value = category;
+  const idx = items.value.findIndex((it) => it.name === category);
+  if (idx !== -1) {
+    enteredQuantity.value = Number(items.value[idx].quantity) || 0;
+  } else {
+    enteredQuantity.value = null;
+  }
+  editMode.value = true;
+  showEnterModal.value = true;
+  showConfirmAddModal.value = false;
+  showCheckoutConfirm.value = false;
+  showRemovedModal.value = false;
+} 
 
 // when Add is clicked in quantity modal
 function onAddFromEnter() {
@@ -174,19 +220,50 @@ function confirmAdd() {
     (it) => it.name === selectedCategory.value
   );
   if (idx !== -1) {
-    const current = Number(items.value[idx].quantity) || 0;
-    items.value[idx].quantity = current + q;
+    if (editMode.value) {
+      // replace quantity when editing
+      items.value[idx].quantity = q;
+    } else {
+      const current = Number(items.value[idx].quantity) || 0;
+      items.value[idx].quantity = current + q;
+    }
   }
+  editMode.value = false;
   showConfirmAddModal.value = false;
   selectedCategory.value = "";
   enteredQuantity.value = null;
 }
 
 function openCheckoutConfirm() {
-  showCheckoutConfirm.value = true;
+  // Validate against available inventory before showing confirm
   showEnterModal.value = false;
   showConfirmAddModal.value = false;
   showRemovedModal.value = false;
+
+  // Build removals preview
+  const removals = items.value
+    .filter((it) => it.quantity > 0)
+    .map((it) => ({ category: it.name, quantity: Number(it.quantity) }));
+
+  if (removals.length === 0) {
+    alert('No items selected for checkout.');
+    return;
+  }
+
+  // Ensure we have current inventory totals
+  loadInventory().then(() => {
+    const insufficient = [];
+    for (const r of removals) {
+      const avail = availableMap.value[r.category] ?? 0;
+      if (r.quantity > avail) insufficient.push({ category: r.category, requested: r.quantity, available: avail });
+    }
+    if (insufficient.length > 0) {
+      const details = insufficient.map(d => `${d.category}: requested ${d.requested}, available ${d.available}`).join('\n');
+      alert('Insufficient inventory for one or more categories:\n' + details);
+      return;
+    }
+    showCheckoutConfirm.value = true;
+  });
 }
 
 // ✅ This now updates the Prisma database through your API route
@@ -252,6 +329,18 @@ async function confirmCheckout() {
       // ignore if running in a non-Nuxt context
     }
     showRemovedModal.value = true;
+}
+
+// refresh inventory when other pages update it
+onMounted(() => {
+  loadInventory();
+});
+
+try {
+  const inventoryRefresh = useState('inventoryRefreshKey');
+  watch(inventoryRefresh, () => loadInventory());
+} catch (e) {
+  // ignore if useState not available in this context
 }
 
 function newCheckout() {
@@ -337,6 +426,42 @@ h2 {
   border: 1px solid #ccc;
   padding: 10px 12px;
   text-align: left;
+}
+
+.clickable-row {
+  cursor: pointer;
+}
+.clickable-row:hover {
+  background: #fafafa;
+}
+
+.quantity-cell {
+  position: relative;
+  padding-right: 70px; /* space for the inline edit button */
+}
+.qty-val {
+  display: inline-block;
+}
+.edit-inline-btn {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 6px 8px;
+  font-size: 13px;
+  border-radius: 6px;
+  border: 1px solid rgba(0,0,0,0.08);
+  background: rgba(0,0,0,0.04);
+  color: #333;
+  cursor: pointer;
+  opacity: 0; /* hidden by default */
+  transition: opacity 120ms ease-in-out, background 120ms;
+}
+.edit-inline-btn:hover {
+  background: rgba(0,0,0,0.08);
+}
+.quantity-cell:hover .edit-inline-btn {
+  opacity: 1; /* appear on hover */
 }
 
 .items-table th {
