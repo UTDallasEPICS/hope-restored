@@ -140,12 +140,33 @@
       </div>
 
       <!-- Amend Data Modal -->
-      <div v-if="showAmendData" class="modal-overlay">
-        <div class="modal">
-          <button class="modal-close" @click="closeAllModals">✕</button>
-          <h3 style="text-align: center;">{{ currentMonthYearInCST }}</h3>
-          <div class="modal-actions">
-          </div>
+      <div v-if="showAmendData" class="modal-overlay" @click.self="showAmendData = false">
+        <div class="modal-content">
+            <h2>Amend Data</h2>
+            <p>Choose a date to amend data for that date:</p>
+
+            <!-- Calendar for Daily Report -->
+            <div class="calendar">
+                <div class="calendar-header">
+                    <button @click="prevMonth">‹</button>
+                    <div>{{ monthNames[currentMonth] }} {{ currentYear }}</div>
+                    <button @click="nextMonth">›</button>
+                </div>
+                <div class="calendar-grid">
+                    <div class="calendar-weekday" v-for="d in weekDayNames" :key="d">{{ d }}</div>
+                    <button class="calendar-day" 
+                            v-for="day in visibleDays" 
+                            :key="day.key"
+                            :class="{ 'other-month': !day.inMonth, 'selected': day.isSelected }"
+                            @click="selectDate(day.date)">
+                        {{ day.date.getDate() }}
+                    </button>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button class="cancel-button" @click="showAmendData = false">Close</button>
+            </div>
         </div>
       </div>
 
@@ -181,6 +202,7 @@ export default {
             selectedDate: null,
             // Monthly view year display
             displayYear: new Date().getFullYear(),
+            showAmendData: false
         }
     },
     methods: {
@@ -198,6 +220,9 @@ export default {
         openDailyFromPrevious() {
             this.showPreviousReportsModal = false;
             this.ChooseDailyReport = true;
+        },
+        openAmendData() {
+            this.showAmendData = true;
         }
         ,
         // Calendar helpers
@@ -592,71 +617,85 @@ function closeAllModals() {
     border: 1px solid #ddd;
 }
 
-        /* Calendar styles */
-        .calendar {
-            margin: 1em 0;
-        }
-        .calendar-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 0.5em;
-        }
-        .calendar-header button {
-            background: transparent;
-            border: none;
-            font-size: 1.2em;
-            cursor: pointer;
-        }
-        .calendar-grid {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            gap: 0.25em;
-        }
-        .calendar-weekday {
-            text-align: center;
-            font-weight: 600;
-            padding: 0.25em 0;
-            font-size: 0.9em;
-            color: #666;
-        }
-        .calendar-day {
-            padding: 0.5em 0.25em;
-            min-height: 40px;
-            border-radius: 6px;
-            border: 1px solid transparent;
-            background: #fafafa;
-            cursor: pointer;
-            text-align: center;
-        }
-        .calendar-day.other-month {
-            color: #bbb;
-            background: #fff;
-        }
-        .calendar-day.selected {
-            background: #3f51b5;
-            color: white;
-            border-color: rgba(0,0,0,0.08);
-        }
+/* Calendar styles */
+.calendar {
+    margin: 1em 0;
+}
+.calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5em;
+}
+.calendar-header button {
+    background: transparent;
+    border: none;
+    font-size: 1.2em;
+    cursor: pointer;
+}
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0.25em;
+}
+.calendar-weekday {
+    text-align: center;
+    font-weight: 600;
+    padding: 0.25em 0;
+    font-size: 0.9em;
+    color: #666;
+}
+.calendar-day {
+    padding: 0.5em 0.25em;
+    min-height: 40px;
+    border-radius: 6px;
+    border: 1px solid transparent;
+    background: #fafafa;
+    cursor: pointer;
+    text-align: center;
+}
+.calendar-day.other-month {
+    color: #bbb;
+    background: #fff;
+}
+.calendar-day.selected {
+    background: #3f51b5;
+    color: white;
+    border-color: rgba(0,0,0,0.08);
+}
 
-        /* Month grid (3 columns x 4 rows) */
-        .month-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 0.5em;
-            margin-top: 0.5em;
-        }
-        .month-cell {
-            padding: 0.75em 0.5em;
-            background: #fafafa;
-            border: 1px solid transparent;
-            border-radius: 6px;
-            cursor: pointer;
-            text-align: center;
-        }
-        .month-cell.selected {
-            background: #3f51b5;
-            color: #fff;
-            font-weight: 700;
-        }
+/* Month grid (3 columns x 4 rows) */
+.month-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.5em;
+    margin-top: 0.5em;
+}
+.month-cell {
+    padding: 0.75em 0.5em;
+    background: #fafafa;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    cursor: pointer;
+    text-align: center;
+}
+.month-cell.selected {
+    background: #3f51b5;
+    color: #fff;
+    font-weight: 700;
+}
+.amendData-btn {
+    padding: 0.5em 1.5em;
+    background-color: blue;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1em;
+    text-transform: uppercase;
+    transition: background-color 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+}
 </style>
