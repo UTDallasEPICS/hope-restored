@@ -170,6 +170,53 @@
         </div>
       </div>
 
+      <!-- Second pop-up: Amend Data Form -->
+      <div v-if="showAmendForm" class="modal-overlay" @click.self="showAmendForm = false">
+      <div class="modal-content">
+          <h2>Amend Data for {{ selectedDateFormatted }}</h2>
+
+          <div v-if="errorMessage" style="color: red; margin-bottom: 1em;">{{ errorMessage }}</div>
+
+          <div class="form-group">
+          <label>Category:</label>
+          <select v-model="form.category">
+              <option disabled value="">Select category</option>
+              <option v-for="opt in categories" :key="opt">{{ opt }}</option>
+          </select>
+          </div>
+
+          <div class="form-group">
+          <label>Quantity:</label>
+          <input type="number" v-model.number="form.quantity" min="1" />
+          </div>
+
+          <div class="form-group">
+          <label>Action:</label>
+          <select v-model="form.action">
+              <option disabled value="">Select action</option>
+              <option>Add</option>
+              <option>Remove</option>
+          </select>
+          </div>
+
+          <div class="form-actions">
+          <button class="save-button" @click="submitAmend">Confirm</button>
+          <button class="cancel-button" @click="showAmendForm = false">Cancel</button>
+          </div>
+      </div>
+      </div>
+
+      <!-- Success message -->
+      <div v-if="showSuccess" class="modal-overlay" @click.self="showSuccess = false">
+      <div class="modal-content">
+          <h2>Amendment of data successful!</h2>
+          <div class="form-actions">
+          <button class="save-button" @click="showSuccess = false">OK</button>
+          </div>
+      </div>
+      </div>
+
+
 
 
 
@@ -202,7 +249,12 @@ export default {
             selectedDate: null,
             // Monthly view year display
             displayYear: new Date().getFullYear(),
-            showAmendData: false
+            showAmendData: false,
+            showAmendForm: false,
+            showSuccess: false,
+            errorMessage: '',
+            form: { category: '', quantity: null, action: '' },
+            categories: ['Shirts','Jackets','Pants','Underwear','Shoes','Snack Packs','Hygiene Packs']
         }
     },
     methods: {
@@ -253,6 +305,12 @@ export default {
             this.selectedDate = d;
             // you can load report data here
             // keep the daily modal open (or close chooser if it came from chooser)
+            if (this.showAmendData) {
+            // Close calendar pop-up
+            this.showAmendData = false;
+            // Open amend form modal
+            this.showAmendForm = true;
+  }
         },
         // Select a week containing the clicked date (for weekly report)
         selectWeek(date) {
@@ -296,6 +354,33 @@ export default {
             }
             // set month selection
             this.selectedDate = { year: this.displayYear, month: monthIndex };
+        },
+        async submitAmend() {
+            this.errorMessage = '';
+            const { category, quantity, action } = this.form;
+            if (!category || !quantity || !action || quantity <= 0) {
+            this.errorMessage = 'Please fill all fields with valid values.';
+            return;
+            }
+
+            try {
+            const res = await $fetch('/api/amend', {
+                method: 'POST',
+                body: {
+                selectedDate: this.selectedDate,
+                category,
+                quantity,
+                action
+                }
+            });
+            if (res.success) {
+                this.showAmendForm = false;
+                this.showSuccess = true;
+                this.form = { category: '', quantity: null, action: '' };
+            }
+            } catch (err) {
+            this.errorMessage = err.data?.message || 'An error occurred.';
+            }
         }
     }
     ,
@@ -337,40 +422,14 @@ export default {
                 days.push({ date: d, inMonth, key: d.toISOString(), isSelected });
             }
             return days;
+        },
+        selectedDateFormatted() {
+            if (!this.selectedDate) return '';
+            return this.selectedDate.toDateString();
         }
     }
 }
 </script>
-
-<script setup>
-// NOTE: We left the classic options API above; this small section is intentionally empty
-import { ref, computed } from 'vue';
-
-const currentDate = ref(new Date());
-
-const currentMonthYearInCST = computed(() => {
-  // Options for formatting the date
-  const options = {
-    year: 'numeric',
-    month: 'long', // Use 'long' for full month name (e.g., "October")
-    timeZone: 'America/Chicago', // Specify US Central Time
-  };
-
-  // Use Intl.DateTimeFormat to format the current date
-  return new Intl.DateTimeFormat('en-US', options).format(currentDate.value);
-});
-
-const showAmendData = ref(false);
-
-function openAmendData() {
-  showAmendData.value = true;
-}
-
-function closeAllModals() {
-  showAmendData.value = false;
-}
-</script>
-
 
 <style scoped>
 .reports-container {
