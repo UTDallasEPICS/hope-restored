@@ -14,9 +14,11 @@ export default defineEventHandler(async (event) => {
   // Handle different query parameter formats
   if (query.date) {
     // Daily report: ?date=YYYY-MM-DD
-    const d = new Date(String(query.date));
-    rangeStart = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0);
-    rangeEnd = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1, 0, 0, 0, 0);
+    // Parse date string as local date, not UTC
+    const dateStr = String(query.date);
+    const [year, month, day] = dateStr.split('-').map(Number);
+    rangeStart = new Date(year, month - 1, day, 0, 0, 0, 0);
+    rangeEnd = new Date(year, month - 1, day + 1, 0, 0, 0, 0);
   } else if (query.year && query.month) {
     // Monthly report: ?year=YYYY&month=MM
     const year = Number(query.year);
@@ -63,8 +65,9 @@ export default defineEventHandler(async (event) => {
   const addsMap = new Map(addRows.map(r => [r.category, r._sum.quantity ?? 0]));
   const removesMap = new Map(removeRows.map(r => [r.category, r._sum.quantity ?? 0]));
 
-  // Check if there's any data at all for this date range
-  const hasAnyData = totalRows.length > 0 || addRows.length > 0 || removeRows.length > 0;
+  // Check if there's any InventoryRecords for this date range
+  // If no InventoryRecords exist, the day hasn't been set up yet, show N/A
+  const hasInventoryRecords = totalRows.length > 0;
 
   // Construct output in canonical order; include any extra categories if present
   const seen = new Set<string>();
@@ -72,9 +75,9 @@ export default defineEventHandler(async (event) => {
   for (const cat of order) {
     result.push({
       category: cat,
-      total: hasAnyData ? Number(totalsMap.get(cat) || 0) : 'N/A',
-      added: hasAnyData ? Number(addsMap.get(cat) || 0) : 'N/A',
-      removed: hasAnyData ? Number(removesMap.get(cat) || 0) : 'N/A',
+      total: hasInventoryRecords ? Number(totalsMap.get(cat) || 0) : 'N/A',
+      added: hasInventoryRecords ? Number(addsMap.get(cat) || 0) : 'N/A',
+      removed: hasInventoryRecords ? Number(removesMap.get(cat) || 0) : 'N/A',
     });
     seen.add(cat);
   }
@@ -89,9 +92,9 @@ export default defineEventHandler(async (event) => {
     if (seen.has(cat)) continue;
     result.push({
       category: cat,
-      total: hasAnyData ? Number(totalsMap.get(cat) || 0) : 'N/A',
-      added: hasAnyData ? Number(addsMap.get(cat) || 0) : 'N/A',
-      removed: hasAnyData ? Number(removesMap.get(cat) || 0) : 'N/A',
+      total: hasInventoryRecords ? Number(totalsMap.get(cat) || 0) : 'N/A',
+      added: hasInventoryRecords ? Number(addsMap.get(cat) || 0) : 'N/A',
+      removed: hasInventoryRecords ? Number(removesMap.get(cat) || 0) : 'N/A',
     });
   }
 

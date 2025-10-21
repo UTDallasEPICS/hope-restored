@@ -27,12 +27,15 @@ async function run() {
         continue;
       }
 
-      // find last known total for this category (sum of all InventoryRecords before nextDay)
-      const agg = await prisma.inventoryRecords.aggregate({ where: { category: catName, date: { lt: nextDay } }, _sum: { quantity: true } });
-      const lastTotal = agg._sum.quantity ?? 0;
+      // find the most recent previous day's total for this category
+      const lastRecord = await prisma.inventoryRecords.findFirst({
+        where: { category: catName, date: { lt: startOfDay } },
+        orderBy: { date: 'desc' },
+      });
+      const lastTotal = lastRecord?.quantity ?? 0;
 
-      // create today's row with lastTotal
-      const created = await prisma.inventoryRecords.create({ data: { date: now, category: catName, quantity: lastTotal } });
+      // create today's row with lastTotal (use startOfDay for consistent date filtering)
+      const created = await prisma.inventoryRecords.create({ data: { date: startOfDay, category: catName, quantity: lastTotal } });
       console.log(`Inserted snapshot for ${catName} => quantity=${lastTotal} (id=${created.id})`);
     }
 

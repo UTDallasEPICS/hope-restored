@@ -6,10 +6,12 @@
     "both": "node ./scripts/runAdminAndPublic",
     "cpenv": "node ./scripts/cpenv.js",
     "installDeps": "npm install && cd webcomponent && npm install && cd ../admin && npm install",
+    "newDay": "node ./admin/scripts/dailyInventorySnapshot.mjs",
     "prismaMigrate": "cd admin && npx prisma migrate dev",
     "prismaResetMigrations": "cd admin && npx prisma migrate reset",
     "prismaStudio": "cd admin && npx prisma studio",
     "public": "cd webcomponent && npm run dev",
+    "resetInventoryData": "node ./admin/scripts/resetInventoryData.mjs",
     "setup": "npm run cpenv && npm run installDeps && npm run prismaMigrate"
   },
   "prisma": {

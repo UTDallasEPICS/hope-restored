@@ -5,7 +5,7 @@
 
         <!-- View Previous Reports Button -->
         <section class="view-previous-reports">
-            <button @click="showPreviousReportsModal = true" class="monthly-reports-button">
+         <button @click="showPreviousReportsModal = true" class="monthly-reports-button">
                 <i class="fas fa-folder-open"></i> View Previous Reports
             </button>
         </section>
@@ -367,8 +367,15 @@ export default {
             this.isLoadingSelected = true;
             this.selectedError = null;
             try {
-                const start = this.selectedDate.weekStart.toISOString().slice(0,10);
-                const end = this.selectedDate.weekEnd.toISOString().slice(0,10);
+                // Format dates as YYYY-MM-DD in local timezone (not UTC)
+                const formatLocalDate = (date) => {
+                    const year = date.getFullYear();
+                    const month = String(date.getMonth() + 1).padStart(2, '0');
+                    const day = String(date.getDate()).padStart(2, '0');
+                    return `${year}-${month}-${day}`;
+                };
+                const start = formatLocalDate(this.selectedDate.weekStart);
+                const end = formatLocalDate(this.selectedDate.weekEnd);
                 const res = await fetch(`/api/reports/summary?start=${start}&end=${end}`);
                 if (!res.ok) throw new Error(`API error ${res.status}`);
                 const data = await res.json();
@@ -389,7 +396,11 @@ export default {
             this.isLoadingSelected = true;
             this.selectedError = null;
             try {
-                const d = this.selectedDate.toISOString().slice(0,10);
+                // Format date as YYYY-MM-DD in local timezone (not UTC)
+                const year = this.selectedDate.getFullYear();
+                const month = String(this.selectedDate.getMonth() + 1).padStart(2, '0');
+                const day = String(this.selectedDate.getDate()).padStart(2, '0');
+                const d = `${year}-${month}-${day}`;
                 const res = await fetch(`/api/reports/summary?date=${d}`);
                 if (!res.ok) throw new Error(`API error ${res.status}`);
                 const data = await res.json();

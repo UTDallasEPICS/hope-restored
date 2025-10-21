@@ -387,7 +387,7 @@ function closeAllModals() {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: 'Open Sans', sans-serif;
 }
 
 .content {
@@ -456,6 +456,7 @@ h2 {
 
 .items-section {
   margin-bottom: 20px;
+  border: 1px solid #ddd;
 }
 
 .items-table {

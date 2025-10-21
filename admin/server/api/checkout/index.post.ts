@@ -154,8 +154,9 @@ export default defineEventHandler(async (event) => {
         }
 
         // Record Removals history with the input name if available
+        // Use startOfDay (already defined) for consistent date filtering
         const inputName = lookupMap.get(canonicalCategory)?.inputName || canonicalCategory;
-        await tx.removals.create({ data: { category: inputName, dateRemoved: new Date(), quantity: totalRemoved } });
+        await tx.removals.create({ data: { category: inputName, dateRemoved: startOfDay, quantity: totalRemoved } });
         resultLines.push(`Removed ${totalRemoved} ${inputName}`);
       }
     });

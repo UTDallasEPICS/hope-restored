@@ -170,10 +170,14 @@ export default defineEventHandler(async (event) => {
       // Record the addition in the Additions table (keeps a history of added quantity)
       let additionRecord = null;
       try {
+        // Normalize to start of day (local timezone) for consistent date filtering
+        const now = new Date();
+        const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+        
         additionRecord = await prisma.additions.create({
           data: {
             category: entry.category,
-            dateAdded: new Date(),
+            dateAdded: startOfDay,
             quantity: entry.quantity,
           },
           select: {
