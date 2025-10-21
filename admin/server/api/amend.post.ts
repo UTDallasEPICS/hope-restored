@@ -1,64 +1,105 @@
-import prisma from '@/lib/prisma'
+import { defineEventHandler, readBody } from 'h3'
+import prisma from '@/lib/prisma' // Uses existing prisma.ts file in admin/lib
 
 export default defineEventHandler(async (event) => {
-  const body = await readBody(event)
-  const { selectedDate, category, quantity, action } = body
+  try {
+    // Read and destructure request body
+    const body = await readBody(event)
+    const { selectedDate, category, quantity, action } = body
 
-  if (!selectedDate || !category || !quantity || !action) {
-    throw createError({ statusCode: 400, message: 'Missing required fields' })
-  }
+    // Basic validation (frontend should handle this too)
+    if (!selectedDate || !category || !quantity || !action) {
+      return {
+        success: false,
+        message: 'Missing required fields.',
+      }
+    }
 
-  const date = new Date(selectedDate)
-  // Convert to noon US Central Time
-  const dateAtNoon = new Date(date)
-  dateAtNoon.setHours(12, 0, 0, 0)
+    const date = new Date(selectedDate)
+    const isAddition = action === 'Add'
 
-  if (action === 'Remove') {
-    // Check inventory before removing
-    const record = await prisma.inventoryRecords.findFirst({
-      where: { date: dateAtNoon, category }
+    // Find the Inventory record for this date and category
+    const inventoryRecord = await prisma.inventoryRecords.findFirst({
+      where: {
+        date: date,
+        category: category,
+      },
     })
 
-    if (!record) {
-      throw createError({ statusCode: 400, message: 'No inventory record found for this date and category' })
+    if (!inventoryRecord) {
+      return {
+        success: false,
+        message: 'No inventory record found for that date and category.',
+      }
     }
 
-    if (record.quantity < quantity) {
-      throw createError({ statusCode: 400, message: 'Cannot remove more items than there are in selected date\'s inventory.' })
+    // If removing, ensure we are not removing more than exists
+    if (!isAddition && inventoryRecord.quantity < quantity) {
+      return {
+        success: false,
+        message: 'Cannot remove more items than there are in selected date\'s inventory.',
+      }
     }
 
-    // Update inventory
+    // --- STEP 1: Update the InventoryRecord for the selected date ---
     await prisma.inventoryRecords.update({
-      where: { id: record.id },
-      data: { quantity: record.quantity - quantity }
+      where: { id: inventoryRecord.id },
+      data: {
+        quantity: {
+          increment: isAddition ? quantity : -quantity,
+        },
+      },
     })
 
-    // Add to Removals
-    await prisma.removals.create({
-      data: { category, dateRemoved: dateAtNoon, quantity }
-    })
-  } else if (action === 'Add') {
-    // Add to inventory (either update existing or create)
-    const existing = await prisma.inventoryRecords.findFirst({
-      where: { date: dateAtNoon, category }
+    // --- STEP 2: Update all future InventoryRecords for same category ---
+    await prisma.inventoryRecords.updateMany({
+      where: {
+        category: category,
+        date: {
+          gt: date, // All dates AFTER the selected date
+        },
+      },
+      data: {
+        quantity: {
+          increment: isAddition ? quantity : -quantity,
+        },
+      },
     })
 
-    if (existing) {
-      await prisma.inventoryRecords.update({
-        where: { id: existing.id },
-        data: { quantity: existing.quantity + quantity }
+    // --- STEP 3: Add entry to Additions or Removals table ---
+    const localNoon = new Date(date)
+    localNoon.setHours(12, 0, 0, 0) // 12 PM local time (Central)
+
+    if (isAddition) {
+      await prisma.additions.create({
+        data: {
+          category: category,
+          quantity: quantity,
+          dateAdded: localNoon,
+        },
       })
     } else {
-      await prisma.inventoryRecords.create({
-        data: { category, date: dateAtNoon, quantity }
+      await prisma.removals.create({
+        data: {
+          category: category,
+          quantity: quantity,
+          dateRemoved: localNoon,
+        },
       })
     }
 
-    // Add to Additions table
-    await prisma.additions.create({
-      data: { category, dateAdded: dateAtNoon, quantity }
-    })
-  }
+    // --- STEP 4: Return success ---
+    return {
+      success: true,
+      message: 'Amendment of data successful!',
+    }
 
-  return { success: true }
+  } catch (error: any) {
+    console.error('Error during amendment:', error)
+    return {
+      success: false,
+      message: 'An unexpected error occurred.',
+      details: error.message,
+    }
+  }
 })

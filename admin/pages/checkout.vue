@@ -2,6 +2,7 @@
   <div class="checkout-page">
     <!-- Main content -->
     <div class="content">
+      <h1 style="color: red;"> NOTE: Please enter data in chronological order from earliest date to the most recent date/today. Do NOT enter data for a date without entering any previous days' data. In addition, for each date, please enter all additions first and then all removals. This ensures that the reports and inventory show correct data for all dates. </h1>
       <h2>Pick a Category:</h2>
 
       <!-- Category buttons -->
