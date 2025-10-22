@@ -306,6 +306,12 @@ export default {
             selectedDate: null,
             // Monthly view year display
             displayYear: new Date().getFullYear(),
+            showAmendData: false,
+            showAmendForm: false,
+            showSuccess: false,
+            errorMessage: '',
+            form: { category: '', quantity: null, action: '' },
+            categories: ['Shirts','Jackets','Pants','Underwear','Shoes','Snack Packs','Hygiene Packs'],
             // Selected-report popup
             viewingSelectedReport: false,
             selectedReportRows: [],
@@ -375,6 +381,12 @@ export default {
             // Open amend form modal
             this.showAmendForm = true;
   }
+            if (this.showAmendData) {
+            // Close calendar pop-up
+            this.showAmendData = false;
+            // Open amend form modal
+            this.showAmendForm = true;
+  }
         },
         // Select a week containing the clicked date (for weekly report)
         selectWeek(date) {
@@ -418,6 +430,33 @@ export default {
             }
             // set month selection
             this.selectedDate = { year: this.displayYear, month: monthIndex };
+        },
+        async submitAmend() {
+            this.errorMessage = '';
+            const { category, quantity, action } = this.form;
+            if (!category || !quantity || !action || quantity <= 0) {
+            this.errorMessage = 'Please fill all fields with valid values.';
+            return;
+            }
+
+            try {
+            const res = await $fetch('/api/amend', {
+                method: 'POST',
+                body: {
+                selectedDate: this.selectedDate,
+                category,
+                quantity,
+                action
+                }
+            });
+            if (res.success) {
+                this.showAmendForm = false;
+                this.showSuccess = true;
+                this.form = { category: '', quantity: null, action: '' };
+            }
+            } catch (err) {
+            this.errorMessage = err.data?.message || 'An error occurred.';
+            }
         },
         async submitAmend() {
             this.errorMessage = '';
@@ -587,6 +626,10 @@ export default {
         selectedDateFormatted() {
             if (!this.selectedDate) return '';
             return this.selectedDate.toDateString();
+        },
+        selectedDateFormatted() {
+            if (!this.selectedDate) return '';
+            return this.selectedDate.toDateString();
         }
     }
 }
@@ -594,32 +637,8 @@ export default {
 
 <script setup>
 // NOTE: We left the classic options API above; this small section is intentionally empty
-import { ref, computed, watchEffect } from 'vue';
+import { ref, watchEffect } from 'vue';
 import { useFetch } from '#app';
-
-const currentDate = ref(new Date());
-
-const currentMonthYearInCST = computed(() => {
-  // Options for formatting the date
-  const options = {
-    year: 'numeric',
-    month: 'long', // Use 'long' for full month name (e.g., "October")
-    timeZone: 'America/Chicago', // Specify US Central Time
-  };
-
-  // Use Intl.DateTimeFormat to format the current date
-  return new Intl.DateTimeFormat('en-US', options).format(currentDate.value);
-});
-
-const showAmendData = ref(false);
-
-function openAmendData() {
-  showAmendData.value = true;
-}
-
-function closeAllModals() {
-  showAmendData.value = false;
-}
 
 // Reports data (SSR-friendly): fetch at top-level so renders data immediately
 const reportRows = ref([]);
