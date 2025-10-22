@@ -36,6 +36,8 @@
                             <i class="fas fa-plus"></i> Monthly Report
                         </button>
                     </section>
+
+                    
                 </div>
 
                 <div class="form-actions" style="margin-top:1em;">
@@ -60,7 +62,7 @@
                     <div class="month-grid">
                         <button v-for="(mName, idx) in monthNames" :key="mName"
                                 class="month-cell"
-                                :class="{ 'selected': selectedDate && 'year' in selectedDate && selectedDate.year === displayYear && selectedDate.month === idx }"
+                                :class="{ 'selected': selectedDate && selectedDate.year === displayYear && selectedDate.month === idx }"
                                 @click="selectMonth(idx)">
                             {{ mName }}
                         </button>
@@ -278,89 +280,357 @@
                 </tbody>
             </table>
         </div>
+
+
+
     </div>
 </template>
+<script>
+export default {
+    name: 'ReportsLandingPage',
+    data() {
+        return {
+            // Controls the "Previous Reports" chooser modal
+            showPreviousReportsModal: false,
+
+            // Individual report modals
+            ChooseMonthlyReport: false,
+            ChooseWeeklyReport: false,
+            ChooseDailyReport: false,
+            // Calendar state (shared by daily and weekly views)
+            today: new Date(),
+            currentMonth: new Date().getMonth(),
+            currentYear: new Date().getFullYear(),
+            selectedDate: null,
+            // Monthly view year display
+            displayYear: new Date().getFullYear(),
+            showAmendData: false,
+            showAmendForm: false,
+            showSuccess: false,
+            errorMessage: '',
+            form: { category: '', quantity: null, action: '' },
+            categories: ['Shirts','Jackets','Pants','Underwear','Shoes','Snack Packs','Hygiene Packs'],
+            // Selected-report popup
+            viewingSelectedReport: false,
+            selectedReportRows: [],
+            selectedReportTitle: '',
+            isLoadingSelected: false,
+            selectedError: null,
+            // Amend data modals
+            showAmendData: false,
+            showAmendForm: false,
+            showSuccess: false,
+            errorMessage: '',
+            form: { category: '', quantity: null, action: '' },
+            categories: ['Shirts','Jackets','Pants','Underwear','Shoes','Snack Packs','Hygiene Packs']
+        }
+    },
+    methods: {
+        closePreviousReportsModal() {
+            this.showPreviousReportsModal = false;
+        },
+        openMonthlyFromPrevious() {
+            this.showPreviousReportsModal = false;
+            this.ChooseMonthlyReport = true;
+        },
+        openWeeklyFromPrevious() {
+            this.showPreviousReportsModal = false;
+            this.ChooseWeeklyReport = true;
+        },
+        openDailyFromPrevious() {
+            this.showPreviousReportsModal = false;
+            this.ChooseDailyReport = true;
+        },
+        openAmendData() {
+            this.showAmendData = true;
+        }
+        ,
+        // Calendar helpers
+        prevMonth() {
+            if (this.currentMonth === 0) {
+                this.currentMonth = 11;
+                this.currentYear -= 1;
+            } else {
+                this.currentMonth -= 1;
+            }
+        },
+        nextMonth() {
+            if (this.currentMonth === 11) {
+                this.currentMonth = 0;
+                this.currentYear += 1;
+            } else {
+                this.currentMonth += 1;
+            }
+        },
+        // Select a specific date for daily report
+        selectDate(date) {
+            const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+            // if already selected same day, deselect
+            if (this.selectedDate instanceof Date && this.selectedDate.toDateString() === d.toDateString()) {
+                this.selectedDate = null;
+                return;
+            }
+            this.selectedDate = d;
+            // you can load report data here
+            // keep the daily modal open (or close chooser if it came from chooser)
+            if (this.showAmendData) {
+            // Close calendar pop-up
+            this.showAmendData = false;
+            // Open amend form modal
+            this.showAmendForm = true;
+  }
+            if (this.showAmendData) {
+            // Close calendar pop-up
+            this.showAmendData = false;
+            // Open amend form modal
+            this.showAmendForm = true;
+  }
+        },
+        // Select a week containing the clicked date (for weekly report)
+        selectWeek(date) {
+            // compute week start (Sunday) and end (Saturday)
+            const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+            const day = d.getDay();
+            const start = new Date(d);
+            start.setDate(d.getDate() - day);
+            start.setHours(0,0,0,0);
+            const end = new Date(start);
+            end.setDate(start.getDate() + 6);
+            end.setHours(23,59,59,999);
+            // if same week already selected, deselect
+            if (this.selectedDate && this.selectedDate.weekStart) {
+                const existingStart = new Date(this.selectedDate.weekStart);
+                const existingEnd = new Date(this.selectedDate.weekEnd);
+                if (existingStart.toDateString() === start.toDateString() && existingEnd.toDateString() === end.toDateString()) {
+                    this.selectedDate = null;
+                    return;
+                }
+            }
+            // store or load weekly report for the range start..end
+            this.selectedDate = { weekStart: start, weekEnd: end };
+        }
+        ,
+        // Monthly navigation and selection
+        prevYear() {
+            this.displayYear -= 1;
+        },
+        nextYear() {
+            this.displayYear += 1;
+        },
+        selectMonth(monthIndex) {
+            // If current selectedDate is a month selection
+            if (this.selectedDate && this.selectedDate.year !== undefined && this.selectedDate.month !== undefined) {
+                if (this.selectedDate.year === this.displayYear && this.selectedDate.month === monthIndex) {
+                    // toggle off
+                    this.selectedDate = null;
+                    return;
+                }
+            }
+            // set month selection
+            this.selectedDate = { year: this.displayYear, month: monthIndex };
+        },
+        async submitAmend() {
+            this.errorMessage = '';
+            const { category, quantity, action } = this.form;
+            if (!category || !quantity || !action || quantity <= 0) {
+            this.errorMessage = 'Please fill all fields with valid values.';
+            return;
+            }
+
+            try {
+            const res = await $fetch('/api/amend', {
+                method: 'POST',
+                body: {
+                selectedDate: this.selectedDate,
+                category,
+                quantity,
+                action
+                }
+            });
+            if (res.success) {
+                this.showAmendForm = false;
+                this.showSuccess = true;
+                this.form = { category: '', quantity: null, action: '' };
+                showSuccessPopup.value = true
+                await fetchTodayTotals()
+            }
+            } catch (err) {
+            this.errorMessage = err.data?.message || 'An error occurred.';
+            }
+        }
+        ,
+        // Placeholder save handlers for the modal Save buttons
+        async saveMonthly() {
+            if (!this.selectedDate || this.selectedDate.year === undefined || this.selectedDate.month === undefined) {
+                // nothing selected: do nothing (keep modal open)
+                return;
+            }
+            this.isLoadingSelected = true;
+            this.selectedError = null;
+            try {
+                const year = this.selectedDate.year;
+                const month = this.selectedDate.month + 1; // 1-based
+                const res = await fetch(`/api/reports/summary?year=${year}&month=${String(month).padStart(2,'0')}`);
+                if (!res.ok) throw new Error(`API error ${res.status}`);
+                const data = await res.json();
+                this.selectedReportRows = Array.isArray(data) ? data : this.mapApiResponseToRows(data);
+                this.selectedReportTitle = `${this.monthNames[this.selectedDate.month]} ${this.selectedDate.year}`;
+                this.viewingSelectedReport = true;
+                this.ChooseMonthlyReport = false;
+            } catch (err) {
+                // eslint-disable-next-line no-console
+                console.error('Failed to load monthly report', err);
+                this.selectedError = err.message || String(err);
+            } finally {
+                this.isLoadingSelected = false;
+            }
+        },
+        async saveWeekly() {
+            if (!this.selectedDate || !this.selectedDate.weekStart || !this.selectedDate.weekEnd) return;
+            this.isLoadingSelected = true;
+            this.selectedError = null;
+            try {
+                // Format dates as YYYY-MM-DD in local timezone (not UTC)
+                const formatLocalDate = (date) => {
+                    const year = date.getFullYear();
+                    const month = String(date.getMonth() + 1).padStart(2, '0');
+                    const day = String(date.getDate()).padStart(2, '0');
+                    return `${year}-${month}-${day}`;
+                };
+                const start = formatLocalDate(this.selectedDate.weekStart);
+                const end = formatLocalDate(this.selectedDate.weekEnd);
+                const res = await fetch(`/api/reports/summary?start=${start}&end=${end}`);
+                if (!res.ok) throw new Error(`API error ${res.status}`);
+                const data = await res.json();
+                this.selectedReportRows = Array.isArray(data) ? data : this.mapApiResponseToRows(data);
+                this.selectedReportTitle = `Week of ${start}`;
+                this.viewingSelectedReport = true;
+                this.ChooseWeeklyReport = false;
+            } catch (err) {
+                // eslint-disable-next-line no-console
+                console.error('Failed to load weekly report', err);
+                this.selectedError = err.message || String(err);
+            } finally {
+                this.isLoadingSelected = false;
+            }
+        },
+        async saveDaily() {
+            if (!this.selectedDate || !(this.selectedDate instanceof Date)) return;
+            this.isLoadingSelected = true;
+            this.selectedError = null;
+            try {
+                // Format date as YYYY-MM-DD in local timezone (not UTC)
+                const year = this.selectedDate.getFullYear();
+                const month = String(this.selectedDate.getMonth() + 1).padStart(2, '0');
+                const day = String(this.selectedDate.getDate()).padStart(2, '0');
+                const d = `${year}-${month}-${day}`;
+                const res = await fetch(`/api/reports/summary?date=${d}`);
+                if (!res.ok) throw new Error(`API error ${res.status}`);
+                const data = await res.json();
+                this.selectedReportRows = Array.isArray(data) ? data : this.mapApiResponseToRows(data);
+                this.selectedReportTitle = d;
+                this.viewingSelectedReport = true;
+                this.ChooseDailyReport = false;
+            } catch (err) {
+                // eslint-disable-next-line no-console
+                console.error('Failed to load daily report', err);
+                this.selectedError = err.message || String(err);
+            } finally {
+                this.isLoadingSelected = false;
+            }
+        },
+
+        // Normalize API shapes like object-by-category into an array of rows
+        mapApiResponseToRows(apiData) {
+            if (!apiData) return [];
+            if (Array.isArray(apiData)) return apiData;
+            // if keyed object { category: { total, added, removed }, ... }
+            return Object.keys(apiData).map(k => {
+                const v = apiData[k] || {};
+                return {
+                    category: k,
+                    total: v.total ?? v.count ?? 0,
+                    added: v.added ?? 0,
+                    removed: v.removed ?? 0,
+                };
+            });
+        },
+    }
+    ,
+    computed: {
+        monthNames() {
+            return [
+                'January','February','March','April','May','June',
+                'July','August','September','October','November','December'
+            ];
+        },
+        weekDayNames() {
+            return ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+        },
+        visibleDays() {
+            // Build calendar grid: 6 rows x 7 days = 42 cells
+            const year = this.currentYear;
+            const month = this.currentMonth;
+
+            const firstOfMonth = new Date(year, month, 1);
+            const startDay = firstOfMonth.getDay(); // 0-6 (Sun-Sat)
+
+            // Determine the date that will be placed in the first cell
+            const gridStart = new Date(year, month, 1 - startDay);
+
+            const days = [];
+            for (let i = 0; i < 42; i++) {
+                const d = new Date(gridStart);
+                d.setDate(gridStart.getDate() + i);
+                const inMonth = d.getMonth() === month;
+                let isSelected = false;
+                if (this.selectedDate) {
+                    if (this.selectedDate instanceof Date) {
+                        isSelected = d.toDateString() === this.selectedDate.toDateString();
+                    } else if (this.selectedDate && this.selectedDate.weekStart) {
+                        // weekly selection: check if date is within week range
+                        isSelected = d >= this.selectedDate.weekStart && d <= this.selectedDate.weekEnd;
+                    }
+                }
+                days.push({ date: d, inMonth, key: d.toISOString(), isSelected });
+            }
+            return days;
+        },
+        selectedDateFormatted() {
+            if (!this.selectedDate) return '';
+            return this.selectedDate.toDateString();
+        },
+        selectedDateFormatted() {
+            if (!this.selectedDate) return '';
+            return this.selectedDate.toDateString();
+        }
+    }
+}
+</script>
 
 <script setup lang="ts">
-import { ref, computed, watchEffect, onMounted } from 'vue'
-import { useFetch } from 'nuxt/app'
+// NOTE: We left the classic options API above; this small section is intentionally empty
+import { ref, watchEffect, onMounted } from 'vue';
+import { useFetch } from '#app';
 
-// Type definitions
-interface ReportRow {
-  category: string
-  total: number
-  added: number
-  removed: number
-}
+// Reports data (SSR-friendly): fetch at top-level so renders data immediately
+const reportRows = ref([]);
+const { data: summaryData, error: summaryError } = await useFetch('/api/reports/summary');
 
-interface MonthSelection {
-  year: number
-  month: number
-}
+watchEffect(() => {
+  if (summaryError?.value) {
+    // eslint-disable-next-line no-console
+    console.error('Failed to load report summary', summaryError.value);
+    reportRows.value = [];
+    } else if (summaryData?.value) {
+        reportRows.value = Array.isArray(summaryData.value) ? summaryData.value : [];
+    }
+});
 
-interface WeekSelection {
-  weekStart: Date
-  weekEnd: Date
-}
-
-type DateSelection = Date | MonthSelection | WeekSelection | null
-
-interface DayInfo {
-  date: Date
-  inMonth: boolean
-  key: string
-  isSelected: boolean
-}
-
-interface AmendForm {
-  category: string
-  quantity: number | null
-  action: string
-}
-
-// Modal states
-const showPreviousReportsModal = ref(false)
-const ChooseMonthlyReport = ref(false)
-const ChooseWeeklyReport = ref(false)
-const ChooseDailyReport = ref(false)
-const showAmendData = ref(false)
-const showAmendForm = ref(false)
-const showSuccess = ref(false)
-
-// Calendar state
-const today = new Date()
-const currentMonth = ref(today.getMonth())
-const currentYear = ref(today.getFullYear())
-const selectedDate = ref<DateSelection>(null)
-const displayYear = ref(today.getFullYear())
-
-// Form state
-const errorMessage = ref('')
-const form = ref<AmendForm>({ 
-  category: '', 
-  quantity: null, 
-  action: '' 
-})
-
-const categories = [
-  'Shirts',
-  'Jackets',
-  'Pants',
-  'Underwear',
-  'Shoes',
-  'Snack Packs',
-  'Hygiene Packs'
-]
-
-// Selected report state
-const viewingSelectedReport = ref(false)
-const selectedReportRows = ref<ReportRow[]>([])
-const selectedReportTitle = ref('')
-const isLoadingSelected = ref(false)
-const selectedError = ref<string | null>(null)
-
-// Today's totals
+// State for today’s category totals
 const todayTotals = ref<Record<string, number>>({})
+
+// List of categories (always shown)
 const allCategories = [
   'Shirts',
   'Jackets',
@@ -373,312 +643,15 @@ const allCategories = [
   'Tops'
 ]
 
-// Reports data (SSR-friendly)
-const reportRows = ref<ReportRow[]>([])
-const { data: summaryData, error: summaryError } = await useFetch('/api/reports/summary')
-
-watchEffect(() => {
-  if (summaryError?.value) {
-    console.error('Failed to load report summary', summaryError.value)
-    reportRows.value = []
-  } else if (summaryData?.value) {
-    reportRows.value = Array.isArray(summaryData.value) 
-    ? summaryData.value.map(row => ({
-        category: row.category,
-        total: Number(row.total) || 0,
-        added: Number(row.added) || 0,
-        removed: Number(row.removed) || 0
-        }))
-    : []
-  }
-})
-
-// Computed properties
-const monthNames = computed(() => [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December'
-])
-
-const weekDayNames = computed(() => ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'])
-
-const visibleDays = computed((): DayInfo[] => {
-  const year = currentYear.value
-  const month = currentMonth.value
-
-  const firstOfMonth = new Date(year, month, 1)
-  const startDay = firstOfMonth.getDay()
-  const gridStart = new Date(year, month, 1 - startDay)
-
-  const days: DayInfo[] = []
-  for (let i = 0; i < 42; i++) {
-    const d = new Date(gridStart)
-    d.setDate(gridStart.getDate() + i)
-    const inMonth = d.getMonth() === month
-    let isSelected = false
-    
-    if (selectedDate.value) {
-      if (selectedDate.value instanceof Date) {
-        isSelected = d.toDateString() === selectedDate.value.toDateString()
-      } else if ('weekStart' in selectedDate.value) {
-        isSelected = d >= selectedDate.value.weekStart && d <= selectedDate.value.weekEnd
-      }
-    }
-    
-    days.push({ 
-      date: d, 
-      inMonth, 
-      key: d.toISOString(), 
-      isSelected 
-    })
-  }
-  return days
-})
-
-const selectedDateFormatted = computed(() => {
-  if (!selectedDate.value) return ''
-  if (selectedDate.value instanceof Date) {
-    return selectedDate.value.toDateString()
-  }
-  return ''
-})
-
-// Methods
-function closePreviousReportsModal() {
-  showPreviousReportsModal.value = false
-}
-
-function openMonthlyFromPrevious() {
-  showPreviousReportsModal.value = false
-  ChooseMonthlyReport.value = true
-}
-
-function openWeeklyFromPrevious() {
-  showPreviousReportsModal.value = false
-  ChooseWeeklyReport.value = true
-}
-
-function openDailyFromPrevious() {
-  showPreviousReportsModal.value = false
-  ChooseDailyReport.value = true
-}
-
-function openAmendData() {
-  showAmendData.value = true
-}
-
-function prevMonth() {
-  if (currentMonth.value === 0) {
-    currentMonth.value = 11
-    currentYear.value -= 1
-  } else {
-    currentMonth.value -= 1
-  }
-}
-
-function nextMonth() {
-  if (currentMonth.value === 11) {
-    currentMonth.value = 0
-    currentYear.value += 1
-  } else {
-    currentMonth.value += 1
-  }
-}
-
-function selectDate(date: Date) {
-  const d = new Date(date.getFullYear(), date.getMonth(), date.getDate())
-  
-  if (selectedDate.value instanceof Date && selectedDate.value.toDateString() === d.toDateString()) {
-    selectedDate.value = null
-    return
-  }
-  
-  selectedDate.value = d
-  
-  if (showAmendData.value) {
-    showAmendData.value = false
-    showAmendForm.value = true
-  }
-}
-
-function selectWeek(date: Date) {
-  const d = new Date(date.getFullYear(), date.getMonth(), date.getDate())
-  const day = d.getDay()
-  const start = new Date(d)
-  start.setDate(d.getDate() - day)
-  start.setHours(0, 0, 0, 0)
-  const end = new Date(start)
-  end.setDate(start.getDate() + 6)
-  end.setHours(23, 59, 59, 999)
-  
-  if (selectedDate.value && typeof selectedDate.value === 'object' && 'weekStart' in selectedDate.value) {
-    const existingStart = new Date(selectedDate.value.weekStart)
-    const existingEnd = new Date(selectedDate.value.weekEnd)
-    if (existingStart.toDateString() === start.toDateString() && existingEnd.toDateString() === end.toDateString()) {
-      selectedDate.value = null
-      return
-    }
-  }
-  
-  selectedDate.value = { weekStart: start, weekEnd: end }
-}
-
-function prevYear() {
-  displayYear.value -= 1
-}
-
-function nextYear() {
-  displayYear.value += 1
-}
-
-function selectMonth(monthIndex: number) {
-  if (selectedDate.value && typeof selectedDate.value === 'object' && 'year' in selectedDate.value) {
-    if (selectedDate.value.year === displayYear.value && selectedDate.value.month === monthIndex) {
-      selectedDate.value = null
-      return
-    }
-  }
-  selectedDate.value = { year: displayYear.value, month: monthIndex }
-}
-
-async function submitAmend() {
-  errorMessage.value = ''
-  const { category, quantity, action } = form.value
-  
-  if (!category || !quantity || !action || quantity <= 0) {
-    errorMessage.value = 'Please fill all fields with valid values.'
-    return
-  }
-
-  try {
-    const res = await $fetch('/api/amend', {
-      method: 'POST',
-      body: {
-        selectedDate: selectedDate.value,
-        category,
-        quantity,
-        action
-      }
-    })
-    
-    if (res && typeof res === 'object' && 'success' in res && res.success) {
-      showAmendForm.value = false
-      showSuccess.value = true
-      form.value = { category: '', quantity: null, action: '' }
-      await fetchTodayTotals()
-    }
-  } catch (err: any) {
-    errorMessage.value = err.data?.message || 'An error occurred.'
-  }
-}
-
-async function saveMonthly() {
-  if (!selectedDate.value || typeof selectedDate.value !== 'object' || !('year' in selectedDate.value)) {
-    return
-  }
-  
-  isLoadingSelected.value = true
-  selectedError.value = null
-  
-  try {
-    const year = selectedDate.value.year
-    const month = selectedDate.value.month + 1
-    const res = await fetch(`/api/reports/summary?year=${year}&month=${String(month).padStart(2, '0')}`)
-    if (!res.ok) throw new Error(`API error ${res.status}`)
-    const data = await res.json()
-    selectedReportRows.value = Array.isArray(data) ? data : mapApiResponseToRows(data)
-    selectedReportTitle.value = `${monthNames.value[selectedDate.value.month]} ${selectedDate.value.year}`
-    viewingSelectedReport.value = true
-    ChooseMonthlyReport.value = false
-  } catch (err: any) {
-    console.error('Failed to load monthly report', err)
-    selectedError.value = err.message || String(err)
-  } finally {
-    isLoadingSelected.value = false
-  }
-}
-
-async function saveWeekly() {
-  if (!selectedDate.value || typeof selectedDate.value !== 'object' || !('weekStart' in selectedDate.value)) {
-    return
-  }
-  
-  isLoadingSelected.value = true
-  selectedError.value = null
-  
-  try {
-    const formatLocalDate = (date: Date) => {
-      const year = date.getFullYear()
-      const month = String(date.getMonth() + 1).padStart(2, '0')
-      const day = String(date.getDate()).padStart(2, '0')
-      return `${year}-${month}-${day}`
-    }
-    
-    const start = formatLocalDate(selectedDate.value.weekStart)
-    const end = formatLocalDate(selectedDate.value.weekEnd)
-    const res = await fetch(`/api/reports/summary?start=${start}&end=${end}`)
-    if (!res.ok) throw new Error(`API error ${res.status}`)
-    const data = await res.json()
-    selectedReportRows.value = Array.isArray(data) ? data : mapApiResponseToRows(data)
-    selectedReportTitle.value = `Week of ${start}`
-    viewingSelectedReport.value = true
-    ChooseWeeklyReport.value = false
-  } catch (err: any) {
-    console.error('Failed to load weekly report', err)
-    selectedError.value = err.message || String(err)
-  } finally {
-    isLoadingSelected.value = false
-  }
-}
-
-async function saveDaily() {
-  if (!selectedDate.value || !(selectedDate.value instanceof Date)) return
-  
-  isLoadingSelected.value = true
-  selectedError.value = null
-  
-  try {
-    const year = selectedDate.value.getFullYear()
-    const month = String(selectedDate.value.getMonth() + 1).padStart(2, '0')
-    const day = String(selectedDate.value.getDate()).padStart(2, '0')
-    const d = `${year}-${month}-${day}`
-    const res = await fetch(`/api/reports/summary?date=${d}`)
-    if (!res.ok) throw new Error(`API error ${res.status}`)
-    const data = await res.json()
-    selectedReportRows.value = Array.isArray(data) ? data : mapApiResponseToRows(data)
-    selectedReportTitle.value = d
-    viewingSelectedReport.value = true
-    ChooseDailyReport.value = false
-  } catch (err: any) {
-    console.error('Failed to load daily report', err)
-    selectedError.value = err.message || String(err)
-  } finally {
-    isLoadingSelected.value = false
-  }
-}
-
-function mapApiResponseToRows(apiData: any): ReportRow[] {
-  if (!apiData) return []
-  if (Array.isArray(apiData)) return apiData
-  
-  return Object.keys(apiData).map(k => {
-    const v = apiData[k] || {}
-    return {
-      category: k,
-      total: v.total ?? v.count ?? 0,
-      added: v.added ?? 0,
-      removed: v.removed ?? 0,
-    }
-  })
-}
-
 async function fetchTodayTotals() {
   try {
     const res = await fetch('/api/todayTotals')
     const data = await res.json()
 
+    // Fill in missing categories with 0
     const totals: Record<string, number> = {}
-    allCategories.forEach(aCat => {
-      totals[aCat] = data[aCat] ?? 0
+    categories.forEach(cat => {
+      totals[cat] = data[cat] ?? 0
     })
 
     todayTotals.value = totals
@@ -687,6 +660,7 @@ async function fetchTodayTotals() {
   }
 }
 
+// Call it on mount so the table loads immediately
 onMounted(() => {
   fetchTodayTotals()
 })
@@ -696,13 +670,14 @@ onMounted(() => {
 .reports-container {
     font-family: 'Open Sans', sans-serif;
     padding: 2em;
-    background-color: #f0f2f5;
+    background-color: #f0f2f5; /* Light gray background */
     min-height: 100vh;
-    max-height: 300px;
-    overflow-y: auto;
-    overflow-x: auto;
+    max-height: 300px; /* Adjust as needed */
+    overflow-y: auto; /* Vertical scroll */
+    overflow-x: auto; /* Horizontal scroll if needed */
 }
 
+/* Reuse inventory table styles */
 #reports-summary table {
     width: 100%;
     border-collapse: collapse;
@@ -720,7 +695,7 @@ onMounted(() => {
 }
 
 #reports-summary th {
-    background-color: #3f51b5;
+    background-color: #3f51b5; /* Indigo */
     color: #fff;
     font-weight: bold;
 }
@@ -739,7 +714,7 @@ onMounted(() => {
 
 .reports-section-title {
     font-size: 1.8em;
-    color: #3f51b5;
+    color: #3f51b5; /* Indigo */
     margin: 1em 0 0.5em;
 }
 
@@ -858,6 +833,7 @@ onMounted(() => {
   margin-top: 14px;
 }
 
+/* Modal styles */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -883,7 +859,7 @@ onMounted(() => {
 .modal-content h2 {
     margin-top: 0;
     margin-bottom: 1em;
-    color: #3f51b5;
+    color: #3f51b5; /* Indigo */
     text-align: center;
 }
 
@@ -897,8 +873,7 @@ onMounted(() => {
     color: #333;
 }
 
-.form-group input,
-.form-group select {
+.form-group input {
     width: 100%;
     padding: 0.5em;
     border: 1px solid #ccc;
@@ -907,9 +882,9 @@ onMounted(() => {
 
 .report-buttons {
     display: flex;
-    flex-direction: column;
+    flex-direction: column;   /* stack vertically */
     gap: 0.75rem;
-    align-items: stretch;
+    align-items: stretch;     /* make children fill width if you want */
     width: 100%;
 }
 
@@ -918,9 +893,10 @@ onMounted(() => {
 }
 
 .report-buttons button {
-    width: 100%;
-    justify-content: center;
+    width: 100%;              /* make each button full width inside its section */
+    justify-content: center;  /* center icon + text */
 }
+
 
 .form-actions {
     display: flex;
@@ -941,7 +917,7 @@ onMounted(() => {
 }
 
 .save-button {
-    background-color: #4caf50;
+    background-color: #4caf50; /* Green */
 }
 
 .save-button:hover {
@@ -949,13 +925,14 @@ onMounted(() => {
 }
 
 .cancel-button {
-    background-color: #f44336;
+    background-color: #f44336; /* Red */
 }
 
 .cancel-button:hover {
     background-color: #e53935;
 }
 
+/* Filter and Sort Section */
 .filter-sort-section {
     display: flex;
     flex-wrap: wrap;
@@ -967,7 +944,7 @@ onMounted(() => {
 .search-input {
     flex: 1 1 200px;
     margin-bottom: 1em;
-    max-width: 300px;
+    max-width: 300px; /* Shortened search bar */
 }
 
 .search-input input {
@@ -993,30 +970,27 @@ onMounted(() => {
     border: 1px solid #ddd;
 }
 
+/* Calendar styles */
 .calendar {
     margin: 1em 0;
 }
-
 .calendar-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 0.5em;
 }
-
 .calendar-header button {
     background: transparent;
     border: none;
     font-size: 1.2em;
     cursor: pointer;
 }
-
 .calendar-grid {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
     gap: 0.25em;
 }
-
 .calendar-weekday {
     text-align: center;
     font-weight: 600;
@@ -1024,7 +998,6 @@ onMounted(() => {
     font-size: 0.9em;
     color: #666;
 }
-
 .calendar-day {
     padding: 0.5em 0.25em;
     min-height: 40px;
@@ -1034,25 +1007,23 @@ onMounted(() => {
     cursor: pointer;
     text-align: center;
 }
-
 .calendar-day.other-month {
     color: #bbb;
     background: #fff;
 }
-
 .calendar-day.selected {
     background: #3f51b5;
     color: white;
     border-color: rgba(0,0,0,0.08);
 }
 
+/* Month grid (3 columns x 4 rows) */
 .month-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 0.5em;
     margin-top: 0.5em;
 }
-
 .month-cell {
     padding: 0.75em 0.5em;
     background: #fafafa;
@@ -1061,13 +1032,11 @@ onMounted(() => {
     cursor: pointer;
     text-align: center;
 }
-
 .month-cell.selected {
     background: #3f51b5;
     color: #fff;
     font-weight: 700;
 }
-
 .amendData-btn {
     padding: 0.5em 1.5em;
     background-color: blue;
