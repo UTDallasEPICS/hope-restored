@@ -6,7 +6,7 @@
 
         <!-- View Previous Reports Button -->
         <section class="view-previous-reports">
-            <button @click="showPreviousReportsModal = true" class="monthly-reports-button">
+         <button @click="showPreviousReportsModal = true" class="monthly-reports-button">
                 <i class="fas fa-folder-open"></i> View Previous Reports
             </button>
         </section>
@@ -19,9 +19,9 @@
 
                 <!-- Put the existing report buttons here -->
                 <div class="report-buttons">
-                    <section class="choose-monthly-report">
-                        <button @click="openMonthlyFromPrevious" class="monthly-reports-button">
-                            <i class="fas fa-plus"></i> Monthly Report
+                    <section class="choose-daily-report">
+                        <button @click="openDailyFromPrevious" class="daily-reports-button">
+                            <i class="fas fa-plus"></i> Daily Report
                         </button>
                     </section>
 
@@ -31,11 +31,13 @@
                         </button>
                     </section>
 
-                    <section class="choose-daily-report">
-                        <button @click="openDailyFromPrevious" class="daily-reports-button">
-                            <i class="fas fa-plus"></i> Daily Report
+                    <section class="choose-monthly-report">
+                        <button @click="openMonthlyFromPrevious" class="monthly-reports-button">
+                            <i class="fas fa-plus"></i> Monthly Report
                         </button>
                     </section>
+
+                    
                 </div>
 
                 <div class="form-actions" style="margin-top:1em;">
@@ -68,6 +70,7 @@
                 </div>
 
                 <div class="form-actions">
+                    <button class="save-button" @click="saveMonthly">Save</button>
                     <button class="cancel-button" @click="ChooseMonthlyReport = false">Close</button>
                 </div>
             </div>
@@ -98,6 +101,7 @@
                 </div>
 
                 <div class="form-actions">
+                    <button class="save-button" @click="saveWeekly">Save</button>
                     <button class="cancel-button" @click="ChooseWeeklyReport = false">Close</button>
                 </div>
             </div>
@@ -128,7 +132,46 @@
                 </div>
 
                 <div class="form-actions">
+                    <button class="save-button" @click="saveDaily">Save</button>
                     <button class="cancel-button" @click="ChooseDailyReport = false">Close</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Selected report results modal -->
+        <div v-if="viewingSelectedReport" class="modal-overlay" @click.self="viewingSelectedReport = false">
+            <div class="modal-content">
+                <h2>Report for: {{ selectedReportTitle }}</h2>
+
+                <div v-if="isLoadingSelected">Loading...</div>
+                <div v-else>
+                    <div v-if="selectedError" style="color: #b00020; margin-bottom: 1em;">{{ selectedError }}</div>
+                    <div v-else>
+                        <div id="reports-summary">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Category</th>
+                                        <th>Total</th>
+                                        <th>Added</th>
+                                        <th>Removed</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="r in selectedReportRows" :key="r.category">
+                                        <td>{{ r.category }}</td>
+                                        <td>{{ r.total }}</td>
+                                        <td>{{ r.added }}</td>
+                                        <td>{{ r.removed }}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-actions" style="margin-top:1em;">
+                    <button class="cancel-button" @click="viewingSelectedReport = false">Close</button>
                 </div>
             </div>
         </div>
@@ -226,6 +269,28 @@
 
 
 
+        <!-- Reports Summary Table Section -->
+        <h2 class="reports-section-title">Today's Data:</h2>
+        <div id="reports-summary" class="inventory_table_container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Category</th>
+                        <th>Total</th>
+                        <th>Added</th>
+                        <th>Removed</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-for="row in reportRows" :key="row.category">
+                        <td>{{ row.category }}</td>
+                        <td>{{ row.total }}</td>
+                        <td>{{ row.added }}</td>
+                        <td>{{ row.removed }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
 
 
 
@@ -255,7 +320,13 @@ export default {
             showSuccess: false,
             errorMessage: '',
             form: { category: '', quantity: null, action: '' },
-            categories: ['Shirts','Jackets','Pants','Underwear','Shoes','Snack Packs','Hygiene Packs']
+            categories: ['Shirts','Jackets','Pants','Underwear','Shoes','Snack Packs','Hygiene Packs'],
+            // Selected-report popup
+            viewingSelectedReport: false,
+            selectedReportRows: [],
+            selectedReportTitle: '',
+            isLoadingSelected: false,
+            selectedError: null
         }
     },
     methods: {
@@ -383,6 +454,103 @@ export default {
             this.errorMessage = err.data?.message || 'An error occurred.';
             }
         }
+        ,
+        // Placeholder save handlers for the modal Save buttons
+        async saveMonthly() {
+            if (!this.selectedDate || this.selectedDate.year === undefined || this.selectedDate.month === undefined) {
+                // nothing selected: do nothing (keep modal open)
+                return;
+            }
+            this.isLoadingSelected = true;
+            this.selectedError = null;
+            try {
+                const year = this.selectedDate.year;
+                const month = this.selectedDate.month + 1; // 1-based
+                const res = await fetch(`/api/reports/summary?year=${year}&month=${String(month).padStart(2,'0')}`);
+                if (!res.ok) throw new Error(`API error ${res.status}`);
+                const data = await res.json();
+                this.selectedReportRows = Array.isArray(data) ? data : this.mapApiResponseToRows(data);
+                this.selectedReportTitle = `${this.monthNames[this.selectedDate.month]} ${this.selectedDate.year}`;
+                this.viewingSelectedReport = true;
+                this.ChooseMonthlyReport = false;
+            } catch (err) {
+                // eslint-disable-next-line no-console
+                console.error('Failed to load monthly report', err);
+                this.selectedError = err.message || String(err);
+            } finally {
+                this.isLoadingSelected = false;
+            }
+        },
+        async saveWeekly() {
+            if (!this.selectedDate || !this.selectedDate.weekStart || !this.selectedDate.weekEnd) return;
+            this.isLoadingSelected = true;
+            this.selectedError = null;
+            try {
+                // Format dates as YYYY-MM-DD in local timezone (not UTC)
+                const formatLocalDate = (date) => {
+                    const year = date.getFullYear();
+                    const month = String(date.getMonth() + 1).padStart(2, '0');
+                    const day = String(date.getDate()).padStart(2, '0');
+                    return `${year}-${month}-${day}`;
+                };
+                const start = formatLocalDate(this.selectedDate.weekStart);
+                const end = formatLocalDate(this.selectedDate.weekEnd);
+                const res = await fetch(`/api/reports/summary?start=${start}&end=${end}`);
+                if (!res.ok) throw new Error(`API error ${res.status}`);
+                const data = await res.json();
+                this.selectedReportRows = Array.isArray(data) ? data : this.mapApiResponseToRows(data);
+                this.selectedReportTitle = `Week of ${start}`;
+                this.viewingSelectedReport = true;
+                this.ChooseWeeklyReport = false;
+            } catch (err) {
+                // eslint-disable-next-line no-console
+                console.error('Failed to load weekly report', err);
+                this.selectedError = err.message || String(err);
+            } finally {
+                this.isLoadingSelected = false;
+            }
+        },
+        async saveDaily() {
+            if (!this.selectedDate || !(this.selectedDate instanceof Date)) return;
+            this.isLoadingSelected = true;
+            this.selectedError = null;
+            try {
+                // Format date as YYYY-MM-DD in local timezone (not UTC)
+                const year = this.selectedDate.getFullYear();
+                const month = String(this.selectedDate.getMonth() + 1).padStart(2, '0');
+                const day = String(this.selectedDate.getDate()).padStart(2, '0');
+                const d = `${year}-${month}-${day}`;
+                const res = await fetch(`/api/reports/summary?date=${d}`);
+                if (!res.ok) throw new Error(`API error ${res.status}`);
+                const data = await res.json();
+                this.selectedReportRows = Array.isArray(data) ? data : this.mapApiResponseToRows(data);
+                this.selectedReportTitle = d;
+                this.viewingSelectedReport = true;
+                this.ChooseDailyReport = false;
+            } catch (err) {
+                // eslint-disable-next-line no-console
+                console.error('Failed to load daily report', err);
+                this.selectedError = err.message || String(err);
+            } finally {
+                this.isLoadingSelected = false;
+            }
+        },
+
+        // Normalize API shapes like object-by-category into an array of rows
+        mapApiResponseToRows(apiData) {
+            if (!apiData) return [];
+            if (Array.isArray(apiData)) return apiData;
+            // if keyed object { category: { total, added, removed }, ... }
+            return Object.keys(apiData).map(k => {
+                const v = apiData[k] || {};
+                return {
+                    category: k,
+                    total: v.total ?? v.count ?? 0,
+                    added: v.added ?? 0,
+                    removed: v.removed ?? 0,
+                };
+            });
+        },
     }
     ,
     computed: {
@@ -432,6 +600,27 @@ export default {
 }
 </script>
 
+<script setup>
+// NOTE: We left the classic options API above; this small section is intentionally empty
+import { ref, watchEffect } from 'vue';
+import { useFetch } from '#app';
+
+// Reports data (SSR-friendly): fetch at top-level so renders data immediately
+const reportRows = ref([]);
+const { data: summaryData, error: summaryError } = await useFetch('/api/reports/summary');
+
+watchEffect(() => {
+  if (summaryError?.value) {
+    // eslint-disable-next-line no-console
+    console.error('Failed to load report summary', summaryError.value);
+    reportRows.value = [];
+    } else if (summaryData?.value) {
+        reportRows.value = Array.isArray(summaryData.value) ? summaryData.value : [];
+    }
+});
+</script>
+
+
 <style scoped>
 .reports-container {
     font-family: 'Open Sans', sans-serif;
@@ -441,6 +630,47 @@ export default {
     max-height: 300px; /* Adjust as needed */
     overflow-y: auto; /* Vertical scroll */
     overflow-x: auto; /* Horizontal scroll if needed */
+}
+
+/* Reuse inventory table styles */
+#reports-summary table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+#reports-summary th,
+#reports-summary td {
+    padding: 12px;
+    border-bottom: 1px solid #ddd;
+    text-align: center;
+}
+
+#reports-summary th {
+    background-color: #3f51b5; /* Indigo */
+    color: #fff;
+    font-weight: bold;
+}
+
+#reports-summary tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+#reports-summary tr:hover {
+    background-color: #e0e0e0;
+}
+
+#reports-summary td {
+    color: #333;
+}
+
+.reports-section-title {
+    font-size: 1.8em;
+    color: #3f51b5; /* Indigo */
+    margin: 1em 0 0.5em;
 }
 
 .reports-landing {
@@ -459,7 +689,7 @@ export default {
 
 .monthly-reports-button{
     padding: 0.5em 1.5em;
-    background-color: #af4c4c; /* Red */
+    background-color: #4c5baf; 
     color: #fff;
     border: none;
     border-radius: 4px;
@@ -480,7 +710,7 @@ export default {
 
 .weekly-reports-button{
     padding: 0.5em 1.5em;
-    background-color: #4caf53; /* Green */
+    background-color: #4c5baf; 
     color: #fff;
     border: none;
     border-radius: 4px;
@@ -501,7 +731,7 @@ export default {
 
 .daily-reports-button{
     padding: 0.5em 1.5em;
-    background-color: #4c5baf; /* Blue */
+    background-color: #4c5baf;
     color: #fff;
     border: none;
     border-radius: 4px;
@@ -605,10 +835,28 @@ export default {
     border-radius: 4px;
 }
 
+.report-buttons {
+    display: flex;
+    flex-direction: column;   /* stack vertically */
+    gap: 0.75rem;
+    align-items: stretch;     /* make children fill width if you want */
+    width: 100%;
+}
+
+.report-buttons > section {
+    width: 100%;
+}
+
+.report-buttons button {
+    width: 100%;              /* make each button full width inside its section */
+    justify-content: center;  /* center icon + text */
+}
+
+
 .form-actions {
     display: flex;
     justify-content: flex-end;
-    gap: 1em;
+    gap: 1rem;
 }
 
 .save-button,

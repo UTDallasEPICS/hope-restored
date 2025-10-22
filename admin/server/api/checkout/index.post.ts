@@ -42,26 +42,51 @@ export default defineEventHandler(async (event) => {
 
   const resultLines: string[] = [];
 
+  // Helper to get today's date range (server local time / CDT)
+  const now = new Date();
+  const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+  const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0, 0);
+
   try {
-    // Pre-check: ensure requested quantities do not exceed available inventory
-    const insufficient: Array<{ category: string; requested: number; available: number }> = [];
+    // Pre-check: ensure requested quantities do not exceed available inventory FOR TODAY ONLY
+    // Build a map of requested totals per canonical category name to handle multiple lines for same category
+    const requestedMap = new Map<string, number>();
+    const lookupMap = new Map<string, { inputName: string; categoryName: string }>();
     for (const entry of removals) {
-      const categoryName = entry.category;
+      const inputName = entry.category;
       const requested = Number(entry.quantity) || 0;
-      if (!categoryName || requested <= 0) continue;
+      if (!inputName || requested <= 0) continue;
+      const category = await findCategoryByName(prisma, inputName);
+      const canonical = category ? category.name : inputName;
+      lookupMap.set(canonical, { inputName, categoryName: canonical });
+      requestedMap.set(canonical, (requestedMap.get(canonical) || 0) + requested);
+    }
 
-      // Case-insensitive category lookup to avoid mismatch due to casing
-        // Robust category lookup
-        const category = await findCategoryByName(prisma, categoryName);
-      if (!category) {
-        insufficient.push({ category: categoryName, requested, available: 0 });
-        continue;
+    const insufficient: Array<{ category: string; requested: number; available: number }> = [];
+    // Query available totals for all involved categories in parallel (TODAY ONLY)
+    const categoriesToCheck = Array.from(requestedMap.keys());
+    if (categoriesToCheck.length > 0) {
+      const aggs = await Promise.all(
+        categoriesToCheck.map((cat) =>
+          prisma.inventoryRecords.aggregate({
+            where: {
+              category: cat,
+              date: { gte: startOfDay, lt: endOfDay },
+            },
+            _sum: { quantity: true },
+          })
+        )
+      );
+
+      for (let i = 0; i < categoriesToCheck.length; i++) {
+        const cat = categoriesToCheck[i];
+        const requested = requestedMap.get(cat) || 0;
+        const available = aggs[i]._sum.quantity ?? 0;
+        if (requested > available) {
+          const original = lookupMap.get(cat)?.inputName || cat;
+          insufficient.push({ category: original, requested, available });
+        }
       }
-
-      // Use InventoryRecords as the source of truth for available stock
-      const agg = await prisma.inventoryRecords.aggregate({ where: { category: category.name }, _sum: { quantity: true } });
-      const available = agg._sum.quantity ?? 0;
-      if (requested > available) insufficient.push({ category: categoryName, requested, available });
     }
 
     if (insufficient.length > 0) {
@@ -69,34 +94,38 @@ export default defineEventHandler(async (event) => {
     }
 
     // All checks passed — perform removals inside a transaction for consistency
+    // Perform removals inside a single transaction. Use the grouped requestedMap so multiple lines for same category are consumed once.
     await prisma.$transaction(async (tx) => {
-      for (const entry of removals) {
-        const categoryName = entry.category;
-        let remainingToRemove = Number(entry.quantity) || 0;
-        if (!categoryName || remainingToRemove <= 0) continue;
-        // Use case-insensitive lookup inside transaction and re-check availability to avoid race conditions
-          // Robust lookup inside the transaction and re-check availability to avoid race conditions
-          const category = await findCategoryByName(tx, categoryName);
-        if (!category) {
-          resultLines.push(`Category not found: ${categoryName}`);
-          continue;
-        }
-        // Re-check availability from InventoryRecords inside the transaction
-        const agg = await tx.inventoryRecords.aggregate({ where: { category: category.name }, _sum: { quantity: true } });
+      for (const [canonicalCategory, totalRequested] of requestedMap.entries()) {
+        if (!canonicalCategory || totalRequested <= 0) continue;
+        // re-check availability inside transaction (TODAY ONLY)
+        const agg = await tx.inventoryRecords.aggregate({
+          where: {
+            category: canonicalCategory,
+            date: { gte: startOfDay, lt: endOfDay },
+          },
+          _sum: { quantity: true },
+        });
         const available = agg._sum.quantity ?? 0;
-        if (remainingToRemove > available) {
-          throw new Error(`Insufficient inventory for ${categoryName}: requested ${remainingToRemove}, available ${available}`);
+        if (totalRequested > available) {
+          throw new Error(`Insufficient inventory for ${canonicalCategory}: requested ${totalRequested}, available ${available}`);
         }
-        // Consume InventoryRecords FIFO (oldest first)
-        const recordRows = await tx.inventoryRecords.findMany({ where: { category: category.name }, orderBy: { date: 'asc' } });
+
+        // Consume InventoryRecords FIFO (oldest first) from TODAY ONLY until totalRequested satisfied
+        let needed = totalRequested;
+        const recordRows = await tx.inventoryRecords.findMany({
+          where: {
+            category: canonicalCategory,
+            date: { gte: startOfDay, lt: endOfDay },
+          },
+          orderBy: { date: 'asc' },
+        });
         let totalRemoved = 0;
-        let needed = remainingToRemove;
         for (const rec of recordRows) {
           if (needed <= 0) break;
           const take = Math.min(needed, rec.quantity);
           if (take <= 0) continue;
           if (take >= rec.quantity) {
-            // consume entire record
             await tx.inventoryRecords.delete({ where: { id: rec.id } });
           } else {
             await tx.inventoryRecords.update({ where: { id: rec.id }, data: { quantity: { decrement: take } } });
@@ -105,30 +134,41 @@ export default defineEventHandler(async (event) => {
           totalRemoved += take;
         }
 
-        // Sanity: totalRemoved should equal remainingToRemove now
-        if (totalRemoved !== remainingToRemove) {
-          throw new Error(`Could not consume requested quantity for ${categoryName}. Removed ${totalRemoved} expected ${remainingToRemove}`);
+        if (totalRemoved !== totalRequested) {
+          throw new Error(`Could not consume requested quantity for ${canonicalCategory}. Removed ${totalRemoved} expected ${totalRequested}`);
         }
 
-        // Also decrement Inventory aggregated rows to keep inventory table in sync
+        // Also decrement Inventory aggregated rows to keep inventory table in sync (best-effort)
         let remainingToDecrement = totalRemoved;
-        const invRows = await tx.inventory.findMany({ where: { categoryId: category.id }, orderBy: { quantity: 'desc' } });
-        for (const row of invRows) {
-          if (remainingToDecrement <= 0) break;
-          const take = Math.min(remainingToDecrement, row.quantity);
-          if (take <= 0) continue;
-          await tx.inventory.update({ where: { barcode: row.barcode }, data: { quantity: { decrement: take } } });
-          remainingToDecrement -= take;
+        // find matching inventory rows by category relation
+        const categoryRow = await tx.itemCategory.findUnique({ where: { name: canonicalCategory } });
+        if (categoryRow) {
+          const invRows = await tx.inventory.findMany({ where: { categoryId: categoryRow.id }, orderBy: { quantity: 'desc' } });
+          for (const row of invRows) {
+            if (remainingToDecrement <= 0) break;
+            const take = Math.min(remainingToDecrement, row.quantity);
+            if (take <= 0) continue;
+            await tx.inventory.update({ where: { barcode: row.barcode }, data: { quantity: { decrement: take } } });
+            remainingToDecrement -= take;
+          }
         }
 
-        await tx.removals.create({ data: { category: categoryName, dateRemoved: new Date(), quantity: totalRemoved } });
-        resultLines.push(`Removed ${totalRemoved} ${categoryName}`);
+        // Record Removals history with the input name if available
+        // Use startOfDay (already defined) for consistent date filtering
+        const inputName = lookupMap.get(canonicalCategory)?.inputName || canonicalCategory;
+        await tx.removals.create({ data: { category: inputName, dateRemoved: startOfDay, quantity: totalRemoved } });
+        resultLines.push(`Removed ${totalRemoved} ${inputName}`);
       }
     });
 
     return { success: true, lines: resultLines };
-  } catch (err) {
+  } catch (err: any) {
     console.error('Checkout error:', err);
-    return { success: false, error: String(err) };
+    console.error('Error details:', {
+      message: err?.message,
+      stack: err?.stack,
+      name: err?.name,
+    });
+    return { success: false, error: String(err?.message || err) };
   }
 });

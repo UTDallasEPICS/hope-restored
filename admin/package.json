@@ -4,6 +4,8 @@
   "scripts": {
     "build": "nuxt build",
     "dev": "nuxt dev",
+    "newDay": "node ./scripts/dailyInventorySnapshot.mjs",
+    "snapshot:daily": "node ./scripts/dailyInventorySnapshot.mjs",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
