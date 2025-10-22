@@ -273,9 +273,11 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr v-for="aCat in allCategories" :key="aCat">
-                        <td>{{ aCat }}</td>
-                        <td>{{ todayTotals[aCat] ?? 0 }}</td>
+                    <tr v-for="row in reportRows" :key="row.category">
+                        <td>{{ row.category }}</td>
+                        <td>{{ row.total }}</td>
+                        <td>{{ row.added }}</td>
+                        <td>{{ row.removed }}</td>
                     </tr>
                 </tbody>
             </table>
@@ -451,8 +453,33 @@ export default {
                 this.showAmendForm = false;
                 this.showSuccess = true;
                 this.form = { category: '', quantity: null, action: '' };
-                showSuccessPopup.value = true
-                await fetchTodayTotals()
+            }
+            } catch (err) {
+            this.errorMessage = err.data?.message || 'An error occurred.';
+            }
+        },
+        async submitAmend() {
+            this.errorMessage = '';
+            const { category, quantity, action } = this.form;
+            if (!category || !quantity || !action || quantity <= 0) {
+            this.errorMessage = 'Please fill all fields with valid values.';
+            return;
+            }
+
+            try {
+            const res = await $fetch('/api/amend', {
+                method: 'POST',
+                body: {
+                selectedDate: this.selectedDate,
+                category,
+                quantity,
+                action
+                }
+            });
+            if (res.success) {
+                this.showAmendForm = false;
+                this.showSuccess = true;
+                this.form = { category: '', quantity: null, action: '' };
             }
             } catch (err) {
             this.errorMessage = err.data?.message || 'An error occurred.';
@@ -608,9 +635,9 @@ export default {
 }
 </script>
 
-<script setup lang="ts">
+<script setup>
 // NOTE: We left the classic options API above; this small section is intentionally empty
-import { ref, watchEffect, onMounted } from 'vue';
+import { ref, watchEffect } from 'vue';
 import { useFetch } from '#app';
 
 // Reports data (SSR-friendly): fetch at top-level so renders data immediately
@@ -626,44 +653,6 @@ watchEffect(() => {
         reportRows.value = Array.isArray(summaryData.value) ? summaryData.value : [];
     }
 });
-
-// State for today’s category totals
-const todayTotals = ref<Record<string, number>>({})
-
-// List of categories (always shown)
-const allCategories = [
-  'Shirts',
-  'Jackets',
-  'Pants',
-  'Underwear',
-  'Shoes',
-  'Snack Packs',
-  'Hygiene Packs',
-  'Socks',
-  'Tops'
-]
-
-async function fetchTodayTotals() {
-  try {
-    const res = await fetch('/api/todayTotals')
-    const data = await res.json()
-
-    // Fill in missing categories with 0
-    const totals: Record<string, number> = {}
-    categories.forEach(cat => {
-      totals[cat] = data[cat] ?? 0
-    })
-
-    todayTotals.value = totals
-  } catch (err) {
-    console.error('Error fetching today totals:', err)
-  }
-}
-
-// Call it on mount so the table loads immediately
-onMounted(() => {
-  fetchTodayTotals()
-})
 </script>
 
 <style scoped>
