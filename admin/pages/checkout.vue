@@ -2,6 +2,8 @@
   <div class="checkout-page">
     <!-- Main content -->
     <div class="content">
+      <h1 style="color: red;"> NOTE: Please enter data in chronological order from earliest date to the most recent date/today. Do NOT enter data for a date without entering any previous days' data. In addition, for each date, please enter all additions first and then all removals. This ensures that the reports and inventory show correct data for all dates. </h1>
+      <h2>Pick a Category:</h2>
       <h2>Select a Category to Checkout</h2>
 
       <!-- Category buttons -->
@@ -281,70 +283,86 @@ function openCheckoutConfirm() {
   });
 }
 
-// ✅ This now updates the Prisma database through your API route
+// Handles checkout confirmation and updates Prisma DB through API
 async function confirmCheckout() {
   showCheckoutConfirm.value = false;
 
-  // Only send nonzero items
-  const removals = items.value
-    .filter((it) => it.quantity > 0)
-    .map((it) => ({
-      category: it.name,
-      quantity: it.quantity,
-    }));
+  // Prepare list of valid removals (nonzero quantities)
+  const removals = items.value.reduce((acc, item) => {
+    if (item.quantity > 0) {
+      acc.push({ category: item.name, quantity: item.quantity });
+    }
+    return acc;
+  }, []);
 
-  if (removals.length === 0) {
+  if (!removals.length) {
     alert("No items selected for checkout.");
     return;
   }
 
-    const { data, error } = await useFetch("/api/checkout", {
+  let data, error;
+  try {
+    ({ data, error } = await useFetch("/api/checkout", {
       method: "POST",
       body: { removals },
-    });
+    }));
+  } catch (fetchErr) {
+    console.error(fetchErr);
+    alert("Network error during checkout.");
+    return;
+  }
 
-    if (error.value) {
-      console.error(error.value);
-      alert("Checkout failed. Please try again.");
-      return;
+  if (error?.value) {
+    console.error(error.value);
+    alert("Checkout failed. Please try again.");
+    return;
+  }
+
+  const resp = data?.value;
+  if (!resp) {
+    alert("No response from server.");
+    return;
+  }
+
+  if (!resp.success) {
+    console.error("Checkout failed:", resp);
+
+    const msg = resp.error || "Checkout failed";
+    let detailsMsg = "";
+
+    if (Array.isArray(resp.details)) {
+      detailsMsg = resp.details
+        .map(
+          (d) => `${d.category}: requested ${d.requested}, available ${d.available}`
+        )
+        .join("\n");
+    } else if (resp.details) {
+      detailsMsg = JSON.stringify(resp.details);
     }
 
-    const resp = data.value;
-    if (!resp) {
-      alert('No response from server');
-      return;
-    }
+    alert(msg + (detailsMsg ? "\n" + detailsMsg : ""));
+    return;
+  }
 
-    if (!resp.success) {
-      // Show server-sent details if available
-      console.error('Checkout failed:', resp);
-      const msg = resp.error || 'Checkout failed';
-      if (resp.details && Array.isArray(resp.details)) {
-        const details = resp.details.map(d => `${d.category}: requested ${d.requested}, available ${d.available}`).join('\n');
-        alert(msg + '\n' + details);
-      } else if (resp.details) {
-        alert(msg + '\n' + JSON.stringify(resp.details));
-      } else {
-        alert(msg);
-      }
-      return;
-    }
-
-  // Success: display removed lines and signal inventory refresh
-  // Log response for debugging and fall back to local removedList if server didn't return lines
+  // Success: show confirmation + refresh inventory
   try {
-    console.log('checkout response:', resp);
-  } catch (e) {}
-  const serverLines = (resp.lines && Array.isArray(resp.lines) && resp.lines.length > 0) ? resp.lines : null;
+    console.log("Checkout response:", resp);
+  } catch (_) {}
+
+  const serverLines =
+    Array.isArray(resp.lines) && resp.lines.length > 0 ? resp.lines : null;
   removedListServer.value = serverLines || removedList.value || [];
-    try {
-      const inventoryRefresh = useState('inventoryRefreshKey');
-      inventoryRefresh.value = Date.now();
-    } catch (e) {
-      // ignore if running in a non-Nuxt context
-    }
-    showRemovedModal.value = true;
+
+  try {
+    const inventoryRefresh = useState("inventoryRefreshKey");
+    inventoryRefresh.value = Date.now();
+  } catch {
+    // Safe to ignore if not in Nuxt
+  }
+
+  showRemovedModal.value = true;
 }
+
 
 // refresh inventory when other pages update it
 onMounted(() => {
