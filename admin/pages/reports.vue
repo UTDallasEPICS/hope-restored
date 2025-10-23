@@ -2,7 +2,6 @@
 <template>
     <div class="reports-container">
         <h1 style="color: red;"> NOTE: Please enter data in chronological order from earliest date to the most recent date/today. Do NOT enter data for a date without entering any previous days' data. In addition, for each date, please enter all additions first and then all removals. This ensures that the reports and inventory show correct data for all dates. </h1>
-        <h1>Reports</h1>
 
         <!-- View Previous Reports Button -->
         <section class="view-previous-reports">
@@ -282,11 +281,34 @@
                 </tbody>
             </table>
         </div>
-
-
-
     </div>
 </template>
+
+<script setup>
+import { ref, watchEffect, getCurrentInstance } from 'vue';
+import { useFetch } from '#app';
+
+// Reports data (SSR-friendly): fetch at top-level so renders data immediately
+const reportRows = ref([]);
+const { data: summaryData, error: summaryError, refresh: refreshSummary } = await useFetch('/api/reports/summary');
+
+watchEffect(() => {
+  if (summaryError?.value) {
+    // eslint-disable-next-line no-console
+    console.error('Failed to load report summary', summaryError.value);
+    reportRows.value = [];
+  } else if (summaryData?.value) {
+    reportRows.value = Array.isArray(summaryData.value) ? summaryData.value : [];
+  }
+});
+
+// Expose refreshSummary to the Options API part via the instance
+const instance = getCurrentInstance();
+if (instance) {
+  instance.appContext.config.globalProperties.$refreshSummaryData = refreshSummary;
+}
+</script>
+
 <script>
 export default {
     name: 'ReportsLandingPage',
@@ -317,14 +339,7 @@ export default {
             selectedReportRows: [],
             selectedReportTitle: '',
             isLoadingSelected: false,
-            selectedError: null,
-            // Amend data modals
-            showAmendData: false,
-            showAmendForm: false,
-            showSuccess: false,
-            errorMessage: '',
-            form: { category: '', quantity: null, action: '' },
-            categories: ['Shirts','Jackets','Pants','Underwear','Shoes','Snack Packs','Hygiene Packs']
+            selectedError: null
         }
     },
     methods: {
@@ -345,8 +360,7 @@ export default {
         },
         openAmendData() {
             this.showAmendData = true;
-        }
-        ,
+        },
         // Calendar helpers
         prevMonth() {
             if (this.currentMonth === 0) {
@@ -376,17 +390,11 @@ export default {
             // you can load report data here
             // keep the daily modal open (or close chooser if it came from chooser)
             if (this.showAmendData) {
-            // Close calendar pop-up
-            this.showAmendData = false;
-            // Open amend form modal
-            this.showAmendForm = true;
-  }
-            if (this.showAmendData) {
-            // Close calendar pop-up
-            this.showAmendData = false;
-            // Open amend form modal
-            this.showAmendForm = true;
-  }
+                // Close calendar pop-up
+                this.showAmendData = false;
+                // Open amend form modal
+                this.showAmendForm = true;
+            }
         },
         // Select a week containing the clicked date (for weekly report)
         selectWeek(date) {
@@ -410,8 +418,7 @@ export default {
             }
             // store or load weekly report for the range start..end
             this.selectedDate = { weekStart: start, weekEnd: end };
-        }
-        ,
+        },
         // Monthly navigation and selection
         prevYear() {
             this.displayYear -= 1;
@@ -435,57 +442,32 @@ export default {
             this.errorMessage = '';
             const { category, quantity, action } = this.form;
             if (!category || !quantity || !action || quantity <= 0) {
-            this.errorMessage = 'Please fill all fields with valid values.';
-            return;
+                this.errorMessage = 'Please fill all fields with valid values.';
+                return;
             }
 
             try {
-            const res = await $fetch('/api/amend', {
-                method: 'POST',
-                body: {
-                selectedDate: this.selectedDate,
-                category,
-                quantity,
-                action
+                const res = await $fetch('/api/amend', {
+                    method: 'POST',
+                    body: {
+                        selectedDate: this.selectedDate,
+                        category,
+                        quantity,
+                        action
+                    }
+                });
+                if (res.success) {
+                    this.showAmendForm = false;
+                    this.showSuccess = true;
+                    this.form = { category: '', quantity: null, action: '' };
+                    
+                    // CRITICAL: Refresh the summary data to show updated totals without page reload
+                    await this.$refreshSummaryData();
                 }
-            });
-            if (res.success) {
-                this.showAmendForm = false;
-                this.showSuccess = true;
-                this.form = { category: '', quantity: null, action: '' };
-            }
             } catch (err) {
-            this.errorMessage = err.data?.message || 'An error occurred.';
+                this.errorMessage = err.data?.message || 'An error occurred.';
             }
         },
-        async submitAmend() {
-            this.errorMessage = '';
-            const { category, quantity, action } = this.form;
-            if (!category || !quantity || !action || quantity <= 0) {
-            this.errorMessage = 'Please fill all fields with valid values.';
-            return;
-            }
-
-            try {
-            const res = await $fetch('/api/amend', {
-                method: 'POST',
-                body: {
-                selectedDate: this.selectedDate,
-                category,
-                quantity,
-                action
-                }
-            });
-            if (res.success) {
-                this.showAmendForm = false;
-                this.showSuccess = true;
-                this.form = { category: '', quantity: null, action: '' };
-            }
-            } catch (err) {
-            this.errorMessage = err.data?.message || 'An error occurred.';
-            }
-        }
-        ,
         // Placeholder save handlers for the modal Save buttons
         async saveMonthly() {
             if (!this.selectedDate || this.selectedDate.year === undefined || this.selectedDate.month === undefined) {
@@ -581,9 +563,8 @@ export default {
                     removed: v.removed ?? 0,
                 };
             });
-        },
-    }
-    ,
+        }
+    },
     computed: {
         monthNames() {
             return [
@@ -626,33 +607,9 @@ export default {
         selectedDateFormatted() {
             if (!this.selectedDate) return '';
             return this.selectedDate.toDateString();
-        },
-        selectedDateFormatted() {
-            if (!this.selectedDate) return '';
-            return this.selectedDate.toDateString();
         }
     }
 }
-</script>
-
-<script setup>
-// NOTE: We left the classic options API above; this small section is intentionally empty
-import { ref, watchEffect } from 'vue';
-import { useFetch } from '#app';
-
-// Reports data (SSR-friendly): fetch at top-level so renders data immediately
-const reportRows = ref([]);
-const { data: summaryData, error: summaryError } = await useFetch('/api/reports/summary');
-
-watchEffect(() => {
-  if (summaryError?.value) {
-    // eslint-disable-next-line no-console
-    console.error('Failed to load report summary', summaryError.value);
-    reportRows.value = [];
-    } else if (summaryData?.value) {
-        reportRows.value = Array.isArray(summaryData.value) ? summaryData.value : [];
-    }
-});
 </script>
 
 <style scoped>
@@ -862,7 +819,8 @@ watchEffect(() => {
     color: #333;
 }
 
-.form-group input {
+.form-group input,
+.form-group select {
     width: 100%;
     padding: 0.5em;
     border: 1px solid #ccc;
@@ -1028,7 +986,7 @@ watchEffect(() => {
 }
 .amendData-btn {
     padding: 0.5em 1.5em;
-    background-color: blue;
+    background-color: #4c5baf;
     color: #fff;
     border: none;
     border-radius: 4px;
