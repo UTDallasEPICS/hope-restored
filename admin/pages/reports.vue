@@ -3,12 +3,13 @@
     <div class="reports-container">
         <h1 style="color: red;"> NOTE: Please enter data in chronological order from earliest date to the most recent date/today. Do NOT enter data for a date without entering any previous days' data. In addition, for each date, please enter all additions first and then all removals. This ensures that the reports and inventory show correct data for all dates. </h1>
 
-        <!-- View Previous Reports Button -->
-        <section class="view-previous-reports">
-         <button @click="showPreviousReportsModal = true" class="monthly-reports-button">
+        <!-- Actions Row: View Previous Reports + Amend Data -->
+        <div class="actions-row">
+            <button @click="showPreviousReportsModal = true" class="monthly-reports-button">
                 <i class="fas fa-folder-open"></i> View Previous Reports
             </button>
-        </section>
+            <button class="amendData-btn" @click="openAmendData">Amend Data</button>
+        </div>
 
         <!-- Previous Reports Modal -->
         <div v-if="showPreviousReportsModal" class="modal-overlay" @click.self="closePreviousReportsModal">
@@ -175,12 +176,7 @@
             </div>
         </div>
 
-      <!-- Amend Data button -->
-      <div class="amendData-button">
-        <button class="amendData-btn" @click="openAmendData">
-          Amend Data
-        </button>
-      </div>
+      
 
       <!-- Amend Data Modal -->
       <div v-if="showAmendData" class="modal-overlay" @click.self="showAmendData = false">
@@ -842,6 +838,13 @@ export default {
 .report-buttons button {
     width: 100%;              /* make each button full width inside its section */
     justify-content: center;  /* center icon + text */
+}
+
+.actions-row {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    margin-bottom: 1em;
 }
 
 
