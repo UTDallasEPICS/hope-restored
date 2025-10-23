@@ -47,7 +47,7 @@
         </div>
 
         <!-- Individual report modals (can be opened directly or via Previous Reports) -->
-        <div v-if="ChooseMonthlyReport" class="modal-overlay" @click.self="ChooseMonthlyReport = false">
+        <div v-if="ChooseMonthlyReport" class="modal-overlay" @click.self="closeMonthlyReport">
             <div class="modal-content">
                 <h2>Monthly Report</h2>
                 <p>Select a month to view:</p>
@@ -70,13 +70,13 @@
                 </div>
 
                 <div class="form-actions">
-                    <button class="save-button" @click="saveMonthly">Save</button>
-                    <button class="cancel-button" @click="ChooseMonthlyReport = false">Close</button>
+                    <button class="save-button" @click="saveMonthly">Select</button>
+                    <button class="cancel-button" @click="closeMonthlyReport">Close</button>
                 </div>
             </div>
         </div>
 
-        <div v-if="ChooseWeeklyReport" class="modal-overlay" @click.self="ChooseWeeklyReport = false">
+        <div v-if="ChooseWeeklyReport" class="modal-overlay" @click.self="closeWeeklyReport">
             <div class="modal-content">
                 <h2>Weekly Report</h2>
                 <p>Select a week to view:</p>
@@ -101,13 +101,13 @@
                 </div>
 
                 <div class="form-actions">
-                    <button class="save-button" @click="saveWeekly">Save</button>
-                    <button class="cancel-button" @click="ChooseWeeklyReport = false">Close</button>
+                    <button class="save-button" @click="saveWeekly">Select</button>
+                    <button class="cancel-button" @click="closeWeeklyReport">Close</button>
                 </div>
             </div>
         </div>
 
-        <div v-if="ChooseDailyReport" class="modal-overlay" @click.self="ChooseDailyReport = false">
+        <div v-if="ChooseDailyReport" class="modal-overlay" @click.self="closeDailyReport">
             <div class="modal-content">
                 <h2>Daily Report</h2>
                 <p>Select a date to view:</p>
@@ -132,8 +132,8 @@
                 </div>
 
                 <div class="form-actions">
-                    <button class="save-button" @click="saveDaily">Save</button>
-                    <button class="cancel-button" @click="ChooseDailyReport = false">Close</button>
+                    <button class="save-button" @click="saveDaily">Select</button>
+                    <button class="cancel-button" @click="closeDailyReport">Close</button>
                 </div>
             </div>
         </div>
@@ -179,7 +179,7 @@
       
 
       <!-- Amend Data Modal -->
-      <div v-if="showAmendData" class="modal-overlay" @click.self="showAmendData = false">
+      <div v-if="showAmendData" class="modal-overlay" @click.self="closeAmendData">
         <div class="modal-content">
             <h2>Amend Data</h2>
             <p>Choose a date to amend data for that date:</p>
@@ -204,7 +204,8 @@
             </div>
 
             <div class="form-actions">
-                <button class="cancel-button" @click="showAmendData = false">Close</button>
+                <button class="save-button" @click="selectDateForAmend">Select</button>
+                <button class="cancel-button" @click="closeAmendData">Close</button>
             </div>
         </div>
       </div>
@@ -342,6 +343,22 @@ export default {
         closePreviousReportsModal() {
             this.showPreviousReportsModal = false;
         },
+        closeMonthlyReport() {
+            this.ChooseMonthlyReport = false;
+            this.selectedDate = null;
+        },
+        closeWeeklyReport() {
+            this.ChooseWeeklyReport = false;
+            this.selectedDate = null;
+        },
+        closeDailyReport() {
+            this.ChooseDailyReport = false;
+            this.selectedDate = null;
+        },
+        closeAmendData() {
+            this.showAmendData = false;
+            this.selectedDate = null;
+        },
         openMonthlyFromPrevious() {
             this.showPreviousReportsModal = false;
             this.ChooseMonthlyReport = true;
@@ -356,6 +373,16 @@ export default {
         },
         openAmendData() {
             this.showAmendData = true;
+        },
+        selectDateForAmend() {
+            if (!this.selectedDate || !(this.selectedDate instanceof Date)) {
+                // No date selected, do nothing
+                return;
+            }
+            // Close calendar pop-up
+            this.showAmendData = false;
+            // Open amend form modal
+            this.showAmendForm = true;
         },
         // Calendar helpers
         prevMonth() {
@@ -385,12 +412,6 @@ export default {
             this.selectedDate = d;
             // you can load report data here
             // keep the daily modal open (or close chooser if it came from chooser)
-            if (this.showAmendData) {
-                // Close calendar pop-up
-                this.showAmendData = false;
-                // Open amend form modal
-                this.showAmendForm = true;
-            }
         },
         // Select a week containing the clicked date (for weekly report)
         selectWeek(date) {
@@ -482,6 +503,7 @@ export default {
                 this.selectedReportTitle = `${this.monthNames[this.selectedDate.month]} ${this.selectedDate.year}`;
                 this.viewingSelectedReport = true;
                 this.ChooseMonthlyReport = false;
+                this.selectedDate = null;
             } catch (err) {
                 // eslint-disable-next-line no-console
                 console.error('Failed to load monthly report', err);
@@ -502,15 +524,26 @@ export default {
                     const day = String(date.getDate()).padStart(2, '0');
                     return `${year}-${month}-${day}`;
                 };
+                // Format dates for display (e.g., "October 19")
+                const formatDisplayDate = (date) => {
+                    const monthName = this.monthNames[date.getMonth()];
+                    const day = date.getDate();
+                    return `${monthName} ${day}`;
+                };
                 const start = formatLocalDate(this.selectedDate.weekStart);
                 const end = formatLocalDate(this.selectedDate.weekEnd);
                 const res = await fetch(`/api/reports/summary?start=${start}&end=${end}`);
                 if (!res.ok) throw new Error(`API error ${res.status}`);
                 const data = await res.json();
                 this.selectedReportRows = Array.isArray(data) ? data : this.mapApiResponseToRows(data);
-                this.selectedReportTitle = `Week of ${start}`;
+                // Create readable title with full date range
+                const startDisplay = formatDisplayDate(this.selectedDate.weekStart);
+                const endDisplay = formatDisplayDate(this.selectedDate.weekEnd);
+                const year = this.selectedDate.weekEnd.getFullYear();
+                this.selectedReportTitle = `${startDisplay} - ${endDisplay} ${year}`;
                 this.viewingSelectedReport = true;
                 this.ChooseWeeklyReport = false;
+                this.selectedDate = null;
             } catch (err) {
                 // eslint-disable-next-line no-console
                 console.error('Failed to load weekly report', err);
@@ -533,9 +566,13 @@ export default {
                 if (!res.ok) throw new Error(`API error ${res.status}`);
                 const data = await res.json();
                 this.selectedReportRows = Array.isArray(data) ? data : this.mapApiResponseToRows(data);
-                this.selectedReportTitle = d;
+                // Format display title (e.g., "October 19 2025")
+                const monthName = this.monthNames[this.selectedDate.getMonth()];
+                const dayNum = this.selectedDate.getDate();
+                this.selectedReportTitle = `${monthName} ${dayNum} ${year}`;
                 this.viewingSelectedReport = true;
                 this.ChooseDailyReport = false;
+                this.selectedDate = null;
             } catch (err) {
                 // eslint-disable-next-line no-console
                 console.error('Failed to load daily report', err);

@@ -177,7 +177,19 @@
                     <input type="number" v-model.number="quickQuantity" min="1" />
                 </div>
                 <div class="form-actions" style="justify-content:center; flex-direction:column; gap:0.5rem;">
-                    <button type="button" @click="addQuick" class="save-button">ADD</button>
+                    <button type="button" @click="showConfirmAdd" class="save-button">ADD</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Confirm Add Modal -->
+        <div v-if="showConfirmAddModal" class="modal-overlay">
+            <div class="modal">
+                <h3>Add {{ quickQuantity }} {{ quickPopupCategory }}?</h3>
+                <p>Confirm Yes/No</p>
+                <div class="modal-actions">
+                    <button type="button" @click="confirmAddQuick" class="btn danger">Yes</button>
+                    <button type="button" @click="cancelConfirmAdd" class="btn">No</button>
                 </div>
             </div>
         </div>
@@ -290,6 +302,7 @@
     const shirtsQuantity = ref(1);
     // Generic quick popup for all categories
     const showQuickPopup = ref(false);
+    const showConfirmAddModal = ref(false);
     const quickPopupCategory = ref('');
     const quickQuantity = ref(1);
     const editedItem = ref({ barcode: null, quantity: null });
@@ -337,9 +350,20 @@
 
     function closeQuickPopup() {
         showQuickPopup.value = false;
+        showConfirmAddModal.value = false;
     }
 
-    async function addQuick() {
+    function showConfirmAdd() {
+        showQuickPopup.value = false;
+        showConfirmAddModal.value = true;
+    }
+
+    function cancelConfirmAdd() {
+        showConfirmAddModal.value = false;
+        showQuickPopup.value = true;
+    }
+
+    async function confirmAddQuick() {
         const payload = {
             category: quickPopupCategory.value,
             style: 'Misc.',
@@ -359,7 +383,8 @@
         } catch (err) {
             console.error('Error adding item:', err);
         } finally {
-            closeQuickPopup();
+            showConfirmAddModal.value = false;
+            quickQuantity.value = 1;
         }
     }
 
@@ -745,6 +770,16 @@
         z-index: 1000;
     }
 
+    .modal {
+        background: white;
+        border-radius: 8px;
+        padding: 20px;
+        min-width: 320px;
+        max-width: 480px;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
+        position: relative;
+    }
+
     .modal-content {
         background-color: #fff;
         padding: 2em;
@@ -782,6 +817,27 @@
         display: flex;
         justify-content: flex-end;
         gap: 1em;
+    }
+
+    .modal-actions {
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+        margin-top: 8px;
+    }
+
+    .btn {
+        padding: 8px 14px;
+        border-radius: 6px;
+        border: 1px solid #bbb;
+        cursor: pointer;
+        background: #f5f5f5;
+    }
+
+    .btn.danger {
+        background: #c0392b;
+        color: white;
+        border: none;
     }
 
     .save-button,
