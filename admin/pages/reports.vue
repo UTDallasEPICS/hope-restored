@@ -456,35 +456,64 @@ export default {
             this.selectedDate = { year: this.displayYear, month: monthIndex };
         },
         async submitAmend() {
+            console.log('submitAmend called'); // DEBUG
             this.errorMessage = '';
             const { category, quantity, action } = this.form;
+            console.log('Form data:', { category, quantity, action, selectedDate: this.selectedDate }); // DEBUG
+            
             if (!category || !quantity || !action || quantity <= 0) {
                 this.errorMessage = 'Please fill all fields with valid values.';
+                console.log('Validation failed:', this.errorMessage); // DEBUG
                 return;
             }
 
             try {
-                const res = await $fetch('/api/amend', {
+                console.log('Sending request to /api/amend'); // DEBUG
+                // Use native fetch API with JSON serialization
+                const response = await fetch('/api/amend', {
                     method: 'POST',
-                    body: {
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
                         selectedDate: this.selectedDate,
                         category,
                         quantity,
                         action
-                    }
+                    })
                 });
+
+                console.log('Response status:', response.status); // DEBUG
+                
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    console.log('Error response:', errorData); // DEBUG
+                    throw new Error(errorData.message || `HTTP error ${response.status}`);
+                }
+
+                const res = await response.json();
+                console.log('Success response:', res); // DEBUG
+                
                 if (res.success) {
+                    console.log('Closing modals and showing success'); // DEBUG
                     this.showAmendForm = false;
                     this.showSuccess = true;
                     this.form = { category: '', quantity: null, action: '' };
                     
-                    // CRITICAL: Refresh the summary data to show updated totals without page reload
-                    await this.$refreshSummaryData();
+                    console.log('Refreshing summary data'); // DEBUG
+                    if (this.$refreshSummaryData) {
+                        await this.$refreshSummaryData();
+                        console.log('Summary data refreshed'); // DEBUG
+                    } else {
+                        console.warn('$refreshSummaryData not available'); // DEBUG
+                    }
                 }
             } catch (err) {
-                this.errorMessage = err.data?.message || 'An error occurred.';
+                console.error('Amendment error:', err);
+                this.errorMessage = err.message || 'An error occurred.';
             }
-        },
+        }
+        ,
         // Placeholder save handlers for the modal Save buttons
         async saveMonthly() {
             if (!this.selectedDate || this.selectedDate.year === undefined || this.selectedDate.month === undefined) {
