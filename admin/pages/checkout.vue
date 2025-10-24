@@ -51,7 +51,7 @@
       <div class="modal">
   <button class="modal-close" @click="closeAllModals">✕</button>
   <h3 v-if="!editMode">Enter {{ selectedCategory }} Quantity:</h3>
-  <h3 v-else>Update quantity of {{ selectedCategory }}:</h3>
+  <h3 v-else>Update Quantity of {{ selectedCategory }}:</h3>
         <input
           type="number"
           min="0"
