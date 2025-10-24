@@ -125,11 +125,8 @@ export default defineEventHandler(async (event) => {
           if (needed <= 0) break;
           const take = Math.min(needed, rec.quantity);
           if (take <= 0) continue;
-          if (take >= rec.quantity) {
-            await tx.inventoryRecords.delete({ where: { id: rec.id } });
-          } else {
-            await tx.inventoryRecords.update({ where: { id: rec.id }, data: { quantity: { decrement: take } } });
-          }
+          // Always update to decrement, never delete - keeps row at 0
+          await tx.inventoryRecords.update({ where: { id: rec.id }, data: { quantity: { decrement: take } } });
           needed -= take;
           totalRemoved += take;
         }
@@ -148,6 +145,7 @@ export default defineEventHandler(async (event) => {
             if (remainingToDecrement <= 0) break;
             const take = Math.min(remainingToDecrement, row.quantity);
             if (take <= 0) continue;
+            // Always update to decrement, never delete - keeps row at 0
             await tx.inventory.update({ where: { barcode: row.barcode }, data: { quantity: { decrement: take } } });
             remainingToDecrement -= take;
           }

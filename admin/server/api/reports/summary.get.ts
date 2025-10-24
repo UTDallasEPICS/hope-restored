@@ -39,21 +39,38 @@ export default defineEventHandler(async (event) => {
   // Canonical category order
   const order = ['Shirts', 'Pants', 'Jackets', 'Underwear', 'Shoes', 'Snack Packs', 'Hygiene Packs'];
 
-  // Aggregate totals from InventoryRecords (today only)
-  const totalRows = await prisma.inventoryRecords.groupBy({
-    by: ['category'],
+  // For inventory totals, get only the LAST day's inventory in the range
+  // Find the most recent date with InventoryRecords in the range
+  const lastDateRecord = await prisma.inventoryRecords.findFirst({
     where: { date: { gte: rangeStart, lt: rangeEnd } },
-    _sum: { quantity: true },
+    orderBy: { date: 'desc' },
+    select: { date: true },
   });
 
-  // Aggregate additions for the day
+  type InventoryGroupBy = { category: string; _sum: { quantity: number | null } };
+  let totalRows: InventoryGroupBy[] = [];
+  if (lastDateRecord) {
+    // Get only records from the last day in the range
+    const lastDate = lastDateRecord.date;
+    const lastDayStart = new Date(lastDate.getFullYear(), lastDate.getMonth(), lastDate.getDate(), 0, 0, 0, 0);
+    const lastDayEnd = new Date(lastDate.getFullYear(), lastDate.getMonth(), lastDate.getDate() + 1, 0, 0, 0, 0);
+    
+    // @ts-expect-error - Prisma groupBy return type inference issue
+    totalRows = await prisma.inventoryRecords.groupBy({
+      by: ['category'],
+      where: { date: { gte: lastDayStart, lt: lastDayEnd } },
+      _sum: { quantity: true },
+    });
+  }
+
+  // Aggregate additions for the entire date range
   const addRows = await prisma.additions.groupBy({
     by: ['category'],
     where: { dateAdded: { gte: rangeStart, lt: rangeEnd } },
     _sum: { quantity: true },
   });
 
-  // Aggregate removals for the day
+  // Aggregate removals for the entire date range
   const removeRows = await prisma.removals.groupBy({
     by: ['category'],
     where: { dateRemoved: { gte: rangeStart, lt: rangeEnd } },
