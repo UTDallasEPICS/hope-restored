@@ -5,7 +5,7 @@
         <header class="welcome-section">
             <h1>Welcome to Hope Restored Missions!</h1>
             <p>Your hope is our mission.</p>
-            <button onclick="location.href='https://hoperestoredmissions.org/'" target="_blank" class="cta-button">Get Involved</button>
+            <a href="https://hoperestoredmissions.org/" target="_blank" rel="noopener" class="cta-button">Get Involved</a>
         </header>
 
         <!-- About Us Section -->
@@ -84,16 +84,17 @@
 
         .welcome-section h1 {
             font-size: 3em;
-            margin-bottom: 0.5em;
+            margin-bottom: 1.5em;
         }
 
         .welcome-section p {
             font-size: 1.5em;
+            margin-bottom: 1em;
         }
 
         .welcome-section .cta-button {
             margin-top: 1.5em;
-            padding: 0.75em 2em;
+            padding: 0.5em 2em;
             font-size: 1.2em;
             color: #fff;
             background-color: #ff9800; /* Orange */
