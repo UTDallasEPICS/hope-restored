@@ -455,8 +455,31 @@
         return { start, end };
     }
 
+    // Check and create new day's inventory records if they don't exist
+    async function checkAndCreateNewDay() {
+        try {
+            const response: any = await $fetch('/api/inventory/check-new-day', {
+                method: 'POST',
+            });
+            
+            if (response.recordsCreated) {
+                console.log(`✅ New day detected: Created ${response.count || 0} inventory records for ${new Date(response.date).toLocaleDateString()}`);
+            } else {
+                console.log(`✓ Today's inventory records already exist`);
+            }
+            
+            return response;
+        } catch (error) {
+            console.error('Failed to check/create new day:', error);
+            throw error;
+        }
+    }
+
     async function getInventory() {
         try {
+            // Check and create new day's records first
+            await checkAndCreateNewDay();
+            
             const { start, end } = getTodayRange();
             // Fetch only today's InventoryRecords
             inventory.value = await $fetch('/api/inventory/', {
