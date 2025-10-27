@@ -1,3 +1,5 @@
+// check-new-day.post.ts
+
 import { defineEventHandler } from 'h3';
 import { PrismaClient } from '@prisma/client';
 
@@ -31,9 +33,15 @@ export default defineEventHandler(async () => {
   }
 
   // Get all categories
-  const categories = await prisma.itemCategory.findMany({
-    orderBy: { name: 'asc' },
-  });
+  const categories = [
+    { name: 'Shirts' },
+    { name: 'Pants' },
+    { name: 'Shoes' },
+    { name: 'Underwear' },
+    { name: 'Jackets' },
+    { name: 'Snack Packs' },
+    { name: 'Hygiene Packs' }
+  ];
 
   // For each category, find the most recent InventoryRecord and copy its quantity
   const newRecords = [];
