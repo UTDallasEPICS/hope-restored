@@ -145,7 +145,7 @@
             <div class="modal-content">
                 <h2>Add Inventory Item</h2>
                 <h2>Item Barcode: {{ editedItem.barcode }}</h2>
-                <form @submit.prevent="updateItem">
+                <form @submit.prevent="editItem(editedItem)">
                     <div class="form-group">
                         <label for="quantity">Quantity:</label>
                         <input type="number"
@@ -174,21 +174,27 @@
                 <button type="button" class="popup-close-x" aria-label="Close" @click="closeQuickPopup">×</button>
                 <h2>Enter Quantity for {{ quickPopupCategory }}:</h2>
                 <div class="form-group">
-                    <input type="number" v-model.number="quickQuantity" min="1" />
+                    <input
+                        type="number"
+                        v-model.number="quickQuantity"
+                        min="0"
+                        placeholder="Enter number"
+                        @keyup.enter="showConfirmAdd"
+                    />
                 </div>
-                <div class="form-actions" style="justify-content:center; flex-direction:column; gap:0.5rem;">
-                    <button type="button" @click="showConfirmAdd" class="save-button">ADD</button>
+                <div class="form-actions">
+                    <button type="button" @click="showConfirmAdd" class="add-button">Add</button>
                 </div>
             </div>
         </div>
 
         <!-- Confirm Add Modal -->
-        <div v-if="showConfirmAddModal" class="modal-overlay">
-            <div class="modal">
+        <div v-if="showConfirmAddModal" class="modal-overlay" @keydown.enter.prevent="confirmAddQuick">
+            <div class="modal" tabindex="-1">
                 <h3>Add {{ quickQuantity }} {{ quickPopupCategory }}?</h3>
                 <p>Confirm Yes/No</p>
                 <div class="modal-actions">
-                    <button type="button" @click="confirmAddQuick" class="btn danger">Yes</button>
+                    <button type="button" @click="confirmAddQuick" class="btn danger" autofocus ref="confirmAddYesBtn">Yes</button>
                     <button type="button" @click="cancelConfirmAdd" class="btn">No</button>
                 </div>
             </div>
@@ -199,7 +205,7 @@
             <div class="modal-content">
                 <h2>Remove Inventory Item</h2>
                 <h2>Item Barcode: {{ editedItem.barcode }}</h2>
-                <form @submit.prevent="updateItem">
+                <form @submit.prevent="editItem({ barcode: editedItem.barcode, quantity: editedItem.quantity ? editedItem.quantity * -1 : 0 })">
                     <div class="form-group">
                         <label for="quantity">Quantity:</label>
                         <input type="number"
@@ -207,10 +213,10 @@
                                id="quantity"
                                required
                                min="0"
-                               :max="editedItem.quantity" />
+                               :max="editedItem.quantity ?? 0" />
                     </div>
                     <div class="form-actions">
-                        <button type="submit" @click="editItem({ barcode: editedItem.barcode, quantity: editedItem.quantity * -1 })" class="save-button">
+                        <button type="submit" @click="editItem({ barcode: editedItem.barcode, quantity: editedItem.quantity ? editedItem.quantity * -1 : 0 })" class="save-button">
                             <i class="fas fa-save"></i> Save
                         </button>
                         <button type="button"
@@ -283,7 +289,7 @@
 </template>
 
 <script setup lang="ts">
-    import { ref, computed, onMounted, watch } from 'vue';
+    import { ref, computed, onMounted, watch, nextTick } from 'vue';
     import { useFetch, useRuntimeConfig } from 'nuxt/app';
     import QRCode from 'qrcode.vue';
     
@@ -303,8 +309,9 @@
     // Generic quick popup for all categories
     const showQuickPopup = ref(false);
     const showConfirmAddModal = ref(false);
+    const confirmAddYesBtn = ref<any>(null);
     const quickPopupCategory = ref('');
-    const quickQuantity = ref(1);
+    const quickQuantity = ref(null);
     const editedItem = ref({ barcode: null, quantity: null });
     
     // making the drop down dynamic
@@ -344,7 +351,7 @@
 
     function openQuickPopup(category: string) {
         quickPopupCategory.value = category;
-        quickQuantity.value = 1;
+        quickQuantity.value = null;
         showQuickPopup.value = true;
     }
 
@@ -384,16 +391,25 @@
             console.error('Error adding item:', err);
         } finally {
             showConfirmAddModal.value = false;
-            quickQuantity.value = 1;
+            quickQuantity.value = null;
         }
     }
 
-    function openAddQuantityModal(item) {
+    // Focus the Yes button when the confirm modal opens so Enter activates it
+    watch(showConfirmAddModal, (val) => {
+        if (val) {
+            nextTick(() => {
+                confirmAddYesBtn.value?.focus();
+            });
+        }
+    });
+
+    function openAddQuantityModal(item: any) {
         editedItem.value = item;
         showAddQuantityModal.value = true;
     }
 
-    function openReduceQuantityModal(item) {
+    function openReduceQuantityModal(item: any) {
         editedItem.value = item;
         showReduceQuantityModal.value = true;
     }
@@ -402,7 +418,7 @@
         showInvalidQuantityPopup.value = true;
     }
 
-    async function editItem(editedItem) {
+    async function editItem(editedItem: any) {
         let item = null;
 
         if (editedItem.barcode && editedItem.quantity){
@@ -455,8 +471,31 @@
         return { start, end };
     }
 
+    // Check and create new day's inventory records if they don't exist
+    async function checkAndCreateNewDay() {
+        try {
+            const response: any = await $fetch('/api/inventory/check-new-day', {
+                method: 'POST',
+            });
+            
+            if (response.recordsCreated) {
+                console.log(`✅ New day detected: Created ${response.count || 0} inventory records for ${new Date(response.date).toLocaleDateString()}`);
+            } else {
+                console.log(`✓ Today's inventory records already exist`);
+            }
+            
+            return response;
+        } catch (error) {
+            console.error('Failed to check/create new day:', error);
+            throw error;
+        }
+    }
+
     async function getInventory() {
         try {
+            // Check and create new day's records first
+            await checkAndCreateNewDay();
+            
             const { start, end } = getTodayRange();
             // Fetch only today's InventoryRecords
             inventory.value = await $fetch('/api/inventory/', {
@@ -474,10 +513,10 @@
     onMounted(getInventory);
 
     // Fetch inventory item
-    async function getItem(id) {
+    async function getItem(id: any) {
         try {
             console.log(id);
-            const item = await $fetch(`/api/inventory/${id}`, { // get inventory data; call [id].get.ts
+            const item: any = await $fetch(`/api/inventory/${id}`, { // get inventory data; call [id].get.ts
                 method: 'GET'
             });
 
@@ -491,7 +530,7 @@
     };
 
     // Call the server-side API to delete this item from the database
-    async function deleteEntry(barcode) {
+    async function deleteEntry(barcode: any) {
         const response = await $fetch('/api/inventory/', {  // post entry to database; call index.delete.ts
             method: 'DELETE',
             body: { // data for database entry
@@ -841,7 +880,8 @@
     }
 
     .save-button,
-    .cancel-button {
+    .cancel-button,
+    .add-button {
         padding: 0.5em 1.5em;
         color: #fff;
         border: none;
@@ -858,6 +898,14 @@
 
         .save-button:hover {
             background-color: #43a047;
+        }
+
+    .add-button {
+        background-color: #007bff; /* Blue */
+    }
+
+        .add-button:hover {
+            background-color: #0056b3;
         }
 
     .cancel-button {

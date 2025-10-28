@@ -17,7 +17,7 @@
                 <h2>Previous Reports</h2>
                 <p>Select a report to view:</p>
 
-                <!-- Put the existing report buttons here -->
+                <!-- Report buttons -->
                 <div class="report-buttons">
                     <section class="choose-daily-report">
                         <button @click="openDailyFromPrevious" class="daily-reports-button">
@@ -62,7 +62,11 @@
                     <div class="month-grid">
                         <button v-for="(mName, idx) in monthNames" :key="mName"
                                 class="month-cell"
-                                :class="{ 'selected': selectedDate && selectedDate.year === displayYear && selectedDate.month === idx }"
+                                :class="{ 
+                                    'selected': selectedDate && selectedDate.year === displayYear && selectedDate.month === idx,
+                                    'disabled': isMonthDisabled(displayYear, idx)
+                                }"
+                                :disabled="isMonthDisabled(displayYear, idx)"
                                 @click="selectMonth(idx)">
                             {{ mName }}
                         </button>
@@ -93,7 +97,12 @@
                         <button class="calendar-day" 
                                 v-for="day in visibleDays" 
                                 :key="day.key"
-                                :class="{ 'other-month': !day.inMonth, 'selected': day.isSelected }"
+                                :class="{ 
+                                    'other-month': !day.inMonth, 
+                                    'selected': day.isSelected,
+                                    'disabled': isWeekDisabled(day.date)
+                                }"
+                                :disabled="isWeekDisabled(day.date)"
                                 @click="selectWeek(day.date)">
                             {{ day.date.getDate() }}
                         </button>
@@ -124,7 +133,12 @@
                         <button class="calendar-day" 
                                 v-for="day in visibleDays" 
                                 :key="day.key"
-                                :class="{ 'other-month': !day.inMonth, 'selected': day.isSelected }"
+                                :class="{ 
+                                    'other-month': !day.inMonth, 
+                                    'selected': day.isSelected,
+                                    'disabled': isDayDisabled(day.date)
+                                }"
+                                :disabled="isDayDisabled(day.date)"
                                 @click="selectDate(day.date)">
                             {{ day.date.getDate() }}
                         </button>
@@ -196,7 +210,12 @@
                     <button class="calendar-day" 
                             v-for="day in visibleDays" 
                             :key="day.key"
-                            :class="{ 'other-month': !day.inMonth, 'selected': day.isSelected }"
+                            :class="{ 
+                                'other-month': !day.inMonth, 
+                                'selected': day.isSelected,
+                                'disabled': isDayDisabled(day.date)
+                            }"
+                            :disabled="isDayDisabled(day.date)"
                             @click="selectDate(day.date)">
                         {{ day.date.getDate() }}
                     </button>
@@ -310,7 +329,26 @@ if (instance) {
 export default {
     name: 'ReportsLandingPage',
     data() {
+        // Calculate today in Central Time before returning data
+        const now = new Date();
+        const centralTimeString = now.toLocaleString('en-US', { 
+            timeZone: 'America/Chicago',
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit'
+        });
+        const [month, day, year] = centralTimeString.split('/');
+        const todayCentral = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+        todayCentral.setHours(0, 0, 0, 0);
+        
         return {
+            // ========================================
+            // IMPORTANT: Change this date to modify the "first date" restriction
+            // Format: new Date(year, month-1, day)
+            // Example: new Date(2025, 9, 23) = October 23, 2025
+            // ========================================
+            FIRST_ALLOWED_DATE: new Date(2025, 9, 23), // October 23, 2025 (month is 0-indexed) 
+            
             // Controls the "Previous Reports" chooser modal
             showPreviousReportsModal: false,
 
@@ -319,9 +357,9 @@ export default {
             ChooseWeeklyReport: false,
             ChooseDailyReport: false,
             // Calendar state (shared by daily and weekly views)
-            today: new Date(),
-            currentMonth: new Date().getMonth(),
-            currentYear: new Date().getFullYear(),
+            today: todayCentral,
+            currentMonth: todayCentral.getMonth(),
+            currentYear: todayCentral.getFullYear(),
             selectedDate: null,
             // Monthly view year display
             displayYear: new Date().getFullYear(),
@@ -340,6 +378,94 @@ export default {
         }
     },
     methods: {
+        // Get today's date in US Central Time
+        getTodayInCentralTime() {
+            const now = new Date();
+            // Get the date/time components in Central Time
+            const centralTimeString = now.toLocaleString('en-US', { 
+                timeZone: 'America/Chicago',
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit'
+            });
+            // Parse the MM/DD/YYYY format
+            const [month, day, year] = centralTimeString.split('/');
+            // Create a new date at midnight
+            const centralDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+            centralDate.setHours(0, 0, 0, 0);
+            return centralDate;
+        },
+        // Helper method to check if a date (day) is disabled
+        // Helper method to check if a date (day) is disabled
+        isDayDisabled(date) {
+            // Normalize all dates to midnight for accurate comparison
+            const checkDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+            checkDate.setHours(0, 0, 0, 0);
+            
+            // Get today in Central Time
+            const todayDate = this.getTodayInCentralTime();
+            
+            const firstDate = new Date(this.FIRST_ALLOWED_DATE.getFullYear(), this.FIRST_ALLOWED_DATE.getMonth(), this.FIRST_ALLOWED_DATE.getDate());
+            firstDate.setHours(0, 0, 0, 0);
+            
+            // DEBUG LOGGING
+            if (checkDate.getDate() === 21 || checkDate.getDate() === 22 || checkDate.getDate() === 23) {
+                console.log('Date being checked:', checkDate.toDateString());
+                console.log('First allowed date:', firstDate.toDateString());
+                console.log('Today date:', todayDate.toDateString());
+                console.log('checkDate < firstDate:', checkDate < firstDate);
+                console.log('checkDate.getTime():', checkDate.getTime());
+                console.log('firstDate.getTime():', firstDate.getTime());
+                console.log('---');
+            }
+            
+            // Disable if before first allowed date or today or after
+            return checkDate < firstDate || checkDate >= todayDate;
+        },
+        
+        // Helper method to check if a week is disabled
+        isWeekDisabled(date) {
+            // Calculate the week start (Sunday) for the clicked date
+            const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+            const day = d.getDay();
+            const weekStart = new Date(d);
+            weekStart.setDate(d.getDate() - day);
+            weekStart.setHours(0, 0, 0, 0);
+            
+            // Calculate the week that contains the first allowed date
+            const firstDate = new Date(this.FIRST_ALLOWED_DATE.getFullYear(), this.FIRST_ALLOWED_DATE.getMonth(), this.FIRST_ALLOWED_DATE.getDate());
+            const firstDay = firstDate.getDay();
+            const firstWeekStart = new Date(firstDate);
+            firstWeekStart.setDate(firstDate.getDate() - firstDay);
+            firstWeekStart.setHours(0, 0, 0, 0);
+            
+            // Calculate the current week start
+            const today = this.getTodayInCentralTime();
+            const todayDay = today.getDay();
+            const currentWeekStart = new Date(today);
+            currentWeekStart.setDate(today.getDate() - todayDay);
+            currentWeekStart.setHours(0, 0, 0, 0);
+            
+            // Disable if week starts before the first allowed week or after the current week
+            return weekStart < firstWeekStart || weekStart > currentWeekStart;
+        },
+        
+        // Helper method to check if a month is disabled
+        isMonthDisabled(year, monthIndex) {
+            // Create date for first day of the selected month
+            const selectedMonth = new Date(year, monthIndex, 1);
+            
+            // Create date for first day of the first allowed month
+            const firstMonth = new Date(this.FIRST_ALLOWED_DATE.getFullYear(), this.FIRST_ALLOWED_DATE.getMonth(), 1);
+            
+            // Create date for first day of current month
+            const todayCentral = this.getTodayInCentralTime();
+            const currentMonth = new Date(todayCentral.getFullYear(), todayCentral.getMonth(), 1);
+            
+            // Disable if before first allowed month or after current month
+            return selectedMonth < firstMonth || selectedMonth > currentMonth;
+        },
+        
         closePreviousReportsModal() {
             this.showPreviousReportsModal = false;
         },
@@ -403,6 +529,11 @@ export default {
         },
         // Select a specific date for daily report
         selectDate(date) {
+            // Check if date is disabled
+            if (this.isDayDisabled(date)) {
+                return;
+            }
+            
             const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
             // if already selected same day, deselect
             if (this.selectedDate instanceof Date && this.selectedDate.toDateString() === d.toDateString()) {
@@ -410,11 +541,14 @@ export default {
                 return;
             }
             this.selectedDate = d;
-            // you can load report data here
-            // keep the daily modal open (or close chooser if it came from chooser)
         },
         // Select a week containing the clicked date (for weekly report)
         selectWeek(date) {
+            // Check if week is disabled
+            if (this.isWeekDisabled(date)) {
+                return;
+            }
+            
             // compute week start (Sunday) and end (Saturday)
             const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
             const day = d.getDay();
@@ -444,6 +578,11 @@ export default {
             this.displayYear += 1;
         },
         selectMonth(monthIndex) {
+            // Check if month is disabled
+            if (this.isMonthDisabled(this.displayYear, monthIndex)) {
+                return;
+            }
+            
             // If current selectedDate is a month selection
             if (this.selectedDate && this.selectedDate.year !== undefined && this.selectedDate.month !== undefined) {
                 if (this.selectedDate.year === this.displayYear && this.selectedDate.month === monthIndex) {
@@ -680,9 +819,9 @@ export default {
     padding: 2em;
     background-color: #f0f2f5; /* Light gray background */
     min-height: 100vh;
-    max-height: 300px; /* Adjust as needed */
+    max-height: 300px; 
     overflow-y: auto; /* Vertical scroll */
-    overflow-x: auto; /* Horizontal scroll if needed */
+    overflow-x: auto; /* Horizontal scroll */
 }
 
 /* Reuse inventory table styles */
@@ -893,7 +1032,7 @@ export default {
     display: flex;
     flex-direction: column;   /* stack vertically */
     gap: 0.75rem;
-    align-items: stretch;     /* make children fill width if you want */
+    align-items: stretch;     /* make children fill width */
     width: 100%;
 }
 
@@ -1032,6 +1171,15 @@ export default {
     color: white;
     border-color: rgba(0,0,0,0.08);
 }
+.calendar-day.disabled {
+    background: #e0e0e0;
+    color: #9e9e9e;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+.calendar-day.disabled:hover {
+    background: #e0e0e0;
+}
 
 /* Month grid (3 columns x 4 rows) */
 .month-grid {
@@ -1052,6 +1200,15 @@ export default {
     background: #3f51b5;
     color: #fff;
     font-weight: 700;
+}
+.month-cell.disabled {
+    background: #e0e0e0;
+    color: #9e9e9e;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+.month-cell.disabled:hover {
+    background: #e0e0e0;
 }
 .amendData-btn {
     padding: 0.5em 1.5em;
