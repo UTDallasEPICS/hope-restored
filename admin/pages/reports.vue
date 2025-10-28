@@ -345,9 +345,9 @@ export default {
             // ========================================
             // IMPORTANT: Change this date to modify the "first date" restriction
             // Format: new Date(year, month-1, day)
-            // Example: new Date(2025, 9, 23) = October 23, 2025
+            // Example: new Date(2025, 9, 23) = October 23, 2025 (month is 0-indexed)
             // ========================================
-            FIRST_ALLOWED_DATE: new Date(2025, 9, 23), // October 23, 2025 (month is 0-indexed) 
+            FIRST_ALLOWED_DATE: new Date(2025, 9, 28),
             
             // Controls the "Previous Reports" chooser modal
             showPreviousReportsModal: false,
@@ -432,38 +432,39 @@ export default {
             weekStart.setDate(d.getDate() - day);
             weekStart.setHours(0, 0, 0, 0);
             
-            // Calculate the week that contains the first allowed date
+            // Calculate week end (Saturday)
+            const weekEnd = new Date(weekStart);
+            weekEnd.setDate(weekStart.getDate() + 6);
+            weekEnd.setHours(23, 59, 59, 999);
+            
+            // Get first allowed date and today
             const firstDate = new Date(this.FIRST_ALLOWED_DATE.getFullYear(), this.FIRST_ALLOWED_DATE.getMonth(), this.FIRST_ALLOWED_DATE.getDate());
-            const firstDay = firstDate.getDay();
-            const firstWeekStart = new Date(firstDate);
-            firstWeekStart.setDate(firstDate.getDate() - firstDay);
-            firstWeekStart.setHours(0, 0, 0, 0);
+            firstDate.setHours(0, 0, 0, 0);
             
-            // Calculate the current week start
             const today = this.getTodayInCentralTime();
-            const todayDay = today.getDay();
-            const currentWeekStart = new Date(today);
-            currentWeekStart.setDate(today.getDate() - todayDay);
-            currentWeekStart.setHours(0, 0, 0, 0);
             
-            // Disable if week starts before the first allowed week or after the current week
-            return weekStart < firstWeekStart || weekStart > currentWeekStart;
+            // Disable if the week end is before the first allowed date, OR if week start is >= today
+            return weekEnd < firstDate || weekStart >= today;
         },
         
         // Helper method to check if a month is disabled
         isMonthDisabled(year, monthIndex) {
-            // Create date for first day of the selected month
-            const selectedMonth = new Date(year, monthIndex, 1);
+            // Create date for last day of the selected month
+            const selectedMonthEnd = new Date(year, monthIndex + 1, 0); // Day 0 = last day of previous month
+            selectedMonthEnd.setHours(23, 59, 59, 999);
             
-            // Create date for first day of the first allowed month
-            const firstMonth = new Date(this.FIRST_ALLOWED_DATE.getFullYear(), this.FIRST_ALLOWED_DATE.getMonth(), 1);
+            // Get first allowed date and today
+            const firstDate = new Date(this.FIRST_ALLOWED_DATE.getFullYear(), this.FIRST_ALLOWED_DATE.getMonth(), this.FIRST_ALLOWED_DATE.getDate());
+            firstDate.setHours(0, 0, 0, 0);
             
-            // Create date for first day of current month
-            const todayCentral = this.getTodayInCentralTime();
-            const currentMonth = new Date(todayCentral.getFullYear(), todayCentral.getMonth(), 1);
+            const today = this.getTodayInCentralTime();
             
-            // Disable if before first allowed month or after current month
-            return selectedMonth < firstMonth || selectedMonth > currentMonth;
+            // Create first day of selected month
+            const selectedMonthStart = new Date(year, monthIndex, 1);
+            selectedMonthStart.setHours(0, 0, 0, 0);
+            
+            // Disable if the month ends before the first allowed date, OR if month starts >= today
+            return selectedMonthEnd < firstDate || selectedMonthStart >= today;
         },
         
         closePreviousReportsModal() {
