@@ -347,7 +347,7 @@ export default {
             // Format: new Date(year, month-1, day)
             // Example: new Date(2025, 9, 23) = October 23, 2025 (month is 0-indexed)
             // ========================================
-            FIRST_ALLOWED_DATE: new Date(2025, 9, 28),
+            FIRST_ALLOWED_DATE: new Date(2025, 9, 23),
             
             // Controls the "Previous Reports" chooser modal
             showPreviousReportsModal: false,
@@ -432,7 +432,7 @@ export default {
             weekStart.setDate(d.getDate() - day);
             weekStart.setHours(0, 0, 0, 0);
             
-            // Calculate week end (Saturday)
+            // Calculate week end (Saturday) at end of day
             const weekEnd = new Date(weekStart);
             weekEnd.setDate(weekStart.getDate() + 6);
             weekEnd.setHours(23, 59, 59, 999);
@@ -442,29 +442,43 @@ export default {
             firstDate.setHours(0, 0, 0, 0);
             
             const today = this.getTodayInCentralTime();
+            const lastValidDate = new Date(today.getTime() - 1); // One millisecond before today
             
-            // Disable if the week end is before the first allowed date, OR if week start is >= today
-            return weekEnd < firstDate || weekStart >= today;
+            // The week is valid only if the intersection of [weekStart, weekEnd] and [firstDate, lastValidDate] is non-empty
+            // Intersection is non-empty if: max(weekStart, firstDate) <= min(weekEnd, lastValidDate)
+            const intersectionStart = Math.max(weekStart.getTime(), firstDate.getTime());
+            const intersectionEnd = Math.min(weekEnd.getTime(), lastValidDate.getTime());
+            
+            const hasValidDates = intersectionStart <= intersectionEnd;
+            
+            return !hasValidDates;
         },
         
         // Helper method to check if a month is disabled
         isMonthDisabled(year, monthIndex) {
-            // Create date for last day of the selected month
-            const selectedMonthEnd = new Date(year, monthIndex + 1, 0); // Day 0 = last day of previous month
+            // Create date for last day of the selected month at end of day
+            const selectedMonthEnd = new Date(year, monthIndex + 1, 0);
             selectedMonthEnd.setHours(23, 59, 59, 999);
+            
+            // Create first day of selected month at start of day
+            const selectedMonthStart = new Date(year, monthIndex, 1);
+            selectedMonthStart.setHours(0, 0, 0, 0);
             
             // Get first allowed date and today
             const firstDate = new Date(this.FIRST_ALLOWED_DATE.getFullYear(), this.FIRST_ALLOWED_DATE.getMonth(), this.FIRST_ALLOWED_DATE.getDate());
             firstDate.setHours(0, 0, 0, 0);
             
             const today = this.getTodayInCentralTime();
+            const lastValidDate = new Date(today.getTime() - 1); // One millisecond before today
             
-            // Create first day of selected month
-            const selectedMonthStart = new Date(year, monthIndex, 1);
-            selectedMonthStart.setHours(0, 0, 0, 0);
+            // The month is valid only if the intersection of [monthStart, monthEnd] and [firstDate, lastValidDate] is non-empty
+            // Intersection is non-empty if: max(monthStart, firstDate) <= min(monthEnd, lastValidDate)
+            const intersectionStart = Math.max(selectedMonthStart.getTime(), firstDate.getTime());
+            const intersectionEnd = Math.min(selectedMonthEnd.getTime(), lastValidDate.getTime());
             
-            // Disable if the month ends before the first allowed date, OR if month starts >= today
-            return selectedMonthEnd < firstDate || selectedMonthStart >= today;
+            const hasValidDates = intersectionStart <= intersectionEnd;
+            
+            return !hasValidDates;
         },
         
         closePreviousReportsModal() {
