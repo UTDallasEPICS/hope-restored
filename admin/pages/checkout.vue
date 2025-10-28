@@ -66,13 +66,13 @@
     </div>
 
     <!-- Confirm Add / Update Modal -->
-    <div v-if="showConfirmAddModal" class="modal-overlay">
-      <div class="modal">
+    <div v-if="showConfirmAddModal" class="modal-overlay" @keydown.enter.prevent="confirmAdd">
+      <div class="modal" tabindex="-1">
         <h3 v-if="!editMode">Add {{ enteredQuantity }} {{ selectedCategory }}?</h3>
         <h3 v-else>Update to {{ enteredQuantity }} {{ selectedCategory }}?</h3>
         <p>Confirm {{ editMode ? 'Update' : 'Yes' }}/No</p>
         <div class="modal-actions">
-          <button class="btn danger" @click="confirmAdd">{{ editMode ? 'Update' : 'Yes' }}</button>
+          <button class="btn danger" @click="confirmAdd" autofocus ref="confirmAddYesBtn">{{ editMode ? 'Update' : 'Yes' }}</button>
           <button class="btn" @click="cancelConfirmAdd">No</button>
         </div>
       </div>
@@ -113,7 +113,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from "vue";
+import { ref, computed, onMounted, watch, nextTick } from "vue";
 import { useFetch, useRouter, useState } from "#app";
 
 const router = useRouter();
@@ -173,6 +173,7 @@ async function loadInventory() {
 // modal and state variables
 const showEnterModal = ref(false);
 const showConfirmAddModal = ref(false);
+const confirmAddYesBtn = ref(null);
 const showCheckoutConfirm = ref(false);
 const showRemovedModal = ref(false);
 const editMode = ref(false);
@@ -248,6 +249,15 @@ function confirmAdd() {
   selectedCategory.value = "";
   enteredQuantity.value = null;
 }
+
+// Focus the Yes button when the confirm modal opens so Enter activates it
+watch(showConfirmAddModal, (val) => {
+  if (val) {
+    nextTick(() => {
+      confirmAddYesBtn.value?.focus?.();
+    });
+  }
+});
 
 function openCheckoutConfirm() {
   // Validate against available inventory before showing confirm
