@@ -329,12 +329,25 @@ if (instance) {
 export default {
     name: 'ReportsLandingPage',
     data() {
+        // Calculate today in Central Time before returning data
+        const now = new Date();
+        const centralTimeString = now.toLocaleString('en-US', { 
+            timeZone: 'America/Chicago',
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit'
+        });
+        const [month, day, year] = centralTimeString.split('/');
+        const todayCentral = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+        todayCentral.setHours(0, 0, 0, 0);
+        
         return {
             // ========================================
             // IMPORTANT: Change this date to modify the "first date" restriction
-            // Format: 'YYYY-MM-DD' (e.g., '2025-10-23' for October 23, 2025)
+            // Format: new Date(year, month-1, day)
+            // Example: new Date(2025, 9, 23) = October 23, 2025
             // ========================================
-            FIRST_ALLOWED_DATE: new Date('2025-10-22'), 
+            FIRST_ALLOWED_DATE: new Date(2025, 9, 23), // October 23, 2025 (month is 0-indexed) 
             
             // Controls the "Previous Reports" chooser modal
             showPreviousReportsModal: false,
@@ -344,9 +357,9 @@ export default {
             ChooseWeeklyReport: false,
             ChooseDailyReport: false,
             // Calendar state (shared by daily and weekly views)
-            today: this.getTodayInCentralTime(),
-            currentMonth: new Date().getMonth(),
-            currentYear: new Date().getFullYear(),
+            today: todayCentral,
+            currentMonth: todayCentral.getMonth(),
+            currentYear: todayCentral.getFullYear(),
             selectedDate: null,
             // Monthly view year display
             displayYear: new Date().getFullYear(),
@@ -394,6 +407,17 @@ export default {
             
             const firstDate = new Date(this.FIRST_ALLOWED_DATE.getFullYear(), this.FIRST_ALLOWED_DATE.getMonth(), this.FIRST_ALLOWED_DATE.getDate());
             firstDate.setHours(0, 0, 0, 0);
+            
+            // DEBUG LOGGING
+            if (checkDate.getDate() === 21 || checkDate.getDate() === 22 || checkDate.getDate() === 23) {
+                console.log('Date being checked:', checkDate.toDateString());
+                console.log('First allowed date:', firstDate.toDateString());
+                console.log('Today date:', todayDate.toDateString());
+                console.log('checkDate < firstDate:', checkDate < firstDate);
+                console.log('checkDate.getTime():', checkDate.getTime());
+                console.log('firstDate.getTime():', firstDate.getTime());
+                console.log('---');
+            }
             
             // Disable if before first allowed date or today or after
             return checkDate < firstDate || checkDate >= todayDate;
