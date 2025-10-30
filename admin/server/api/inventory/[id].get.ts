@@ -7,7 +7,7 @@ const prisma = new PrismaClient();
 export default defineEventHandler(async (event) => {
 
     // Read the barcode
-    const { id } = event.context.params;
+    const { id } = event.context.params || {};
 
     return await prisma.inventory.findUnique({
         where: { barcode: id }

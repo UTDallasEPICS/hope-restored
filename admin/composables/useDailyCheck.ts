@@ -2,7 +2,7 @@
 export const useDailyCheck = () => {
   const checkAndCreateNewDay = async () => {
     try {
-      const response = await $fetch('/api/inventory/check-new-day', {
+      const response: any = await $fetch('/api/inventory/check-new-day', {
         method: 'POST',
       });
       
