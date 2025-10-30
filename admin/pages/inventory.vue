@@ -283,7 +283,7 @@
                 </tbody>
             </table>
         </div>
-
+    -->
     
     </div>
 </template>
@@ -295,7 +295,7 @@
     
     //import { RefSymbol } from '@vue/reactivity';
     
-    const inventory = ref([]);
+    const inventory = ref<any[]>([]);
     //inventory.value = await getInventory();
     const searchQuery = ref('');
     const selectedSort = ref('alphabetical');
@@ -311,8 +311,8 @@
     const showConfirmAddModal = ref(false);
     const confirmAddYesBtn = ref<any>(null);
     const quickPopupCategory = ref('');
-    const quickQuantity = ref(null);
-    const editedItem = ref({ barcode: null, quantity: null });
+    const quickQuantity = ref<number | null>(null);
+    const editedItem = ref<{ barcode: string | null; quantity: number | null }>({ barcode: null, quantity: null });
     
     // making the drop down dynamic
 
@@ -498,7 +498,7 @@
             
             const { start, end } = getTodayRange();
             // Fetch only today's InventoryRecords
-            inventory.value = await $fetch('/api/inventory/', {
+            inventory.value = await ($fetch as any)('/api/inventory/', {
                 method: 'GET',
                 params: {
                     start: start.toISOString(),
@@ -542,7 +542,7 @@
     }
 
     // Computed property to filter and sort inventory based on search query and sort option
-    const sortedAndFilteredInventory = computed(() => {
+    const sortedAndFilteredInventory = computed((): any[] => {
         let filtered = inventory.value; //.value accesses the actual array inside the inventory variable
         console.log(filtered);
 
