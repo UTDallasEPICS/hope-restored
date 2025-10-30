@@ -408,17 +408,6 @@ export default {
             const firstDate = new Date(this.FIRST_ALLOWED_DATE.getFullYear(), this.FIRST_ALLOWED_DATE.getMonth(), this.FIRST_ALLOWED_DATE.getDate());
             firstDate.setHours(0, 0, 0, 0);
             
-            // DEBUG LOGGING
-            if (checkDate.getDate() === 21 || checkDate.getDate() === 22 || checkDate.getDate() === 23) {
-                console.log('Date being checked:', checkDate.toDateString());
-                console.log('First allowed date:', firstDate.toDateString());
-                console.log('Today date:', todayDate.toDateString());
-                console.log('checkDate < firstDate:', checkDate < firstDate);
-                console.log('checkDate.getTime():', checkDate.getTime());
-                console.log('firstDate.getTime():', firstDate.getTime());
-                console.log('---');
-            }
-            
             // Disable if before first allowed date or today or after
             return checkDate < firstDate || checkDate >= todayDate;
         },
@@ -610,19 +599,15 @@ export default {
             this.selectedDate = { year: this.displayYear, month: monthIndex };
         },
         async submitAmend() {
-            console.log('submitAmend called'); // DEBUG
             this.errorMessage = '';
             const { category, quantity, action } = this.form;
-            console.log('Form data:', { category, quantity, action, selectedDate: this.selectedDate }); // DEBUG
             
             if (!category || !quantity || !action || quantity <= 0) {
                 this.errorMessage = 'Please fill all fields with valid values.';
-                console.log('Validation failed:', this.errorMessage); // DEBUG
                 return;
             }
 
             try {
-                console.log('Sending request to /api/amend'); // DEBUG
                 // Use native fetch API with JSON serialization
                 const response = await fetch('/api/amend', {
                     method: 'POST',
@@ -636,30 +621,22 @@ export default {
                         action
                     })
                 });
-
-                console.log('Response status:', response.status); // DEBUG
                 
                 if (!response.ok) {
                     const errorData = await response.json().catch(() => ({}));
-                    console.log('Error response:', errorData); // DEBUG
                     throw new Error(errorData.message || `HTTP error ${response.status}`);
                 }
 
                 const res = await response.json();
-                console.log('Success response:', res); // DEBUG
                 
                 if (res.success) {
-                    console.log('Closing modals and showing success'); // DEBUG
                     this.showAmendForm = false;
                     this.showSuccess = true;
                     this.form = { category: '', quantity: null, action: '' };
                     
-                    console.log('Refreshing summary data'); // DEBUG
                     if (this.$refreshSummaryData) {
                         await this.$refreshSummaryData();
-                        console.log('Summary data refreshed'); // DEBUG
                     } else {
-                        console.warn('$refreshSummaryData not available'); // DEBUG
                     }
                 }
             } catch (err) {
