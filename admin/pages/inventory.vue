@@ -21,24 +21,6 @@
         </section>
         
 
-        <!--Pick Category Section-->
-        
-        <!--Shirt Button-->
-        
-        
-        <!--Pants Button-->
-
-        <!--Jacket Button-->
-
-        <!--Underwear Button-->
-
-        <!--Shoes Button-->
-
-        <!--Snack Packs Button-->
-
-        <!--Hygiene Packs Button-->
-
-
         <!-- Add Item Modal -->
         <div v-if="showAddItemModal" class="modal-overlay">
             <div class="modal-content">
@@ -46,7 +28,6 @@
                 <form @submit.prevent="addItem">
                     <div class="form-group mt-2">
                         <label for="category">Category:</label>
-                        <!-- <input v-model="newItem.category" id="category" required /> -->
                         <select v-model="newItem.category" id="category" required>
                             <option disabled value="">Select a category</option>
                             <option value="Tops">Tops</option>
@@ -61,7 +42,6 @@
                     </div>
                     <div class="form-group">
                         <label for="style">Style:</label>
-                        <!-- <input v-model="newItem.style" id="style" required /> -->
                         <select v-model="newItem.style" id="style" :disabled="!newItem.category" required>
                             <option disabled value="">Select a style</option>
                             <option v-for="style in filteredStyles" :key="style" :value="style">
@@ -69,25 +49,10 @@
                             </option>
                         </select>
 
-
-
-                    <!--<input v-model="newItem.style" id="style" required />
-                        <select v-model="newItem.style" id="style" required>
-                            <option disabled value="">Select a style</option>
-                            <option value="Long Sleeve">Long Sleeve</option>
-                            <option value="Short Sleeve">Short Sleeve</option>
-                            <option value="T-Shirt">T-Shirt</option>
-                            <option value="Casual">Casual</option>
-                            <option value="Fancy">Fancy</option>
-                            <option value="Canvas">Canvas</option>
-                            <option value="Leather">Leather</option>
-                            <option value="Misc.">Miscellaneous</option>
-                        </select>-->    
                     
                     </div>
                     <div class="form-group">
                         <label for="gender">Gender:</label>
-                        <!-- <input v-model="newItem.gender" id="gender" required /> -->
                         <select v-model="newItem.gender" id="gender" required>
                             <option disabled value="">Select a gender</option>
                             <option value="Male">Male</option>
@@ -96,15 +61,8 @@
                     </div>
                     <div class="form-group">
                         <label for="size">Size:</label>
-                        <!--<input v-model="newItem.size" id="size" required />-->
-
-
                         <select v-model="newItem.size" id="size" :disabled="!newItem.category" required>
                             <option disabled value="">Select a size</option>
-                           <!--<option v-for="style in filteredStyles" :key="style" :value="style">
-                                {{ style }}
-                            </option>--> 
-                            <!--<option value="">Select Size</option>-->
                             <option value="S">Small</option>
                             <option value="M">Medium</option>
                             <option value="L">Large</option>
@@ -248,24 +206,6 @@
             </div>
         </div>
 
-        <!-- Filter and Sort Section DISABLED TEMPORARILY
-        <div class="filter-sort-section">
-            <div class="search-input">
-                <input v-model="searchQuery"
-                       type="text"
-                       placeholder="Search..." />
-            </div>
-            <div class="sort-options">
-                <label for="sortOptions">Sort By:</label>
-                <select v-model="selectedSort" id="sortOptions">
-                    <option value="alphabetical">Alphabetical (Category)</option>
-                    <option value="recent">Most Recent Addition</option>
-                    <option value="dateAdded">Date Added</option>
-                </select>
-            </div>
-        </div>
-        -->
-
         <!-- Inventory Table Section -->
         <div id="inventory" class="inventory_table_container">
             <table>
@@ -283,30 +223,23 @@
                 </tbody>
             </table>
         </div>
-    -->
+    
     
     </div>
 </template>
 
 <script setup lang="ts">
     import { ref, computed, onMounted, watch, nextTick } from 'vue';
-    import { useFetch, useRuntimeConfig } from 'nuxt/app';
-    import QRCode from 'qrcode.vue';
     
-    //import { RefSymbol } from '@vue/reactivity';
     
     const inventory = ref<any[]>([]);
-    //inventory.value = await getInventory();
     const searchQuery = ref('');
     const selectedSort = ref('alphabetical');
-    const config = useRuntimeConfig();
     const showAddItemModal = ref(false);
     const showAddQuantityModal = ref(false);
     const showReduceQuantityModal = ref(false);
     const showInvalidQuantityPopup = ref(false);
-    const showShirtsPopup = ref(false);
-    const shirtsQuantity = ref(1);
-    // Generic quick popup for all categories
+    
     const showQuickPopup = ref(false);
     const showConfirmAddModal = ref(false);
     const confirmAddYesBtn = ref<any>(null);
@@ -344,10 +277,7 @@
         showAddItemModal.value = true;
     }
 
-    function openShirtsPopup() {
-        // backward compatibility (still available but delegates to generic)
-        openQuickPopup('Shirts');
-    }
+    
 
     function openQuickPopup(category: string) {
         quickPopupCategory.value = category;
@@ -543,8 +473,7 @@
 
     // Computed property to filter and sort inventory based on search query and sort option
     const sortedAndFilteredInventory = computed((): any[] => {
-        let filtered = inventory.value; //.value accesses the actual array inside the inventory variable
-        console.log(filtered);
+    let filtered = inventory.value; //.value accesses the actual array inside the inventory variable
 
         // Filter by search query
         if (searchQuery.value) {
