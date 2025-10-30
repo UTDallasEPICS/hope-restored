@@ -318,10 +318,20 @@ watchEffect(() => {
   }
 });
 
-// Expose refreshSummary to the Options API part via the instance
+// Fetch the first inventory date dynamically
+const firstInventoryDate = ref(null);
+const { data: firstDateData } = await useFetch('/api/inventory/first-date');
+watchEffect(() => {
+  if (firstDateData?.value?.firstDate) {
+    firstInventoryDate.value = new Date(firstDateData.value.firstDate);
+  }
+});
+
+// Expose refreshSummary and firstInventoryDate to the Options API part via the instance
 const instance = getCurrentInstance();
 if (instance) {
   instance.appContext.config.globalProperties.$refreshSummaryData = refreshSummary;
+  instance.appContext.config.globalProperties.$firstInventoryDate = firstInventoryDate;
 }
 </script>
 
@@ -342,13 +352,6 @@ export default {
         todayCentral.setHours(0, 0, 0, 0);
         
         return {
-            // ========================================
-            // IMPORTANT: Change this date to modify the "first date" restriction
-            // Format: new Date(year, month-1, day)
-            // Example: new Date(2025, 9, 23) = October 23, 2025 (month is 0-indexed)
-            // ========================================
-            FIRST_ALLOWED_DATE: new Date(2025, 9, 23),
-            
             // Controls the "Previous Reports" chooser modal
             showPreviousReportsModal: false,
 
@@ -405,11 +408,11 @@ export default {
             // Get today in Central Time
             const todayDate = this.getTodayInCentralTime();
             
-            const firstDate = new Date(this.FIRST_ALLOWED_DATE.getFullYear(), this.FIRST_ALLOWED_DATE.getMonth(), this.FIRST_ALLOWED_DATE.getDate());
+            const firstDate = new Date(this.firstAllowedDate.getFullYear(), this.firstAllowedDate.getMonth(), this.firstAllowedDate.getDate());
             firstDate.setHours(0, 0, 0, 0);
             
-            // Disable if before first allowed date or today or after
-            return checkDate < firstDate || checkDate >= todayDate;
+            // Disable if before first allowed date or after today (allow today)
+            return checkDate < firstDate || checkDate > todayDate;
         },
         
         // Helper method to check if a week is disabled
@@ -427,16 +430,16 @@ export default {
             weekEnd.setHours(23, 59, 59, 999);
             
             // Get first allowed date and today
-            const firstDate = new Date(this.FIRST_ALLOWED_DATE.getFullYear(), this.FIRST_ALLOWED_DATE.getMonth(), this.FIRST_ALLOWED_DATE.getDate());
+            const firstDate = new Date(this.firstAllowedDate.getFullYear(), this.firstAllowedDate.getMonth(), this.firstAllowedDate.getDate());
             firstDate.setHours(0, 0, 0, 0);
             
             const today = this.getTodayInCentralTime();
-            const lastValidDate = new Date(today.getTime() - 1); // One millisecond before today
+            today.setHours(23, 59, 59, 999); // Include all of today
             
-            // The week is valid only if the intersection of [weekStart, weekEnd] and [firstDate, lastValidDate] is non-empty
-            // Intersection is non-empty if: max(weekStart, firstDate) <= min(weekEnd, lastValidDate)
+            // The week is valid only if the intersection of [weekStart, weekEnd] and [firstDate, today] is non-empty
+            // Intersection is non-empty if: max(weekStart, firstDate) <= min(weekEnd, today)
             const intersectionStart = Math.max(weekStart.getTime(), firstDate.getTime());
-            const intersectionEnd = Math.min(weekEnd.getTime(), lastValidDate.getTime());
+            const intersectionEnd = Math.min(weekEnd.getTime(), today.getTime());
             
             const hasValidDates = intersectionStart <= intersectionEnd;
             
@@ -454,16 +457,16 @@ export default {
             selectedMonthStart.setHours(0, 0, 0, 0);
             
             // Get first allowed date and today
-            const firstDate = new Date(this.FIRST_ALLOWED_DATE.getFullYear(), this.FIRST_ALLOWED_DATE.getMonth(), this.FIRST_ALLOWED_DATE.getDate());
+            const firstDate = new Date(this.firstAllowedDate.getFullYear(), this.firstAllowedDate.getMonth(), this.firstAllowedDate.getDate());
             firstDate.setHours(0, 0, 0, 0);
             
             const today = this.getTodayInCentralTime();
-            const lastValidDate = new Date(today.getTime() - 1); // One millisecond before today
+            today.setHours(23, 59, 59, 999); // Include all of today
             
-            // The month is valid only if the intersection of [monthStart, monthEnd] and [firstDate, lastValidDate] is non-empty
-            // Intersection is non-empty if: max(monthStart, firstDate) <= min(monthEnd, lastValidDate)
+            // The month is valid only if the intersection of [monthStart, monthEnd] and [firstDate, today] is non-empty
+            // Intersection is non-empty if: max(monthStart, firstDate) <= min(monthEnd, today)
             const intersectionStart = Math.max(selectedMonthStart.getTime(), firstDate.getTime());
-            const intersectionEnd = Math.min(selectedMonthEnd.getTime(), lastValidDate.getTime());
+            const intersectionEnd = Math.min(selectedMonthEnd.getTime(), today.getTime());
             
             const hasValidDates = intersectionStart <= intersectionEnd;
             
@@ -759,6 +762,16 @@ export default {
         }
     },
     computed: {
+        firstAllowedDate() {
+            // Get the dynamically fetched first inventory date
+            // Fall back to a safe default if not yet loaded
+            const dynamicDate = this.$firstInventoryDate?.value;
+            if (dynamicDate instanceof Date && !isNaN(dynamicDate.getTime())) {
+                return dynamicDate;
+            }
+            // Default fallback date (very old date that won't restrict much)
+            return new Date(2020, 0, 1);
+        },
         monthNames() {
             return [
                 'January','February','March','April','May','June',
