@@ -20,8 +20,8 @@
             </div>
         </section>
         
-
-        <!-- Add Item Modal -->
+ 
+        <!-- Add Item Modal ---------------------------------------------------------- DISABLED
         <div v-if="showAddItemModal" class="modal-overlay">
             <div class="modal-content">
                 <h2>Add New Inventory Item</h2>
@@ -97,7 +97,8 @@
                 </form>
             </div>
         </div>
-
+    -->
+    
         <!-- Add to existing item modal -->
         <div v-if="showAddQuantityModal" class="modal-overlay">
             <div class="modal-content">
