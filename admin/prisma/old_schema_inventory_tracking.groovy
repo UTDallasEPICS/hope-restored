@@ -1,4 +1,3 @@
-
 /*model ItemCategory {
   id    Int    @id @default(autoincrement())
   name  String @unique

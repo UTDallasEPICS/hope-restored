@@ -7,7 +7,7 @@
         <section class="add-item-section">
             <div class="category-grid" role="list" aria-label="Quick add categories">
                 <button
-                    v-for="cat in ['Shirts','Pants','Jackets','Underwear','Shoes','Snack Packs','Hygiene Packs']"
+                    v-for="cat in ['Shirts','Pants','Jackets','Underwear','Shoes','Snack Packs','Hygiene Packs', 'Blankets']"
                     :key="cat"
                     type="button"
                     class="category-button"
@@ -20,8 +20,8 @@
             </div>
         </section>
         
-
-        <!-- Add Item Modal -->
+ 
+        <!-- Add Item Modal ---------------------------------------------------------- DISABLED
         <div v-if="showAddItemModal" class="modal-overlay">
             <div class="modal-content">
                 <h2>Add New Inventory Item</h2>
@@ -97,7 +97,8 @@
                 </form>
             </div>
         </div>
-
+    -->
+    
         <!-- Add to existing item modal -->
         <div v-if="showAddQuantityModal" class="modal-overlay">
             <div class="modal-content">
@@ -500,8 +501,8 @@
                 return new Date(a.lastUpdated).getTime() - new Date(b.lastUpdated).getTime();
             }
 
-            // Default/custom ordering: Shirts, Pants, Jackets, Underwear, Shoes, Snack Packs, Hygiene Packs
-            const order = ['Shirts', 'Pants', 'Jackets', 'Underwear', 'Shoes', 'Snack Packs', 'Hygiene Packs'];
+            // Default/custom ordering: Shirts, Pants, Jackets, Underwear, Shoes, Snack Packs, Hygiene Packs, Blankets
+            const order = ['Shirts', 'Pants', 'Jackets', 'Underwear', 'Shoes', 'Snack Packs', 'Hygiene Packs', 'Blankets'];
             const idx = (name: string) => {
                 if (!name) return order.length;
                 const i = order.indexOf(name);

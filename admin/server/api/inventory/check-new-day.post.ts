@@ -20,7 +20,8 @@ export default defineEventHandler(async () => {
     { name: 'Underwear' },
     { name: 'Jackets' },
     { name: 'Snack Packs' },
-    { name: 'Hygiene Packs' }
+    { name: 'Hygiene Packs' },
+    { name: 'Blankets' }
   ];
 
   // Find the most recent date that has any records
