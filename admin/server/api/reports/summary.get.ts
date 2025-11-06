@@ -43,7 +43,7 @@ export default defineEventHandler(async (event) => {
   }
 
   // Canonical category order
-  const order = ['Shirts', 'Pants', 'Jackets', 'Underwear', 'Shoes', 'Snack Packs', 'Hygiene Packs'];
+  const order = ['Shirts', 'Pants', 'Jackets', 'Underwear', 'Shoes', 'Snack Packs', 'Hygiene Packs', 'Blankets'];
 
   // Check if "today" falls within the selected range
   const now = new Date();

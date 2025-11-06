@@ -371,7 +371,7 @@ export default {
             showSuccess: false,
             errorMessage: '',
             form: { category: '', quantity: null, action: '' },
-            categories: ['Shirts','Jackets','Pants','Underwear','Shoes','Snack Packs','Hygiene Packs'],
+            categories: ['Shirts','Jackets','Pants','Underwear','Shoes','Snack Packs','Hygiene Packs','Blankets'],
             // Selected-report popup
             viewingSelectedReport: false,
             selectedReportRows: [],

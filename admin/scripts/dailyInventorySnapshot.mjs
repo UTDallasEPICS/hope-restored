@@ -16,8 +16,8 @@ async function run() {
     const nextDay = new Date(startOfDay);
     nextDay.setDate(startOfDay.getDate() + 1);
 
-    // canonical list of categories to ensure we cover the seven desired
-    const categories = ['Shirts','Pants','Jackets','Underwear','Shoes','Snack Packs','Hygiene Packs'];
+    // canonical list of categories to ensure we cover all desired categories
+    const categories = ['Shirts','Pants','Jackets','Underwear','Shoes','Snack Packs','Hygiene Packs','Blankets'];
 
     for (const catName of categories) {
       // check if there's already a row for today for this category

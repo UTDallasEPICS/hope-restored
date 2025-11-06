@@ -127,6 +127,7 @@ const categories = [
   "Shoes",
   "Snack Packs",
   "Hygiene Packs",
+  "Blankets"
 ];
 
 const items = ref(
