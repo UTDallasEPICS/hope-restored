@@ -272,11 +272,14 @@
         <div v-if="showSuccess" class="modal-overlay" @click.self="showSuccess = false">
         <div class="modal-content">
             <h2>Amendment of data successful!</h2>
+            <div v-if="lastAmendDateDisplay" style="color:#333; margin-top:0.5em; text-align:center;">
+                {{ lastAmendDateDisplay }}
+            </div>
             <div class="form-actions">
             <button class="save-button" @click="showSuccess = false">OK</button>
             </div>
-        </div>
-        </div>
+         </div>
+         </div>
 
         <!-- Reports Summary Table Section -->
         <h2 class="reports-section-title">Today's Data:</h2>
@@ -371,7 +374,8 @@ export default {
             displayYear: new Date().getFullYear(),
             showAmendData: false,
             showAmendForm: false,
-            showSuccess: false,
+            showSuccess: false,           
+            lastAmendDate: null,
             errorMessage: '',
             form: { category: '', quantity: null, action: '' },
             categories: ['Shirts','Jackets','Pants','Underwear','Shoes','Snack Packs','Hygiene Packs','Blankets'],
@@ -649,6 +653,11 @@ export default {
                 const res = await response.json();
                 
                 if (res.success) {
+                    if (this.selectedDate && this.selectedDate instanceof Date) {
+                        this.lastAmendDate = new Date(this.selectedDate.getTime()); // clone
+                    } else {
+                        this.lastAmendDate = null;
+                    }
                     this.showAmendForm = false;
                     this.showSuccess = true;
                     this.form = { category: '', quantity: null, action: '' };
@@ -781,6 +790,16 @@ export default {
         }
     },
     computed: {
+        // display only the day (no time) in Central Time
+        lastAmendDateDisplay() {
+            if (!this.lastAmendDate) return '';
+            return new Date(this.lastAmendDate).toLocaleDateString('en-US', {
+                timeZone: 'America/Chicago',
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric'
+            });
+        },
         firstAllowedDate() {
             // Get the dynamically fetched first inventory date
             // Fall back to a safe default if not yet loaded
