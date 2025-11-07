@@ -44,15 +44,22 @@
     li {
     display: inline;
     margin-left: 10px;
+    margin-right: 15px;
     text-align: left;
     font-family: "Oswald";
     padding-bottom: 0%;
-    font-size: 20px;
+    font-size: 25px;
     }
   
     a {
     color: #878787;
     text-decoration: none;
+    }
+  
+    a.router-link-active,
+    a.router-link-exact-active {
+    color: #000000;
+    font-weight: bold;
     }
   
     .title {

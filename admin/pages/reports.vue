@@ -155,6 +155,9 @@
         <!-- Selected report results modal -->
         <div v-if="viewingSelectedReport" class="modal-overlay" @click.self="viewingSelectedReport = false">
             <div class="modal-content">
+                <button class="back-button" @click="goBackToCalendar">
+                    ← Back
+                </button>
                 <h2>Report for: {{ selectedReportTitle }}</h2>
 
                 <div v-if="isLoadingSelected">Loading...</div>
@@ -377,7 +380,8 @@ export default {
             selectedReportRows: [],
             selectedReportTitle: '',
             isLoadingSelected: false,
-            selectedError: null
+            selectedError: null,
+            lastReportType: null, // Track which report type was selected (daily, weekly, or monthly)
         }
     },
     methods: {
@@ -506,6 +510,18 @@ export default {
         },
         openAmendData() {
             this.showAmendData = true;
+        },
+        goBackToCalendar() {
+            // Close the report view
+            this.viewingSelectedReport = false;
+            // Reopen the appropriate calendar modal based on last report type
+            if (this.lastReportType === 'daily') {
+                this.ChooseDailyReport = true;
+            } else if (this.lastReportType === 'weekly') {
+                this.ChooseWeeklyReport = true;
+            } else if (this.lastReportType === 'monthly') {
+                this.ChooseMonthlyReport = true;
+            }
         },
         selectDateForAmend() {
             if (!this.selectedDate || !(this.selectedDate instanceof Date)) {
@@ -656,6 +672,7 @@ export default {
             }
             this.isLoadingSelected = true;
             this.selectedError = null;
+            this.lastReportType = 'monthly'; // Track report type
             try {
                 const year = this.selectedDate.year;
                 const month = this.selectedDate.month + 1; // 1-based
@@ -679,6 +696,7 @@ export default {
             if (!this.selectedDate || !this.selectedDate.weekStart || !this.selectedDate.weekEnd) return;
             this.isLoadingSelected = true;
             this.selectedError = null;
+            this.lastReportType = 'weekly'; // Track report type
             try {
                 // Format dates as YYYY-MM-DD in local timezone (not UTC)
                 const formatLocalDate = (date) => {
@@ -719,6 +737,7 @@ export default {
             if (!this.selectedDate || !(this.selectedDate instanceof Date)) return;
             this.isLoadingSelected = true;
             this.selectedError = null;
+            this.lastReportType = 'daily'; // Track report type
             try {
                 // Format date as YYYY-MM-DD in local timezone (not UTC)
                 const year = this.selectedDate.getFullYear();
@@ -1006,6 +1025,7 @@ export default {
     width: 90%;
     max-width: 500px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    position: relative;
 }
 
 .modal-content h2 {
@@ -1228,5 +1248,26 @@ export default {
     display: flex;
     align-items: center;
     gap: 0.5em;
+}
+
+.back-button {
+    position: absolute;
+    top: 1em;
+    left: 1em;
+    padding: 0.5em 1em;
+    background-color: #757575;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9em;
+    display: flex;
+    align-items: center;
+    gap: 0em;
+    transition: background-color 0.3s ease;
+}
+
+.back-button:hover {
+    background-color: #616161;
 }
 </style>

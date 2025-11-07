@@ -68,7 +68,7 @@
     <!-- Confirm Add / Update Modal -->
     <div v-if="showConfirmAddModal" class="modal-overlay" @keydown.enter.prevent="confirmAdd">
       <div class="modal" tabindex="-1">
-        <h3 v-if="!editMode">Add {{ enteredQuantity }} {{ selectedCategory }}?</h3>
+        <h3 v-if="!editMode">Add {{ enteredQuantity }} {{ selectedCategory }} to Checkout?</h3>
         <h3 v-else>Update to {{ enteredQuantity }} {{ selectedCategory }}?</h3>
         <p>Confirm {{ editMode ? 'Update' : 'Yes' }}/No</p>
         <div class="modal-actions">
