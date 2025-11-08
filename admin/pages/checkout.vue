@@ -461,7 +461,7 @@ h2 {
 
 .category-button .label {
   display: inline-block;
-  font-size: 1.1rem;
+  font-size: 1.6rem;
   text-align: center;
   line-height: 1.1;
   padding: 0 6px;
