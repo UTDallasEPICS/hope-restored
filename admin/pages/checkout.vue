@@ -2,7 +2,7 @@
   <div class="checkout-page">
     <!-- Main content -->
     <div class="content">
-      <h2>Select a Category to Checkout</h2>
+      <h2><b>Select a Category to Checkout</b></h2>
 
       <!-- Category buttons -->
       <div class="category-grid" role="list" aria-label="Quick add categories">

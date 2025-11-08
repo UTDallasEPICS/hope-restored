@@ -1,7 +1,7 @@
 <!-- pages/inventory.vue -->
 <template>
     <div class="inventory-container">
-        <h1>Select a Category to Add</h1>
+        <h1><b>Select a Category to Add</b></h1>
     
         <!-- Manual Add Section -->
         <section class="add-item-section">
