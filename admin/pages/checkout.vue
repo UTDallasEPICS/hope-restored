@@ -447,7 +447,7 @@ h2 {
   align-items: center;
   justify-content: center;
   gap: 0.4rem;
-  aspect-ratio: 1 / 1;
+  aspect-ratio: 4 / 3;
   width: 100%;
   padding: 0.6rem;
   border-radius: 8px;
@@ -461,7 +461,7 @@ h2 {
 
 .category-button .label {
   display: inline-block;
-  font-size: 1.6rem;
+  font-size: 1.5rem;
   text-align: center;
   line-height: 1.1;
   padding: 0 6px;
