@@ -271,7 +271,7 @@
         <!-- Success message -->
         <div v-if="showSuccess" class="modal-overlay" @click.self="showSuccess = false">
         <div class="modal-content">
-            <h2>Amendment of data successful!</h2>
+            <h2>Amendment of data successful for</h2>
             <div v-if="lastAmendDateDisplay" style="color:#333; margin-top:0.5em; text-align:center;">
                 {{ lastAmendDateDisplay }}
             </div>
@@ -406,6 +406,15 @@ export default {
             centralDate.setHours(0, 0, 0, 0);
             return centralDate;
         },
+        // Reset calendar state to today and clear any selection
+        resetCalendarToToday() {
+            const t = this.getTodayInCentralTime();
+            this.today = new Date(t);
+            this.currentMonth = t.getMonth();
+            this.currentYear = t.getFullYear();
+            this.displayYear = t.getFullYear();
+            this.selectedDate = null;
+        },
         // Helper method to check if a date (day) is disabled
         // Helper method to check if a date (day) is disabled
         isDayDisabled(date) {
@@ -502,14 +511,17 @@ export default {
         },
         openMonthlyFromPrevious() {
             this.showPreviousReportsModal = false;
+            this.resetCalendarToToday();
             this.ChooseMonthlyReport = true;
         },
         openWeeklyFromPrevious() {
             this.showPreviousReportsModal = false;
+            this.resetCalendarToToday();
             this.ChooseWeeklyReport = true;
         },
         openDailyFromPrevious() {
             this.showPreviousReportsModal = false;
+            this.resetCalendarToToday();
             this.ChooseDailyReport = true;
         },
         openAmendData() {
