@@ -46,8 +46,8 @@
     margin-right: 15px;
     font-family: 'sans-serif', Arial;
     padding-bottom: 0%;
-    font-size: 25px;
-    font-weight: 650;
+    font-size: 30px;
+    font-weight: 700;
     }
   
     a {
