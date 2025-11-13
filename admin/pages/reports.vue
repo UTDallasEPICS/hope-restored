@@ -525,6 +525,7 @@ export default {
         },
         openAmendData() {
             this.showAmendData = true;
+            this.resetCalendarToToday();
         },
         goBackToCalendar() {
             // Close the report view
