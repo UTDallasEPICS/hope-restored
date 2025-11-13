@@ -35,29 +35,11 @@
                 <p>Get involved and help us restore hope.</p>
             </div>
         </section>
-
-        <!-- Charts Section -->
-        <!-- TEMPORARILY DISABLED.
-            <section id="charts" class="charts-section">
-            <DonationsChart />
-            <InventoryDistributionChart />
-        </section>
-        -->
         
     </div>
 </template>
 
-<script>
-     import DonationsChart from '../components/Inventory/DonationsChart.vue';
-     import InventoryDistributionChart from '../components/Inventory/InventoryDistributionChart.vue';
 
-     export default {
-         components: {
-             DonationsChart,
-             InventoryDistributionChart,
-         },
-     };
-</script>
 
 <style scoped>
     /* General Page Styling */
@@ -193,19 +175,6 @@
         }
     }
 
-    /* Charts Section Styling */
-    .charts-section {
-        display: flex;
-        flex-direction: column;
-        gap: 2em;
-        align-items: center;
-        padding: 2em 0;
-        /* Animation */
-        opacity: 0;
-        transform: translateY(20px);
-        animation: fadeInUp 1s forwards;
-        animation-delay: 1.5s;
-    }
 
     /* Responsive Design */
     @media (min-width: 768px) {

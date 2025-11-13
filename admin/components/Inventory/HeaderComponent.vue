@@ -3,13 +3,12 @@
   <template>
     <header>
       <nav class="navbar">
-          <!-- <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQrkEWxs5zaMTeYj-qwtpxMkFhJtT4yieFiuQ&s" style="width:170px; height:auto;"> -->
           <ul>
           <li class="title">Hope Restored Missions</li>
           <li><nuxt-link to="/Home">Home</nuxt-link></li>
           <li><nuxt-link to="/reports">Reports</nuxt-link></li>
           <li><nuxt-link to="/inventory">Inventory</nuxt-link></li>
-          <li><nuxt-link to="/checkout">Checkout</nuxt-link></li>  <!-- new -->
+          <li><nuxt-link to="/checkout">Checkout</nuxt-link></li>  
 
           <!-- <li><nuxt-link to="/scanner">Scanner</nuxt-link></li> --> 
 
@@ -45,7 +44,6 @@
     display: inline;
     margin-left: 10px;
     margin-right: 15px;
-    text-align: left;
     font-family: "Oswald";
     padding-bottom: 0%;
     font-size: 25px;
@@ -59,7 +57,6 @@
     a.router-link-active,
     a.router-link-exact-active {
     color: #000000;
-    font-weight: bold;
     }
   
     .title {
