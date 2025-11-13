@@ -44,7 +44,7 @@
 <style scoped>
     /* General Page Styling */
     .home-container {
-        font-family: 'Open Sans', sans-serif;
+        font-family: 'sans-serif', Arial;
         padding: 2em;
         background-color: #f9fafc; /* Lighter background */
         min-height: 100vh;

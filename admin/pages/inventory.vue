@@ -511,7 +511,7 @@
 <style scoped>
     /* General Styling */
     .inventory-container {
-        font-family: 'Open Sans', sans-serif;
+        font-family: 'sans-serif', Arial;
         padding: 2em;
         background-color: #f0f2f5; /* Light gray background */
         min-height: 100vh;

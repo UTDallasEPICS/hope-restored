@@ -44,9 +44,10 @@
     display: inline;
     margin-left: 10px;
     margin-right: 15px;
-    font-family: "Oswald";
+    font-family: 'sans-serif', Arial;
     padding-bottom: 0%;
     font-size: 25px;
+    font-weight: 650;
     }
   
     a {
@@ -60,7 +61,7 @@
     }
   
     .title {
-      font-family: 'Oswald';
+      font-family: 'sans-serif', Arial;
       font-size: 30px;
       margin-left:0%;
       margin-right: 60px;
