@@ -12,7 +12,7 @@
         </div>
 
         <!-- Previous Reports Modal -->
-        <div v-if="showPreviousReportsModal" class="modal-overlay" @click.self="closePreviousReportsModal">
+        <div v-if="showPreviousReportsModal" class="modal-overlay" >
             <div class="modal-content">
                 <h2>Previous Reports</h2>
                 <p>Select a report to view:</p>
@@ -47,7 +47,7 @@
         </div>
 
         <!-- Individual report modals (can be opened directly or via Previous Reports) -->
-        <div v-if="ChooseMonthlyReport" class="modal-overlay" @click.self="closeMonthlyReport">
+        <div v-if="ChooseMonthlyReport" class="modal-overlay" >
             <div class="modal-content">
                 <h2>Monthly Report</h2>
                 <p>Select a month to view:</p>
@@ -81,7 +81,7 @@
             </div>
         </div>
 
-        <div v-if="ChooseWeeklyReport" class="modal-overlay" @click.self="closeWeeklyReport">
+        <div v-if="ChooseWeeklyReport" class="modal-overlay" >
             <div class="modal-content">
                 <h2>Weekly Report</h2>
                 <p>Select a week to view:</p>
@@ -118,7 +118,7 @@
             </div>
         </div>
 
-        <div v-if="ChooseDailyReport" class="modal-overlay" @click.self="closeDailyReport">
+        <div v-if="ChooseDailyReport" class="modal-overlay" >
             <div class="modal-content">
                 <h2>Daily Report</h2>
                 <p>Select a date to view:</p>
@@ -156,10 +156,9 @@
         </div>
 
         <!-- Selected report results modal -->
-        <div v-if="viewingSelectedReport" class="modal-overlay" @click.self="viewingSelectedReport = false">
+        <div v-if="viewingSelectedReport" class="modal-overlay" >
             <div class="modal-content">
-                <button class="back-button" @click="goBackToCalendar">
-                    ← Back
+                <button class="back-button" @click="goBackToCalendar"> Back
                 </button>
                 <h2>Report for: {{ selectedReportTitle }}</h2>
                 <div v-if="selectedReportHasAmendments && selectedReportLatestAmendDateFormatted" class="updated-note">
@@ -202,7 +201,7 @@
       
 
       <!-- Amend Data Modal -->
-      <div v-if="showAmendData" class="modal-overlay" @click.self="closeAmendData">
+      <div v-if="showAmendData" class="modal-overlay">
         <div class="modal-content">
             <h2>Amend Data</h2>
             <p>Choose a date to amend data for that date:</p>
@@ -239,7 +238,7 @@
       </div>
 
         <!-- Second pop-up: Amend Data Form -->
-        <div v-if="showAmendForm" class="modal-overlay" @click.self="showAmendForm = false">
+        <div v-if="showAmendForm" class="modal-overlay" >
         <div class="modal-content">
             <h2>Amend Data for {{ selectedDateFormatted }}</h2>
 
@@ -275,7 +274,7 @@
         </div>
 
         <!-- Success message -->
-        <div v-if="showSuccess" class="modal-overlay" @click.self="showSuccess = false">
+        <div v-if="showSuccess" class="modal-overlay" >
         <div class="modal-content">
             <h2>Amendment of data successful for</h2>
             <div v-if="lastAmendDateDisplay" style="color:#333; margin-top:0.5em; text-align:center;">
@@ -550,6 +549,7 @@ export default {
         },
         openAmendData() {
             this.showAmendData = true;
+            this.resetCalendarToToday();
         },
         goBackToCalendar() {
             // Close the report view
