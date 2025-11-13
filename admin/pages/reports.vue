@@ -62,10 +62,11 @@
                     <div class="month-grid">
                         <button v-for="(mName, idx) in monthNames" :key="mName"
                                 class="month-cell"
-                                :class="{ 
-                                    'selected': selectedDate && selectedDate.year === displayYear && selectedDate.month === idx,
-                                    'disabled': isMonthDisabled(displayYear, idx)
-                                }"
+                                        :class="{ 
+                                            'selected': selectedDate && selectedDate.year === displayYear && selectedDate.month === idx,
+                                            'disabled': isMonthDisabled(displayYear, idx),
+                                            'has-amend': monthHasAmendment(displayYear, idx)
+                                        }"
                                 :disabled="isMonthDisabled(displayYear, idx)"
                                 @click="selectMonth(idx)">
                             {{ mName }}
@@ -97,11 +98,12 @@
                         <button class="calendar-day" 
                                 v-for="day in visibleDays" 
                                 :key="day.key"
-                                :class="{ 
-                                    'other-month': !day.inMonth, 
-                                    'selected': day.isSelected,
-                                    'disabled': isWeekDisabled(day.date)
-                                }"
+                                   :class="{ 
+                                       'other-month': !day.inMonth, 
+                                       'selected': day.isSelected,
+                                       'disabled': isWeekDisabled(day.date),
+                                       'has-amend': day.hasAmendment
+                                   }"
                                 :disabled="isWeekDisabled(day.date)"
                                 @click="selectWeek(day.date)">
                             {{ day.date.getDate() }}
@@ -133,11 +135,12 @@
                         <button class="calendar-day" 
                                 v-for="day in visibleDays" 
                                 :key="day.key"
-                                :class="{ 
-                                    'other-month': !day.inMonth, 
-                                    'selected': day.isSelected,
-                                    'disabled': isDayDisabled(day.date)
-                                }"
+                                   :class="{ 
+                                       'other-month': !day.inMonth, 
+                                       'selected': day.isSelected,
+                                       'disabled': isDayDisabled(day.date),
+                                       'has-amend': day.hasAmendment
+                                   }"
                                 :disabled="isDayDisabled(day.date)"
                                 @click="selectDate(day.date)">
                             {{ day.date.getDate() }}
@@ -158,6 +161,9 @@
                 <button class="back-button" @click="goBackToCalendar"> Back
                 </button>
                 <h2>Report for: {{ selectedReportTitle }}</h2>
+                <div v-if="selectedReportHasAmendments && selectedReportLatestAmendDateFormatted" class="updated-note">
+                    Updated: {{ selectedReportLatestAmendDateFormatted }}
+                </div>
 
                 <div v-if="isLoadingSelected">Loading...</div>
                 <div v-else>
@@ -379,12 +385,17 @@ export default {
             form: { category: '', quantity: null, action: '' },
             categories: ['Shirts','Jackets','Pants','Underwear','Shoes','Snack Packs','Hygiene Packs','Blankets'],
             // Selected-report popup
+                // the date range currently shown in the selected-report modal
+                lastViewedRangeStart: null,
+                lastViewedRangeEnd: null,
             viewingSelectedReport: false,
             selectedReportRows: [],
             selectedReportTitle: '',
             isLoadingSelected: false,
             selectedError: null,
             lastReportType: null, // Track which report type was selected (daily, weekly, or monthly)
+            // map of yyyy-mm-dd -> true when that day has amended data
+            amendmentsByDate: {},
         }
     },
     methods: {
@@ -511,16 +522,29 @@ export default {
         openMonthlyFromPrevious() {
             this.showPreviousReportsModal = false;
             this.resetCalendarToToday();
+            // load amendment flags for the whole year (so months can show indicators)
+            const year = this.displayYear;
+            const startY = new Date(year, 0, 1);
+            const endY = new Date(year, 11, 31);
+            this.loadAmendmentsForRange(startY, endY);
             this.ChooseMonthlyReport = true;
         },
         openWeeklyFromPrevious() {
             this.showPreviousReportsModal = false;
             this.resetCalendarToToday();
+            // load amendments for the currently displayed month
+            const startW = new Date(this.currentYear, this.currentMonth, 1);
+            const endW = new Date(this.currentYear, this.currentMonth + 1, 0);
+            this.loadAmendmentsForRange(startW, endW);
             this.ChooseWeeklyReport = true;
         },
         openDailyFromPrevious() {
             this.showPreviousReportsModal = false;
             this.resetCalendarToToday();
+            // load amendments for the current month so day markers appear
+            const startD = new Date(this.currentYear, this.currentMonth, 1);
+            const endD = new Date(this.currentYear, this.currentMonth + 1, 0);
+            this.loadAmendmentsForRange(startD, endD);
             this.ChooseDailyReport = true;
         },
         openAmendData() {
@@ -548,6 +572,73 @@ export default {
             this.showAmendData = false;
             // Open amend form modal
             this.showAmendForm = true;
+        },
+        // Helper: produce YYYY-MM-DD key for a Date
+        dateKey(date) {
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const d = String(date.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        },
+
+        // Load amendment flags for a date range.
+        // The API may return either an array of date-strings (YYYY-MM-DD) or an array of objects
+        // with fields like { date: 'YYYY-MM-DD', changedAt: '2025-10-19T14:32:00Z' }.
+        // We normalize into this.amendmentsByDate[YYYY-MM-DD] = [ { changedAt: Date|null, amendedFor: YYYY-MM-DD }, ... ]
+        async loadAmendmentsForRange(startDate, endDate) {
+            try {
+                const s = this.dateKey(startDate);
+                const e = this.dateKey(endDate);
+                const res = await fetch(`/api/reports/amendments?start=${s}&end=${e}`);
+                if (!res.ok) throw new Error(`API error ${res.status}`);
+                const list = await res.json();
+                if (!Array.isArray(list)) return;
+
+                // Normalize each item
+                list.forEach(item => {
+                    let amendedFor = null;
+                    let changedAt = null;
+
+                    if (typeof item === 'string') {
+                        // item is the date that was amended (no timestamp available)
+                        amendedFor = item;
+                    } else if (item && typeof item === 'object') {
+                        // try common key names
+                        amendedFor = item.date || item.day || item.amendedDate || item.amended_for || item.amended || null;
+                        const ts = item.changedAt || item.changed_at || item.timestamp || item.updatedAt || item.updated_at || item.modifiedAt || item.modified_at || item.when;
+                        if (ts) {
+                            try { changedAt = new Date(ts); if (isNaN(changedAt)) changedAt = null; } catch (e) { changedAt = null; }
+                        }
+                    }
+
+                    // If amendedFor missing but we have a changedAt, derive the amendedFor key from changedAt local date
+                    if (!amendedFor && changedAt instanceof Date) {
+                        const y = changedAt.getFullYear();
+                        const m = String(changedAt.getMonth() + 1).padStart(2, '0');
+                        const d = String(changedAt.getDate()).padStart(2, '0');
+                        amendedFor = `${y}-${m}-${d}`;
+                    }
+
+                    if (!amendedFor) return; // can't map this record
+
+                    // ensure array exists
+                    if (!this.amendmentsByDate[amendedFor]) this.amendmentsByDate[amendedFor] = [];
+                    this.amendmentsByDate[amendedFor].push({ changedAt: changedAt instanceof Date ? changedAt : null, amendedFor });
+                });
+            } catch (err) {
+                // eslint-disable-next-line no-console
+                console.warn('Failed to load amendments for range', err);
+            }
+        },
+
+        // Return true if any day in a given month/year has amendments (checks the map)
+        monthHasAmendment(year, monthIndex) {
+            const start = new Date(year, monthIndex, 1);
+            const end = new Date(year, monthIndex + 1, 0);
+            for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+                if (this.amendmentsByDate[this.dateKey(d)]) return true;
+            }
+            return false;
         },
         // Calendar helpers
         prevMonth() {
@@ -665,10 +756,23 @@ export default {
                 const res = await response.json();
                 
                 if (res.success) {
+                    // Determine the change timestamp: prefer server-provided timestamp if present, else use now
+                    let changedAt = null;
+                    const ts = res.changedAt || res.changed_at || res.timestamp || res.updatedAt || res.updated_at || res.modifiedAt || res.modified_at || res.when;
+                    if (ts) {
+                        try { const d = new Date(ts); if (!isNaN(d)) changedAt = d; } catch (e) { changedAt = null; }
+                    }
+                    if (!changedAt) changedAt = new Date();
+
                     if (this.selectedDate && this.selectedDate instanceof Date) {
-                        this.lastAmendDate = new Date(this.selectedDate.getTime()); // clone
+                        // Use the change timestamp as the lastAmendDate so success UI shows when the change occurred
+                        this.lastAmendDate = new Date(changedAt.getTime());
+                        // map keyed by the amended-for day
+                        const k = this.dateKey(this.selectedDate);
+                        if (!this.amendmentsByDate[k]) this.amendmentsByDate[k] = [];
+                        this.amendmentsByDate[k].push({ changedAt: new Date(changedAt.getTime()), amendedFor: k });
                     } else {
-                        this.lastAmendDate = null;
+                        this.lastAmendDate = new Date(changedAt.getTime());
                     }
                     this.showAmendForm = false;
                     this.showSuccess = true;
@@ -702,6 +806,9 @@ export default {
                 const data = await res.json();
                 this.selectedReportRows = Array.isArray(data) ? data : this.mapApiResponseToRows(data);
                 this.selectedReportTitle = `${this.monthNames[this.selectedDate.month]} ${this.selectedDate.year}`;
+                // set the viewed range for the month
+                this.lastViewedRangeStart = new Date(this.selectedDate.year, this.selectedDate.month, 1);
+                this.lastViewedRangeEnd = new Date(this.selectedDate.year, this.selectedDate.month + 1, 0);
                 this.viewingSelectedReport = true;
                 this.ChooseMonthlyReport = false;
                 this.selectedDate = null;
@@ -743,6 +850,9 @@ export default {
                 const endDisplay = formatDisplayDate(this.selectedDate.weekEnd);
                 const year = this.selectedDate.weekEnd.getFullYear();
                 this.selectedReportTitle = `${startDisplay} - ${endDisplay} ${year}`;
+                // set viewed week range for amendment checks
+                this.lastViewedRangeStart = new Date(this.selectedDate.weekStart);
+                this.lastViewedRangeEnd = new Date(this.selectedDate.weekEnd);
                 this.viewingSelectedReport = true;
                 this.ChooseWeeklyReport = false;
                 this.selectedDate = null;
@@ -773,6 +883,9 @@ export default {
                 const monthName = this.monthNames[this.selectedDate.getMonth()];
                 const dayNum = this.selectedDate.getDate();
                 this.selectedReportTitle = `${monthName} ${dayNum} ${year}`;
+                // set viewed day range for amendment checks
+                this.lastViewedRangeStart = new Date(this.selectedDate.getFullYear(), this.selectedDate.getMonth(), this.selectedDate.getDate());
+                this.lastViewedRangeEnd = new Date(this.selectedDate.getFullYear(), this.selectedDate.getMonth(), this.selectedDate.getDate());
                 this.viewingSelectedReport = true;
                 this.ChooseDailyReport = false;
                 this.selectedDate = null;
@@ -802,6 +915,57 @@ export default {
         }
     },
     computed: {
+        // true when the currently-viewed selected report contains any amended days
+        selectedReportHasAmendments() {
+            if (!this.lastViewedRangeStart || !this.lastViewedRangeEnd) return false;
+            for (let d = new Date(this.lastViewedRangeStart); d <= this.lastViewedRangeEnd; d.setDate(d.getDate() + 1)) {
+                if (this.amendmentsByDate[this.dateKey(d)]) return true;
+            }
+            return false;
+        },
+        // Return the most recent amended date (formatted) within the currently viewed range, or empty string
+        selectedReportLatestAmendDateFormatted() {
+            if (!this.lastViewedRangeStart || !this.lastViewedRangeEnd) return '';
+            let latestChange = null; // Date
+
+            for (let d = new Date(this.lastViewedRangeStart); d <= this.lastViewedRangeEnd; d.setDate(d.getDate() + 1)) {
+                const k = this.dateKey(d);
+                const records = this.amendmentsByDate[k];
+                if (!records) continue;
+
+                // records may be an array of objects { changedAt }
+                if (Array.isArray(records)) {
+                    records.forEach(rec => {
+                        if (rec && rec.changedAt instanceof Date) {
+                            if (!latestChange || rec.changedAt.getTime() > latestChange.getTime()) latestChange = rec.changedAt;
+                        }
+                    });
+                } else if (records instanceof Date) {
+                    // older format: a single Date
+                    if (!latestChange || records.getTime() > latestChange.getTime()) latestChange = records;
+                } else if (records === true) {
+                    // we only know the amended day (no change timestamp) — treat the amended day as fallback
+                    const cand = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+                    if (!latestChange || cand.getTime() > latestChange.getTime()) latestChange = cand;
+                }
+            }
+
+            if (!latestChange) return '';
+            // Format with date + time in Central Time
+            try {
+                return new Date(latestChange).toLocaleString('en-US', {
+                    timeZone: 'America/Chicago',
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            } catch (e) {
+                return latestChange.toLocaleDateString();
+            }
+        },
+        // (removed duplicate computed) true when there is at least one day with amended data is handled above
         // display only the day (no time) in Central Time
         lastAmendDateDisplay() {
             if (!this.lastAmendDate) return '';
@@ -856,7 +1020,9 @@ export default {
                         isSelected = d >= this.selectedDate.weekStart && d <= this.selectedDate.weekEnd;
                     }
                 }
-                days.push({ date: d, inMonth, key: d.toISOString(), isSelected });
+                const key = this.dateKey(d);
+                const hasAmendment = !!this.amendmentsByDate[key];
+                days.push({ date: d, inMonth, key: d.toISOString(), isSelected, hasAmendment });
             }
             return days;
         },
@@ -1300,5 +1466,13 @@ export default {
 
 .back-button:hover {
     background-color: #616161;
+}
+
+.updated-note {
+    text-align: center;
+    font-size: 0.95em;
+    color: #666;
+    margin-top: 0.25em;
+    font-style: italic;
 }
 </style>
