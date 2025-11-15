@@ -1,13 +1,23 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 import { defineNuxtConfig } from 'nuxt/config'
+import tailwindcss from "@tailwindcss/vite";
 
 
 
 export default defineNuxtConfig({
   devtools: { enabled: true },
-  plugins: ['~/qr-code-stuff/vue3-qr-reader.client.ts'],
-  modules: [
-    '@nuxtjs/tailwindcss'
+  css: ['./app/assets/css/main.css'],
+  plugins: [
+    '~/qr-code-stuff/vue3-qr-reader.client.ts',
+    tailwindcss({
+      src: [
+        './app.vue',
+        './components/**/*.{vue,js,ts}',
+        './layouts/**/*.{vue,js,ts}',
+        './pages/**/*.{vue,js,ts}',
+        './plugins/**/*.{js,ts}',
+      ]
+    }),
   ],
   components:{
     dirs: [
