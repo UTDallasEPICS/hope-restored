@@ -569,10 +569,10 @@
         width: 100%;
         padding: 0.6rem;
         border-radius: 8px;
-    border: 1px solid rgba(0,0,0,0.08);
-    background: #fff;
-    color: #000;
-        font-weight: 600;
+        border: 1px solid rgba(0,0,0,0.08);
+        background: #fff;
+        color: #000;
+        font-weight: 550;
         cursor: pointer;
         transition: transform 120ms ease, box-shadow 120ms ease, background 120ms ease;
     }
@@ -855,37 +855,7 @@
         color: #333;
     }
 
-    /* Charts Section Styling */
-    .charts-section {
-        display: flex;
-        flex-direction: column;
-        gap: 2em;
-        align-items: center;
-        padding: 2em 0;
-    }
+   
 
-    /* Responsive Design */
-    @media (min-width: 768px) {
-        .filter-sort-section {
-            flex-wrap: nowrap;
-            align-items: flex-end;
-        }
-
-        .search-input {
-            margin-bottom: 0;
-        }
-
-        .sort-options {
-            text-align: right;
-        }
-
-        .charts-section {
-            flex-direction: row;
-            justify-content: space-around;
-        }
-
-        .chart-container {
-            width: 45%;
-        }
-    }
+    
 </style>

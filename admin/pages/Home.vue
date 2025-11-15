@@ -46,7 +46,7 @@
     .home-container {
         font-family: 'sans-serif', Arial;
         padding: 2em;
-        background-color: #f9fafc; /* Lighter background */
+        background-color: #f0f2f5; /* Lighter background */
         min-height: 100vh;
     }
 
@@ -66,7 +66,7 @@
 
         .welcome-section h1 {
             font-size: 3em;
-            margin-bottom: 1.5em;
+            margin-bottom: 1em;
         }
 
         .welcome-section p {
