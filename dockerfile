@@ -7,7 +7,7 @@ RUN corepack enable
 
 RUN pnpm i --force
 RUN npx prisma generate
-RUN pnpm run build
+RUN npm run build
 
 FROM node:22-alpine AS deployment
 
