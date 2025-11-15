@@ -5,7 +5,7 @@
         <header class="welcome-section">
             <h1>Welcome to Hope Restored Missions!</h1>
             <p>Your hope is our mission.</p>
-            <button onclick="location.href='https://hoperestoredmissions.org/'" target="_blank" class="cta-button">Get Involved</button>
+            <a href="https://hoperestoredmissions.org/" target="_blank" rel="noopener" class="cta-button">Get Involved</a>
         </header>
 
         <!-- About Us Section -->
@@ -35,36 +35,18 @@
                 <p>Get involved and help us restore hope.</p>
             </div>
         </section>
-
-        <!-- Charts Section -->
-        <!-- TEMPORARILY DISABLED.
-            <section id="charts" class="charts-section">
-            <DonationsChart />
-            <InventoryDistributionChart />
-        </section>
-        -->
         
     </div>
 </template>
 
-<script>
-     import DonationsChart from '../components/Inventory/DonationsChart.vue';
-     import InventoryDistributionChart from '../components/Inventory/InventoryDistributionChart.vue';
 
-     export default {
-         components: {
-             DonationsChart,
-             InventoryDistributionChart,
-         },
-     };
-</script>
 
 <style scoped>
     /* General Page Styling */
     .home-container {
-        font-family: 'Open Sans', sans-serif;
+        font-family: 'sans-serif', Arial;
         padding: 2em;
-        background-color: #f9fafc; /* Lighter background */
+        background-color: #f0f2f5; /* Lighter background */
         min-height: 100vh;
     }
 
@@ -84,16 +66,17 @@
 
         .welcome-section h1 {
             font-size: 3em;
-            margin-bottom: 0.5em;
+            margin-bottom: 1em;
         }
 
         .welcome-section p {
             font-size: 1.5em;
+            margin-bottom: 1em;
         }
 
         .welcome-section .cta-button {
             margin-top: 1.5em;
-            padding: 0.75em 2em;
+            padding: 0.5em 2em;
             font-size: 1.2em;
             color: #fff;
             background-color: #ff9800; /* Orange */
@@ -192,19 +175,6 @@
         }
     }
 
-    /* Charts Section Styling */
-    .charts-section {
-        display: flex;
-        flex-direction: column;
-        gap: 2em;
-        align-items: center;
-        padding: 2em 0;
-        /* Animation */
-        opacity: 0;
-        transform: translateY(20px);
-        animation: fadeInUp 1s forwards;
-        animation-delay: 1.5s;
-    }
 
     /* Responsive Design */
     @media (min-width: 768px) {
