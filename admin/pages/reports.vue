@@ -277,8 +277,8 @@
         <div v-if="showSuccess" class="modal-overlay" >
         <div class="modal-content">
             <h2>Amendment of data successful for</h2>
-            <div v-if="lastAmendDateDisplay" style="color:#333; margin-top:0.5em; text-align:center;">
-                {{ lastAmendDateDisplay }}
+            <div v-if="lastAmendedForDisplay || lastAmendDateDisplay" style="color:#333; margin-top:0.5em; text-align:center;">
+                {{ lastAmendedForDisplay || lastAmendDateDisplay }}
             </div>
             <div class="form-actions">
             <button class="save-button" @click="showSuccess = false">OK</button>
@@ -381,6 +381,8 @@ export default {
             showAmendForm: false,
             showSuccess: false,           
             lastAmendDate: null,
+            // The date that was amended (the day the user intended to change)
+            lastAmendedFor: null,
             errorMessage: '',
             form: { category: '', quantity: null, action: '' },
             categories: ['Shirts','Jackets','Pants','Underwear','Shoes','Snack Packs','Hygiene Packs','Blankets'],
@@ -767,6 +769,8 @@ export default {
                     if (this.selectedDate && this.selectedDate instanceof Date) {
                         // Use the change timestamp as the lastAmendDate so success UI shows when the change occurred
                         this.lastAmendDate = new Date(changedAt.getTime());
+                        // Record which day was amended (the amended-for day) so the success UI shows that day
+                        this.lastAmendedFor = new Date(this.selectedDate.getFullYear(), this.selectedDate.getMonth(), this.selectedDate.getDate());
                         // map keyed by the amended-for day
                         const k = this.dateKey(this.selectedDate);
                         if (!this.amendmentsByDate[k]) this.amendmentsByDate[k] = [];
@@ -970,6 +974,16 @@ export default {
         lastAmendDateDisplay() {
             if (!this.lastAmendDate) return '';
             return new Date(this.lastAmendDate).toLocaleDateString('en-US', {
+                timeZone: 'America/Chicago',
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric'
+            });
+        },
+        // Display the day that was amended (the amended-for date), not the change timestamp
+        lastAmendedForDisplay() {
+            if (!this.lastAmendedFor) return '';
+            return new Date(this.lastAmendedFor).toLocaleDateString('en-US', {
                 timeZone: 'America/Chicago',
                 month: 'short',
                 day: 'numeric',
