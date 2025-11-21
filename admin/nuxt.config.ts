@@ -7,6 +7,7 @@ import tailwindcss from "@tailwindcss/vite";
 export default defineNuxtConfig({
   devtools: { enabled: true },
   css: ['./app/assets/css/main.css'],
+  vite: {
   plugins: [
     '~/qr-code-stuff/vue3-qr-reader.client.ts',
     tailwindcss({
@@ -16,9 +17,10 @@ export default defineNuxtConfig({
         './layouts/**/*.{vue,js,ts}',
         './pages/**/*.{vue,js,ts}',
         './plugins/**/*.{js,ts}',
-      ]
-    }),
-  ],
+        ]
+      }),
+    ],
+  },
   components:{
     dirs: [
       "@/components/"

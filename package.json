@@ -13,6 +13,7 @@
     "public": "cd webcomponent && npm run dev",
     "resetInventoryData": "node ./admin/scripts/resetInventoryData.mjs",
     "setup": "npm run cpenv && npm run installDeps && npm run prismaMigrate",
+    "bashCleanup" : "rm -rf admin/node_modules webcomponent/node_modules && rm -f admin/pnpm-lock.yaml  webcomponent/pnpm-lock.yaml",
     "build": "./build.sh"
   },
   "prisma": {
