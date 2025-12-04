@@ -4,6 +4,7 @@
   "scripts": {
     "admin": "npm --prefix admin run dev",
     "both": "node ./scripts/runAdminAndPublic",
+    "build": "build.sh",
     "cpenv": "node ./scripts/cpenv.js",
     "installDeps": "npm install && cd webcomponent && npm install && cd ../admin && npm install",
     "newDay": "node ./admin/scripts/dailyInventorySnapshot.mjs",
