@@ -23,9 +23,8 @@ const data = ref(null);
 // Fetch data when the component is mounted
 onMounted(async () => {
   try {
-    data.value = await $fetch('/api/test/', {
-      baseURL: config.public.apiBase,
-    });
+    const baseURL = config.public.apiBase as string;
+    data.value = await $fetch<any>(`${baseURL}/api/test/`);
   } catch (error) {
     console.error('Fetch error:', error);
   }

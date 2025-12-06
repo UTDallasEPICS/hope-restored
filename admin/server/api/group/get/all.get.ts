@@ -6,12 +6,7 @@ const prisma = new PrismaClient();
 export default defineEventHandler(async (event) => {
   try {
     const groups = await prisma.group.findMany();
-    // if (!groups || groups.length === 0) {
-    //   throw createError({
-    //     statusCode: 404,
-    //     message: "Groups not found",
-    //   });
-    // }
+   
 
     return groups;
   } catch (error) {

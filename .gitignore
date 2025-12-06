@@ -30,5 +30,3 @@ logs
 /private/
 
 .venv
-
-package-lock.json
