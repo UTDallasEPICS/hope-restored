@@ -277,11 +277,14 @@
         <div v-if="showSuccess" class="modal-overlay" >
         <div class="modal-content">
             <h2>Amendment of data successful for</h2>
-            <div v-if="lastAmendDateDisplay" style="color:#333; margin-top:0.5em; text-align:center;">
-                {{ lastAmendDateDisplay }}
+            <div v-if="lastAmendedForDisplay || lastAmendDateDisplay" style="color:#333; margin-top:0.5em; text-align:center;">
+                {{ lastAmendedForDisplay || lastAmendDateDisplay }}
+            </div>
+            <div v-if="lastAmendedCount && lastAmendAction" style="color:#333; margin-top:0.25em; text-align:center;">
+                {{ lastAmendCountDisplay }}
             </div>
             <div class="form-actions">
-            <button class="save-button" @click="showSuccess = false">OK</button>
+            <button class="save-button" @click="closeSuccess">OK</button>
             </div>
          </div>
          </div>
@@ -381,6 +384,14 @@ export default {
             showAmendForm: false,
             showSuccess: false,           
             lastAmendDate: null,
+            // The date that was amended (the day the user intended to change)
+            lastAmendedFor: null,
+            // Number of items changed in the last amendment (positive integer)
+            lastAmendedCount: null,
+            // Action of the last amendment: 'Add' or 'Remove'
+            lastAmendAction: '',
+            // Category of the last amendment (e.g. 'Shirts')
+            lastAmendedCategory: '',
             errorMessage: '',
             form: { category: '', quantity: null, action: '' },
             categories: ['Shirts','Jackets','Pants','Underwear','Shoes','Snack Packs','Hygiene Packs','Blankets'],
@@ -518,6 +529,15 @@ export default {
         closeAmendData() {
             this.showAmendData = false;
             this.selectedDate = null;
+        },
+        // Close the success modal and clear last-amend tracking fields
+        closeSuccess() {
+            this.showSuccess = false;
+            this.lastAmendDate = null;
+            this.lastAmendedFor = null;
+            this.lastAmendedCount = null;
+            this.lastAmendAction = '';
+            this.lastAmendedCategory = '';
         },
         openMonthlyFromPrevious() {
             this.showPreviousReportsModal = false;
@@ -767,6 +787,12 @@ export default {
                     if (this.selectedDate && this.selectedDate instanceof Date) {
                         // Use the change timestamp as the lastAmendDate so success UI shows when the change occurred
                         this.lastAmendDate = new Date(changedAt.getTime());
+                        // Record which day was amended (the amended-for day) so the success UI shows that day
+                        this.lastAmendedFor = new Date(this.selectedDate.getFullYear(), this.selectedDate.getMonth(), this.selectedDate.getDate());
+                        // Record the number, action and category so the success UI can display what changed
+                        this.lastAmendedCount = this.form.quantity;
+                        this.lastAmendAction = this.form.action;
+                        this.lastAmendedCategory = this.form.category;
                         // map keyed by the amended-for day
                         const k = this.dateKey(this.selectedDate);
                         if (!this.amendmentsByDate[k]) this.amendmentsByDate[k] = [];
@@ -975,6 +1001,23 @@ export default {
                 day: 'numeric',
                 year: 'numeric'
             });
+        },
+        // Display the day that was amended (the amended-for date), not the change timestamp
+        lastAmendedForDisplay() {
+            if (!this.lastAmendedFor) return '';
+            return new Date(this.lastAmendedFor).toLocaleDateString('en-US', {
+                timeZone: 'America/Chicago',
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric'
+            });
+        },
+        // Display the summary of the last amend count/action/category (e.g. "Added 5 Shirts" or "Removed 3 Shoes")
+        lastAmendCountDisplay() {
+            if (!this.lastAmendedCount || !this.lastAmendAction) return '';
+            const action = String(this.lastAmendAction).toLowerCase() === 'add' ? 'Added' : (String(this.lastAmendAction).toLowerCase() === 'remove' ? 'Removed' : this.lastAmendAction);
+            const category = this.lastAmendedCategory ? ` ${this.lastAmendedCategory}` : '';
+            return `${action} ${this.lastAmendedCount}${category}`;
         },
         firstAllowedDate() {
             // Get the dynamically fetched first inventory date

@@ -1,6 +1,8 @@
 {
   "name": "nuxt-app",
+  "type": "module",
   "private": true,
+  "type": "module",
   "scripts": {
     "build": "nuxt build",
     "dev": "nuxt dev",
@@ -34,6 +36,7 @@
   },
   "devDependencies": {
     "@sidebase/nuxt-auth": "^0.6.7",
+    "@tailwindcss/postcss": "^4.1.17",
     "@types/node": "^22.7.5",
     "prisma": "^6.17.1",
     "tsx": "^4.19.2",
