@@ -13,27 +13,27 @@ Hope Restored Missions receives donations from local businesses, churches, and i
 
 ## Functional Requirements
 
-- Reports Page
-o	Will display the total number of items entering and leaving the warehouse daily, weekly, or monthly
-o	There is a “view reports” option - a choice between a daily, weekly, and a monthly report
-	-The daily report gives the report for a selected date
-	-The weekly report gives the report for a selected week
-	-The monthly report gives the report for a selected month
-o	There will be a table on the reports page. The table is 8x4 - the different categories will be the rows. The category, total number in stock, quantity added today, and quantity removed today will be the columns.
-o	A button called “Amend Data” which, when pressed, will pull a calendar that allows the user to select a date and then prompts the user to pick a category, enter the quantity to add or remove, and whether they want to add or remove
-	-After the user confirms, the table or previous reports will update for the respective date.
+Reports Page
+-	Will display the total number of items entering and leaving the warehouse daily, weekly, or monthly
+-	There is a “view reports” option - a choice between a daily, weekly, and a monthly report
+-  The daily report gives the report for a selected date
+-  The weekly report gives the report for a selected week
+-  The monthly report gives the report for a selected month
+-  There will be a table on the reports page. The table is 8x4 - the different categories will be the rows. The category, total number in stock, quantity added today, and quantity removed today will be the columns.
+-  A button called “Amend Data” which, when pressed, will pull a calendar that allows the user to select a date and then prompts the user to pick a category, enter the quantity to add or remove, and whether they want to add or remove
+	-  After the user confirms, the table or previous reports will update for the respective date.
 
-- Inventory Page
-o	Displays all items in stock and the ability to add items.
-o	Eight categories available to enter or remove: shirts, pants, jackets, underwear, shoes, snack packs, hygiene packs, and blankets
-o	Table to display all items in stock: category and quantity as columns
-o	Once the user selects a category, they will be prompted to enter the quantity they want to add, and once they enter a quantity, there will be a confirmation message 
-o	After the user confirms, the table will update the category with the new quantity.
+Inventory Page
+-  Displays all items in stock and the ability to add items.
+-  Eight categories available to enter or remove: shirts, pants, jackets, underwear, shoes, snack packs, hygiene packs, and blankets
+-  Table to display all items in stock: category and quantity as columns
+-  Once the user selects a category, they will be prompted to enter the quantity they want to add, and once they enter a quantity, there will be a confirmation message 
+-  After the user confirms, the table will update the category with the new quantity.
 
-- Checkout Page
-o	Allows for the removal of items from the inventory.
-o	The user will select the category and enter the quantity of the selected category, and will proceed to click the “Check Out” button, which will remove the items from the inventory and be recorded to the daily report for the current date.
-	-Will have a pop-up confirmation window before finalizing the checkout to help minimize accidental human errors.
+ Checkout Page
+-  Allows for the removal of items from the inventory.
+-  The user will select the category and enter the quantity of the selected category, and will proceed to click the “Check Out” button, which will remove the items from the inventory and be recorded to the daily report for the current date.
+	- Will have a pop-up confirmation window before finalizing the checkout to help minimize accidental human errors.
 
 
 
