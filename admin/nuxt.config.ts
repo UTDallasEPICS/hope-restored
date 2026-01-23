@@ -6,7 +6,6 @@ import { defineNuxtConfig } from 'nuxt/config'
 export default defineNuxtConfig({
   devtools: { enabled: true },
   css: ['~/assets/css/main.css'],
-  plugins: [ '~/qr-code-stuff/vue3-qr-reader.client.ts' ],
 
   components:{
     dirs: [

@@ -1,11 +1,13 @@
 <!-- components/QrCodeScanner.vue -->
 <template>
     <div class="qr-code-scanner">
-        <QrReader @decode="onDecode"
-                  @init="onInit"
-                  :paused="paused"
-                  :constraints="constraints"
-                  class="scanner-view" />
+        <ClientOnly>
+            <QrReader @decode="onDecode"
+                      @init="onInit"
+                      :paused="paused"
+                      :constraints="constraints"
+                      class="scanner-view" />
+        </ClientOnly>
         <div v-if="initializing" class="scanner-info">
             Initializing Camera...
         </div>

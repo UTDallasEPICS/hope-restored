@@ -14,8 +14,7 @@
     "prismaStudio": "cd admin && npx prisma studio",
     "public": "cd webcomponent && npm run dev",
     "resetInventoryData": "node ./admin/scripts/resetInventoryData.mjs",
-    "setup": "npm run cpenv && npm run installDeps && npm run prismaMigrate",
-    "build": "./build.sh"
+    "setup": "npm run cpenv && npm run installDeps && npm run prismaMigrate"
   },
   "prisma": {
     "seed": "tsx ./admin/prisma/seed.ts",
@@ -26,19 +25,14 @@
     "@headlessui/vue": "^1.7.23",
     "@heroicons/vue": "^2.2.0",
     "@prisma/client": "^6.17.1",
-    "chart.js": "^3.9.1",
     "cors": "^2.8.5",
     "csv-parser": "^3.0.0",
     "jsbarcode": "^3.11.6",
     "luxon": "^3.7.2",
     "nuxt": "^3.16.0",
     "pinia": "^3.0.1",
-    "qrcode.vue": "^3.6.0",
-    "quagga": "^0.6.16",
     "vite": "^7.1.9",
-    "vue": "^3.2.0",
-    "vue-chartjs": "^4.1.2",
-    "vue3-qr-reader": "^1.0.0"
+    "vue": "^3.2.0"
   },
   "devDependencies": {
     "@nuxtjs/tailwindcss": "^6.12.1",

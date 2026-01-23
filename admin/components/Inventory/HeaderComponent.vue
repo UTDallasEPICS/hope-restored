@@ -10,8 +10,6 @@
           <li><nuxt-link to="/inventory">Inventory</nuxt-link></li>
           <li><nuxt-link to="/checkout">Checkout</nuxt-link></li>  
 
-          <!-- <li><nuxt-link to="/scanner">Scanner</nuxt-link></li> --> 
-
           
         </ul>
         <hr>
