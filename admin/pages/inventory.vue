@@ -1,122 +1,32 @@
 <!-- pages/inventory.vue -->
 <template>
     <div class="inventory-container">
-        <h1>Inventory</h1>
-
+        <h1><b>Select a Category to Add</b></h1>
+    
         <!-- Manual Add Section -->
         <section class="add-item-section">
-            <button @click="showAddItemModal = true" class="add-item-button">
-                <i class="fas fa-plus"></i> Add New Item
-            </button>
-        </section>
-
-        <!-- Add Item Modal -->
-        <div v-if="showAddItemModal" class="modal-overlay">
-            <div class="modal-content">
-                <h2>Add New Inventory Item</h2>
-                <form @submit.prevent="addItem">
-                    <div class="form-group mt-2">
-                        <label for="category">Category:</label>
-                        <!-- <input v-model="newItem.category" id="category" required /> -->
-                        <select v-model="newItem.category" id="category" required>
-                            <option disabled value="">Select a category</option>
-                            <option value="Tops">Tops</option>
-                            <option value="Suits">Suits</option>
-                            <option value="Pants">Pants</option>
-                            <option value="Shorts">Shorts</option>
-                            <option value="Socks">Socks</option>
-                            <option value="Underwear">Underwear</option>
-                            <option value="Shoes">Shoes</option>
-                            <option value="OuterWear">OuterWear</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="style">Style:</label>
-                        <!-- <input v-model="newItem.style" id="style" required /> -->
-                        <select v-model="newItem.style" id="style" :disabled="!newItem.category" required>
-                            <option disabled value="">Select a style</option>
-                            <option v-for="style in filteredStyles" :key="style" :value="style">
-                                {{ style }}
-                            </option>
-                        </select>
-
-
-
-                    <!--<input v-model="newItem.style" id="style" required />
-                        <select v-model="newItem.style" id="style" required>
-                            <option disabled value="">Select a style</option>
-                            <option value="Long Sleeve">Long Sleeve</option>
-                            <option value="Short Sleeve">Short Sleeve</option>
-                            <option value="T-Shirt">T-Shirt</option>
-                            <option value="Casual">Casual</option>
-                            <option value="Fancy">Fancy</option>
-                            <option value="Canvas">Canvas</option>
-                            <option value="Leather">Leather</option>
-                            <option value="Misc.">Miscellaneous</option>
-                        </select>-->    
-                    
-                    </div>
-                    <div class="form-group">
-                        <label for="gender">Gender:</label>
-                        <!-- <input v-model="newItem.gender" id="gender" required /> -->
-                        <select v-model="newItem.gender" id="gender" required>
-                            <option disabled value="">Select a gender</option>
-                            <option value="Male">Male</option>
-                            <option value="Female">Female</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="size">Size:</label>
-                        <!--<input v-model="newItem.size" id="size" required />-->
-
-
-                        <select v-model="newItem.size" id="size" :disabled="!newItem.category" required>
-                            <option disabled value="">Select a size</option>
-                           <!--<option v-for="style in filteredStyles" :key="style" :value="style">
-                                {{ style }}
-                            </option>--> 
-                            <!--<option value="">Select Size</option>-->
-                            <option value="S">Small</option>
-                            <option value="M">Medium</option>
-                            <option value="L">Large</option>
-                            <option value="XL">Extra Large</option>
-
-                        </select>
-
-
-                    </div>
-                    <div class="form-group">
-                        <label for="quantity">Quantity:</label>
-                        <input type="number"
-                               v-model.number="newItem.quantity"
-                               id="quantity"
-                               required
-                               min="1" />
-                    </div>
-                    <div class="form-group">
-                        <label for="location">Location:</label>
-                        <input v-model="newItem.location" id="location" required />
-                    </div>
-                    <div class="form-actions">
-                        <button type="submit" class="save-button">
-                            <i class="fas fa-save"></i> Save
-                        </button>
-                        <button type="button"
-                                @click="showAddItemModal = false"
-                                class="cancel-button">
-                            <i class="fas fa-times"></i> Cancel
-                        </button>
-                    </div>
-                </form>
+            <div class="category-grid" role="list" aria-label="Quick add categories">
+                <button
+                    v-for="cat in ['Shirts','Pants','Jackets','Underwear','Shoes','Snack Packs','Hygiene Packs', 'Blankets']"
+                    :key="cat"
+                    type="button"
+                    class="category-button"
+                    :aria-pressed="newItem.category === cat"
+                    :class="{ active: newItem.category === cat }"
+                    @click="openQuickPopup(cat)">
+                    <i class="fas fa-plus" aria-hidden="true"></i>
+                    <span class="label">{{ cat }}</span>
+                </button>
             </div>
-        </div>
-
+        </section>
+        
+ 
         <!-- Add to existing item modal -->
         <div v-if="showAddQuantityModal" class="modal-overlay">
             <div class="modal-content">
                 <h2>Add Inventory Item</h2>
                 <h2>Item Barcode: {{ editedItem.barcode }}</h2>
-                <form @submit.prevent="updateItem">
+                <form @submit.prevent="editItem(editedItem)">
                     <div class="form-group">
                         <label for="quantity">Quantity:</label>
                         <input type="number"
@@ -139,12 +49,44 @@
             </div>
         </div>
 
+        <!-- Generic Quick Popup for any category -->
+        <div v-if="showQuickPopup" class="modal-overlay">
+            <div class="modal-content shirt-popup" style="max-width:320px; position:relative;">
+                <button type="button" class="popup-close-x" aria-label="Close" @click="closeQuickPopup">×</button>
+                <h2>Enter Quantity for {{ quickPopupCategory }}:</h2>
+                <div class="form-group">
+                    <input
+                        type="number"
+                        v-model.number="quickQuantity"
+                        min="0"
+                        placeholder="Enter number"
+                        @keyup.enter="showConfirmAdd"
+                    />
+                </div>
+                <div class="form-actions">
+                    <button type="button" @click="showConfirmAdd" class="add-button">Add</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Confirm Add Modal -->
+        <div v-if="showConfirmAddModal" class="modal-overlay" @keydown.enter.prevent="confirmAddQuick">
+            <div class="modal" tabindex="-1">
+                <h3>Add {{ quickQuantity }} {{ quickPopupCategory }}?</h3>
+                <p>Confirm Yes/No</p>
+                <div class="modal-actions">
+                    <button type="button" @click="confirmAddQuick" class="btn danger" autofocus ref="confirmAddYesBtn">Yes</button>
+                    <button type="button" @click="cancelConfirmAdd" class="btn">No</button>
+                </div>
+            </div>
+        </div>
+
         <!-- Remove from existing item modal -->
         <div v-if="showReduceQuantityModal" class="modal-overlay">
             <div class="modal-content">
                 <h2>Remove Inventory Item</h2>
                 <h2>Item Barcode: {{ editedItem.barcode }}</h2>
-                <form @submit.prevent="updateItem">
+                <form @submit.prevent="editItem({ barcode: editedItem.barcode, quantity: editedItem.quantity ? editedItem.quantity * -1 : 0 })">
                     <div class="form-group">
                         <label for="quantity">Quantity:</label>
                         <input type="number"
@@ -152,10 +94,10 @@
                                id="quantity"
                                required
                                min="0"
-                               :max="editedItem.quantity" />
+                               :max="editedItem.quantity ?? 0" />
                     </div>
                     <div class="form-actions">
-                        <button type="submit" @click="editItem({ barcode: editedItem.barcode, quantity: editedItem.quantity * -1 })" class="save-button">
+                        <button type="submit" @click="editItem({ barcode: editedItem.barcode, quantity: editedItem.quantity ? editedItem.quantity * -1 : 0 })" class="save-button">
                             <i class="fas fa-save"></i> Save
                         </button>
                         <button type="button"
@@ -187,93 +129,46 @@
             </div>
         </div>
 
-        <!-- Filter and Sort Section -->
-        <div class="filter-sort-section">
-            <div class="search-input">
-                <input v-model="searchQuery"
-                       type="text"
-                       placeholder="Search..." />
-            </div>
-            <div class="sort-options">
-                <label for="sortOptions">Sort By:</label>
-                <select v-model="selectedSort" id="sortOptions">
-                    <option value="alphabetical">Alphabetical (Category)</option>
-                    <option value="recent">Most Recent Addition</option>
-                    <option value="dateAdded">Date Added</option>
-                </select>
-            </div>
-        </div>
-
         <!-- Inventory Table Section -->
         <div id="inventory" class="inventory_table_container">
             <table>
                 <thead>
                     <tr>
-                        <th>#</th>
-                        <th>QR Code</th>
                         <th>Category</th>
-                        <th>Style</th>
-                        <th>Gender</th>
-                        <th>Size</th>
                         <th>Quantity</th>
-                        <th>Location</th>
-                        <th>Add</th>
-                        <th>Remove</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr v-for="item in sortedAndFilteredInventory" :key="item.barcode">
-                        <td>{{ item.barcode }}</td>
-                        <td>
-                            <QRCode :value="item.barcode.toString()" :size="50" />
-                        </td>
-                        <td>{{ item.category.name }}</td>
-                        <td>{{ item.style.name }}</td>
-                        <td>{{ item.gender.name }}</td>
-                        <td>{{ item.size.sizeCode }}</td>
+                        <td>{{ item.category?.name ?? '—' }}</td>
                         <td>{{ item.quantity }}</td>
-                        <td>{{ item.location }}</td>
-                        <td>
-                            <button @click="openAddQuantityModal({ barcode: item.barcode, quantity: item.quantity })" class="add-item-button">
-                                <i class="fas fa-plus"></i> Add
-                            </button>
-                        </td>
-                        <td>
-                            <button @click="openReduceQuantityModal({ barcode: item.barcode, quantity: item.quantity })" class="remove-item-button">
-                                <i class="fas fa-plus"></i> Remove
-                            </button>
-                        </td>
                     </tr>
                 </tbody>
             </table>
         </div>
-
-        <!-- Charts Section -->
-        <section id="charts" class="charts-section">
-            <ItemsPerCategoryChart :inventory="inventory" />
-            <ItemsPerLocationChart :inventory="inventory" />
-        </section>
+    
+    
     </div>
 </template>
 
 <script setup lang="ts">
-    import { ref, computed, onMounted } from 'vue';
-    import { useFetch, useRuntimeConfig } from 'nuxt/app';
-    import QRCode from 'qrcode.vue';
-    import ItemsPerCategoryChart from '../components/Inventory/ItemsPerCategoryChart.vue';
-    import ItemsPerLocationChart from '../components/Inventory/ItemsPerLocationChart.vue';
-    //import { RefSymbol } from '@vue/reactivity';
+    import { ref, computed, onMounted, watch, nextTick } from 'vue';
     
-    const inventory = ref([]);
-    //inventory.value = await getInventory();
+    
+    const inventory = ref<any[]>([]);
     const searchQuery = ref('');
     const selectedSort = ref('alphabetical');
-    const config = useRuntimeConfig();
     const showAddItemModal = ref(false);
     const showAddQuantityModal = ref(false);
     const showReduceQuantityModal = ref(false);
     const showInvalidQuantityPopup = ref(false);
-    const editedItem = ref({ barcode: null, quantity: null });
+    
+    const showQuickPopup = ref(false);
+    const showConfirmAddModal = ref(false);
+    const confirmAddYesBtn = ref<any>(null);
+    const quickPopupCategory = ref('');
+    const quickQuantity = ref<number | null>(null);
+    const editedItem = ref<{ barcode: string | null; quantity: number | null }>({ barcode: null, quantity: null });
     
     // making the drop down dynamic
 
@@ -299,12 +194,75 @@
         lastUpdated: '',
     });
 
-    function openAddQuantityModal(item) {
+    // Open Add modal for a specific category and preselect it
+    function openAddModal(category: string) {
+        newItem.value.category = category;
+        showAddItemModal.value = true;
+    }
+
+    
+
+    function openQuickPopup(category: string) {
+        quickPopupCategory.value = category;
+        quickQuantity.value = null;
+        showQuickPopup.value = true;
+    }
+
+    function closeQuickPopup() {
+        showQuickPopup.value = false;
+        showConfirmAddModal.value = false;
+    }
+
+    function showConfirmAdd() {
+        showQuickPopup.value = false;
+        showConfirmAddModal.value = true;
+    }
+
+    function cancelConfirmAdd() {
+        showConfirmAddModal.value = false;
+        showQuickPopup.value = true;
+    }
+
+    async function confirmAddQuick() {
+        const payload = {
+            category: quickPopupCategory.value,
+            style: 'Misc.',
+            gender: 'Unisex',
+            size: 'M',
+            quantity: Number(quickQuantity.value || 0),
+        };
+
+        if (!payload.quantity || payload.quantity <= 0) return;
+
+        try {
+            await $fetch('/api/inventory/', {
+                method: 'POST',
+                body: payload,
+            });
+            await getInventory();
+        } catch (err) {
+            console.error('Error adding item:', err);
+        } finally {
+            showConfirmAddModal.value = false;
+            quickQuantity.value = null;
+        }
+    }
+
+    // Focus the Yes button when the confirm modal opens so Enter activates it
+    watch(showConfirmAddModal, (val) => {
+        if (val) {
+            nextTick(() => {
+                confirmAddYesBtn.value?.focus();
+            });
+        }
+    });
+
+    function openAddQuantityModal(item: any) {
         editedItem.value = item;
         showAddQuantityModal.value = true;
     }
 
-    function openReduceQuantityModal(item) {
+    function openReduceQuantityModal(item: any) {
         editedItem.value = item;
         showReduceQuantityModal.value = true;
     }
@@ -313,7 +271,7 @@
         showInvalidQuantityPopup.value = true;
     }
 
-    async function editItem(editedItem) {
+    async function editItem(editedItem: any) {
         let item = null;
 
         if (editedItem.barcode && editedItem.quantity){
@@ -358,25 +316,60 @@
 
     // Fetch inventory data
     //onMounted(async () => { // Fetches data when the page (component) is initially loaded
+    // Helper to get start/end of today in server local time
+    function getTodayRange() {
+        const now = new Date();
+        const start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+        const end = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0, 0);
+        return { start, end };
+    }
+
+    // Check and create new day's inventory records if they don't exist
+    async function checkAndCreateNewDay() {
+        try {
+            const response: any = await $fetch('/api/inventory/check-new-day', {
+                method: 'POST',
+            });
+            
+            if (response.recordsCreated) {
+                console.log(`✅ New day detected: Created ${response.count || 0} inventory records for ${new Date(response.date).toLocaleDateString()}`);
+            } else {
+                console.log(`✓ Today's inventory records already exist`);
+            }
+            
+            return response;
+        } catch (error) {
+            console.error('Failed to check/create new day:', error);
+            throw error;
+        }
+    }
+
     async function getInventory() {
         try {
-            //inventory.value = await $fetch('/api/inventory/');
-            inventory.value = await $fetch('/api/inventory/', { // get inventory data; call index.get.ts
-                //baseURL: config.public.apiBase,
-                method: 'GET'
+            // Check and create new day's records first
+            await checkAndCreateNewDay();
+            
+            const { start, end } = getTodayRange();
+            // Fetch only today's InventoryRecords
+            inventory.value = await ($fetch as any)('/api/inventory/', {
+                method: 'GET',
+                params: {
+                    start: start.toISOString(),
+                    end: end.toISOString(),
+                },
             });
         } catch (error) {
             console.error('Fetch error:', error);
         }
-    };
+    }
 
     onMounted(getInventory);
 
     // Fetch inventory item
-    async function getItem(id) {
+    async function getItem(id: any) {
         try {
             console.log(id);
-            const item = await $fetch(`/api/inventory/${id}`, { // get inventory data; call [id].get.ts
+            const item: any = await $fetch(`/api/inventory/${id}`, { // get inventory data; call [id].get.ts
                 method: 'GET'
             });
 
@@ -390,7 +383,7 @@
     };
 
     // Call the server-side API to delete this item from the database
-    async function deleteEntry(barcode) {
+    async function deleteEntry(barcode: any) {
         const response = await $fetch('/api/inventory/', {  // post entry to database; call index.delete.ts
             method: 'DELETE',
             body: { // data for database entry
@@ -402,9 +395,8 @@
     }
 
     // Computed property to filter and sort inventory based on search query and sort option
-    const sortedAndFilteredInventory = computed(() => {
-        let filtered = inventory.value; //.value accesses the actual array inside the inventory variable
-        console.log(filtered);
+    const sortedAndFilteredInventory = computed((): any[] => {
+    let filtered = inventory.value; //.value accesses the actual array inside the inventory variable
 
         // Filter by search query
         if (searchQuery.value) {
@@ -422,17 +414,29 @@
         }
 
         // Sort based on selected option
-        return filtered.slice().sort((a, b) => {
-            if (selectedSort.value === 'alphabetical') {
-                return a.category.name.localeCompare(b.category.name); // Alphabetical by category
-            } else if (selectedSort.value === 'recent') {
-                //return b.barcode - a.barcode; // Assuming higher barcode means more recent
-                return new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime(); // Most recent first (must convert to Date format for comparison)
+        return filtered.slice().sort((a: any, b: any) => {
+            if (selectedSort.value === 'recent') {
+                // Most recent first (must convert to Date format for comparison)
+                return new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime();
             } else if (selectedSort.value === 'dateAdded') {
-                //return new Date(b.dateAdded).getTime() - new Date(a.dateAdded).getTime(); // Sort by dateAdded if available
-                return new Date(a.lastUpdated).getTime() - new Date(b.lastUpdated).getTime(); // Oldest first (must convert to Date format for comparison)
+                // Oldest first
+                return new Date(a.lastUpdated).getTime() - new Date(b.lastUpdated).getTime();
             }
-            return 0;
+
+            // Default/custom ordering: Shirts, Pants, Jackets, Underwear, Shoes, Snack Packs, Hygiene Packs, Blankets
+            const order = ['Shirts', 'Pants', 'Jackets', 'Underwear', 'Shoes', 'Snack Packs', 'Hygiene Packs', 'Blankets'];
+            const idx = (name: string) => {
+                if (!name) return order.length;
+                const i = order.indexOf(name);
+                return i === -1 ? order.length : i;
+            };
+
+            const aName = a?.category?.name ?? '';
+            const bName = b?.category?.name ?? '';
+            const diff = idx(aName) - idx(bName);
+            if (diff !== 0) return diff;
+            // fallback: alphabetical within same category or for unknown categories
+            return aName.localeCompare(bName);
         });
     });
 
@@ -507,7 +511,7 @@
 <style scoped>
     /* General Styling */
     .inventory-container {
-        font-family: 'Open Sans', sans-serif;
+        font-family: 'sans-serif', Arial;
         padding: 2em;
         background-color: #f0f2f5; /* Light gray background */
         min-height: 100vh;
@@ -526,8 +530,7 @@
 
     /* Add Item Section */
     .add-item-section {
-        display: flex;
-        justify-content: flex-end;
+        display: block;
         margin-bottom: 1em;
     }
 
@@ -545,6 +548,81 @@
         align-items: center;
         gap: 0.5em;
     }
+
+    /* Category grid for quick-add buttons */
+    .category-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 0.6rem;
+        align-items: stretch;
+        grid-auto-rows: 1fr;
+    }
+
+    .category-button {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0.4rem;
+        /* Make buttons square */
+        aspect-ratio: 4 / 3;
+        width: 100%;
+        padding: 0.6rem;
+        border-radius: 8px;
+        border: 1px solid rgba(0,0,0,0.08);
+        background: #fff;
+        color: #000;
+        font-weight: 550;
+        cursor: pointer;
+        transition: transform 120ms ease, box-shadow 120ms ease, background 120ms ease;
+    }
+
+    .category-button .label {
+        display: inline-block;
+        font-size: 1.5rem;
+        text-align: center;
+        line-height: 1.1;
+        padding: 0 6px;
+        word-break: break-word;
+    }
+
+    .category-button:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 18px rgba(0,0,0,0.06);
+        border-color: rgba(0,0,0,0.12);
+        background: linear-gradient(180deg, #ffffff, #f7f7f7);
+    }
+
+    .category-button:active {
+        transform: translateY(-1px) scale(0.995);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+        background: linear-gradient(180deg, #f9f9f9, #f0f0f0);
+    }
+
+    /* Shirts popup close X */
+    .popup-close-x {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: rgba(0,0,0,0.06);
+        border: none;
+        color: #333;
+        font-size: 18px;
+        line-height: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+    }
+
+    .popup-close-x:hover {
+        background: rgba(0,0,0,0.12);
+    }
+
+    
 
     .remove-item-button {
         padding: 0.5em 1.5em;
@@ -581,6 +659,16 @@
         align-items: center;
         justify-content: center;
         z-index: 1000;
+    }
+
+    .modal {
+        background: white;
+        border-radius: 8px;
+        padding: 20px;
+        min-width: 320px;
+        max-width: 480px;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
+        position: relative;
     }
 
     .modal-content {
@@ -622,8 +710,30 @@
         gap: 1em;
     }
 
+    .modal-actions {
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+        margin-top: 8px;
+    }
+
+    .btn {
+        padding: 8px 14px;
+        border-radius: 6px;
+        border: 1px solid #bbb;
+        cursor: pointer;
+        background: #f5f5f5;
+    }
+
+    .btn.danger {
+        background: #c0392b;
+        color: white;
+        border: none;
+    }
+
     .save-button,
-    .cancel-button {
+    .cancel-button,
+    .add-button {
         padding: 0.5em 1.5em;
         color: #fff;
         border: none;
@@ -640,6 +750,14 @@
 
         .save-button:hover {
             background-color: #43a047;
+        }
+
+    .add-button {
+        background-color: #007bff; /* Blue */
+    }
+
+        .add-button:hover {
+            background-color: #0056b3;
         }
 
     .cancel-button {
@@ -737,37 +855,7 @@
         color: #333;
     }
 
-    /* Charts Section Styling */
-    .charts-section {
-        display: flex;
-        flex-direction: column;
-        gap: 2em;
-        align-items: center;
-        padding: 2em 0;
-    }
+   
 
-    /* Responsive Design */
-    @media (min-width: 768px) {
-        .filter-sort-section {
-            flex-wrap: nowrap;
-            align-items: flex-end;
-        }
-
-        .search-input {
-            margin-bottom: 0;
-        }
-
-        .sort-options {
-            text-align: right;
-        }
-
-        .charts-section {
-            flex-direction: row;
-            justify-content: space-around;
-        }
-
-        .chart-container {
-            width: 45%;
-        }
-    }
+    
 </style>
