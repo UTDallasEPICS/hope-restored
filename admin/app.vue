@@ -1,14 +1,13 @@
-<!-- layouts/default.vue or App.vue -->
 <template>
     <div>
-      <HeaderComponent v-if="route.path != '/'"/> <!-- Include the header -->
+      <HeaderComponent v-if="route.path != '/'"/>
       <NuxtPage />
     </div>
 </template>
   
 <script setup>
 import { onMounted } from 'vue';
-import HeaderComponent from '@/components/Inventory/HeaderComponent.vue'; // Import your header component
+import HeaderComponent from '@/components/Inventory/HeaderComponent.vue';
 const route = useRoute();
 const { checkAndCreateNewDay } = useDailyCheck();
 
@@ -21,8 +20,3 @@ onMounted(async () => {
   }
 });
 </script>
-  
-<style scoped>
-/* Add your styles here */
-  
-</style>

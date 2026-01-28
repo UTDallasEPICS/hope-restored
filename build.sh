@@ -1,5 +1,7 @@
-cd webcomponent && echo -e "a\n" | pnpm approve-builds && pnpm i && pnpm run build
-cd ../admin && echo -e "a\n" | pnpm approve-builds && pnpm i && pnpm run build
+cd webcomponent && pnpm install && echo -e "a\n" | pnpm approve-builds && pnpm run build
+cd ../admin && pnpm install && echo -e "a\n" | pnpm approve-builds && pnpm run build
 cd ..
-cp webcomponent/dist ./admin/.output/public/webcomponent
-cp ./admin/.output ./.output
+rm -rf ./.output
+rm -rf ./admin/.output/public/webcomponent
+cp -r webcomponent/dist ./admin/.output/public/webcomponent
+cp -r ./admin/.output ./.output

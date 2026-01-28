@@ -5,18 +5,19 @@ import { defineNuxtConfig } from 'nuxt/config'
 
 export default defineNuxtConfig({
   devtools: { enabled: true },
-  plugins: ['~/qr-code-stuff/vue3-qr-reader.client.ts'],
-  modules: [
-    '@nuxtjs/tailwindcss'
-  ],
+  css: ['~/assets/css/main.css'],
+
   components:{
     dirs: [
       "@/components/"
     ]
   },
+
   // Redirect root path to Home to effectively disable pages/index.vue
   routeRules: {
     '/': { redirect: '/Home' }
   },
-  compatibilityDate: "2025-02-27"
+
+  compatibilityDate: "2025-02-27",
+  modules: ['@nuxtjs/tailwindcss']
 })
