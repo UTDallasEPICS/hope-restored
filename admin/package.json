@@ -27,11 +27,9 @@
     "jsbarcode": "^3.11.6",
     "nuxt": "^4.2.1",
     "paradedb": "^0.14.0",
-    "qrcode.vue": "^3.6.0",
     "quagga": "^0.6.16",
     "vite": "^7.2.4",
-    "vue-chartjs": "^4.1.2",
-    "vue3-qr-reader": "^1.0.0"
+    "vue-chartjs": "^4.1.2"
   },
   "devDependencies": {
     "@sidebase/nuxt-auth": "^0.6.7",
