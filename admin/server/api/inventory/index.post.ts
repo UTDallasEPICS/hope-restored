@@ -9,129 +9,6 @@ export default defineEventHandler(async (event) => {
   // Read the request body (entry data)
   const entry = await readBody(event);
 
-  function generateQRCode(){
-    let categoryCode = "00";
-    let styleCode = "00";
-    let sizeCode = "00";
-    let genderCode = "00"
-
-    switch (entry.category){
-      case "Blouses":
-        categoryCode = "00";
-        break;
-      case "Shirts":
-        categoryCode = "01";
-        break;
-      case "Pants":
-        // map client 'Pants' to pants/dress pants code
-        categoryCode = "04";
-        break;
-      case "Tops":
-        categoryCode = "02";
-        break;
-      case "Dresses":
-        categoryCode = "03";
-        break;
-      case "Dress Pants / Slacks":
-        categoryCode = "04";
-        break;
-      case "Suits":
-        categoryCode = "05";
-        break;
-      case "Jeans":
-        categoryCode = "06";
-        break;
-      case "Shorts":
-        categoryCode = "07";
-        break;
-      case "Socks":
-        categoryCode = "08";
-        break;
-      case "Underwear":
-        categoryCode = "09";
-        break;
-      case "Shoes / Boots":
-        categoryCode = "10";
-        break;
-      case "Shoes":
-        // client may send 'Shoes'
-        categoryCode = "10";
-        break;
-      case "Sweater / Sweatshirt":
-        categoryCode = "11";
-        break;
-      case "Coats / Jackets / Hoodies":
-        categoryCode = "12";
-        break;
-      case "Jackets":
-        // client may send 'Jackets'
-        categoryCode = "12";
-        break;
-      case "Snack Packs":
-        // non-clothing categories - assign unique codes
-        categoryCode = "20";
-        break;
-      case "Hygiene Packs":
-        categoryCode = "21";
-        break;
-    }
-
-    switch (entry.style){
-      case "Long Sleeve":
-        styleCode = "00";
-        break;
-      case "Short Sleeve":
-        styleCode = "01";
-        break;
-      case "T-Shirt":
-        styleCode = "02";
-        break;
-      case "Casual":
-        styleCode = "03";
-        break;
-      case "Fancy":
-        styleCode = "04";
-        break;
-      case "Canvas":
-        styleCode = "05";
-        break;
-      case "Leather":
-        styleCode = "06";
-        break;
-      case "Misc.":
-        styleCode = "07";
-        break;
-    }
-
-    switch (entry.size){
-      case "S":
-        sizeCode = "00";
-        break;
-      case "M":
-        sizeCode = "01";
-        break;
-      case "L":
-        sizeCode = "02";
-        break;
-    }
-
-    switch (entry.gender){
-      case "Male":
-        genderCode = "00";
-        break;
-      case "Female":
-        genderCode = "01";
-        break;
-      case "Unisex":
-        genderCode = "02";
-        break;
-    }
-
-    const itemCode = categoryCode + styleCode + sizeCode + genderCode;
-    return itemCode;
-
-  }
-
   try {
     // Insert a new category, ONLY if it does not exist already
     const category = await prisma.itemCategory.upsert({
@@ -160,8 +37,7 @@ export default defineEventHandler(async (event) => {
       update: {},
       create: { name: entry.gender },
     });
-    
-    const barcode = generateQRCode(); // generate qr code (barcode)
+  
 
       // NOTE: InventoryRecords is the source of truth for available stock.
       // We no longer upsert the Inventory table on quick adds here; instead

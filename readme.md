@@ -13,6 +13,30 @@ Hope Restored Missions receives donations from local businesses, churches, and i
 
 ## Functional Requirements
 
+Reports Page
+-	Will display the total number of items entering and leaving the warehouse daily, weekly, or monthly
+-	There is a “view reports” option - a choice between a daily, weekly, and a monthly report
+-  The daily report gives the report for a selected date
+-  The weekly report gives the report for a selected week
+-  The monthly report gives the report for a selected month
+-  There will be a table on the reports page. The table is 8x4 - the different categories will be the rows. The category, total number in stock, quantity added today, and quantity removed today will be the columns.
+-  A button called “Amend Data” which, when pressed, will pull a calendar that allows the user to select a date and then prompts the user to pick a category, enter the quantity to add or remove, and whether they want to add or remove
+	-  After the user confirms, the table or previous reports will update for the respective date.
+
+Inventory Page
+-  Displays all items in stock and the ability to add items.
+-  Eight categories available to enter or remove: shirts, pants, jackets, underwear, shoes, snack packs, hygiene packs, and blankets
+-  Table to display all items in stock: category and quantity as columns
+-  Once the user selects a category, they will be prompted to enter the quantity they want to add, and once they enter a quantity, there will be a confirmation message 
+-  After the user confirms, the table will update the category with the new quantity.
+
+ Checkout Page
+-  Allows for the removal of items from the inventory.
+-  The user will select the category and enter the quantity of the selected category, and will proceed to click the “Check Out” button, which will remove the items from the inventory and be recorded to the daily report for the current date.
+	- Will have a pop-up confirmation window before finalizing the checkout to help minimize accidental human errors.
+
+
+
 ### Community Resources
 
 - A community resource shall have name and description
@@ -26,7 +50,7 @@ Hope Restored Missions receives donations from local businesses, churches, and i
 ### Application
 
 - The application shall have two views, denoted public view and private/admin view
-- The private view shall only be accessible to volunteers or admins at Hope Restored Missions
+- The private view shall only be accessible to staff or admins at Hope Restored Missions
 - The public view shall be accessible to anyone
 - The authentication system shall be integrated with Google
 - The authentication system shall be integrated with the internal database
@@ -53,26 +77,22 @@ Hope Restored Missions receives donations from local businesses, churches, and i
 - The private view shall be a standalone website
 
 #### Resources:
-- The admin/volunteer shall be able to search resources
+- The admin/staff shall be able to search resources
 - The admin shall be able to filter resources
 - The admin shall be able to see requests for resources
 - The admin shall be able to update any information on a resource
 - The admin shall be able to delete, edit, and unarchive archived resources
-- The admin/volunteer shall be able to archive a resource
+- The admin/staff shall be able to archive a resource
 - The admin shall be able to add a resource
 - The admin shall be able to add a new category
 #### Inventory Tracking:
-- The admin/volunteer shall be able to add new items to the inventory
-- The admin/volunteer shall be able to specify the category, size, style, gender, quantity, and location of each newly inserted item in the inventory
-- The admin/volunteer shall be able to view the inventory in a table format with columns for category, size, style, gender, quantity, and location
-- The admin/volunteer shall be able to add to the quantity of an already existing inventory item
-- The admin/volunteer shall be able to remove the quantity of an already existing inventory item
-- The admin/volunteer shall be able to remove an item from the inventory by removing the existing quantity of the item
-- The admin/volunteer shall be able to search for items in the inventory by category, style, size, and gender
-- The admin/volunteer shall be able to sort inventory items alphabetically, newest to oldest, and oldest to newest
-- The admin/volunteer shall be able to view inventory data through charts and graphs on the Inventory Page
-	- Charts and graphs should cover Inventory by Category, Inventory by Location, and any other metrics deemed necessary by the project partner
-	- Charts should help staff determine what donations are needed and better solicit funding
+- The admin/staff shall be able to add new items to the inventory
+- The admin/staff shall be able to specify the category, size, style, gender, quantity, and location of each newly inserted item in the inventory
+- The admin/staff shall be able to view the inventory in a table format with columns for category, size, style, gender, quantity, and location
+- The admin/staff shall be able to add to the quantity of an already existing inventory item
+- The admin/staff shall be able to remove the quantity of an already existing inventory item
+- The admin/staff shall be able to remove an item from the inventory by removing the existing quantity of the item
+	
 
 ## Third-Party Services
 
@@ -87,14 +107,14 @@ Leaflet provides interactive map functionality for the website. It is an open-so
 ## Tech Stack
 
 Community Information:
-- Public Front-End: Vue, Vite, Tailwind CSS, Heroicons
+- Public Front-End: Vue, Typescript, Vite, Tailwind CSS, Heroicons
 - Admin Front-End: Nuxt.js, Tailwind CSS, Heroicons
 - Admin Back-End: Nuxt.js, Prisma
 - Database: SQLite
 - Recommended Tools to use: Postman or any other API testing platform
 
 Inventory Tracking:
-- Front-End: Nuxt.js, CSS (should convert to Tailwind)
+- Front-End: Nuxt.js, Typescript, CSS (should convert to Tailwind)
 - Back-End: Nuxt.js, Prisma
 - Database: SQLite
 - Recommended Tools to use: Postman or any other API testing platform
@@ -102,11 +122,7 @@ Inventory Tracking:
 
 ## Deployment notes
 
-Community Information:
-- Not Applicable at this time
-
-Inventory Tracking:
-- Not Applicable at this time
+*UTD EPICS DEPARTMENT IS CURRRENTLY HANDLING BETA APPLICATION DEPLOYMENT - FALL 2025*
 
 
 
@@ -137,10 +153,12 @@ root/
 │   --- PUBLIC VIEW ----
 ├── webcomponent/
 │   ├── src/
-│   │   ├── assets/                # Uncompiled assets like Sass, images, fonts
+│   │   ├── assets/        # Uncompiled assets like Sass, images, fonts
 │   │   │   ├── main.css 	# holds all styling and Tailwind themes for public view
 │   │   ├── components/            # Vue.js components
 │   │   ├── router/
+|   |   |__ scripts        #Handles automatic inventory snapshots and necessary actions for each day
+|   |   |
 │   │   ├── server/
 │   │   │   ├── api/              	# Server-side API handling
 │   │   │   ├── db/                	# Database models or utilities
