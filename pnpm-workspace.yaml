@@ -6,3 +6,7 @@ onlyBuiltDependencies:
   - prisma
   - sharp
   - vue-demi
+
+packages:
+  - admin
+  - webcomponent
