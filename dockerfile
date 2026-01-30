@@ -5,12 +5,11 @@ ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 RUN corepack enable
 
-RUN pnpm i --force
 RUN pwd
 RUN ls webcomponent
 
-RUN cd webcomponent && pnpm run build
-RUN cd ../admin && pnpm prisma generate && pnpm run build
+RUN cd webcomponent && pnpm i --force && pnpm run build
+RUN cd ../admin && pnpm i --force && pnpm prisma generate && pnpm run build
 RUN cd ..
 RUN rm -rf ./.output
 RUN rm -rf ./admin/.output/public/webcomponent
