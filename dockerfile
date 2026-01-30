@@ -1,23 +1,24 @@
 FROM node:22-alpine AS builder
-COPY . ./
 
-ENV PNPM_HOME="/pnpm"
-ENV PATH="$PNPM_HOME:$PATH"
-RUN corepack enable
+WORKDIR /app
+COPY . .
 
-RUN pwd
-RUN ls webcomponent
+RUN corepack enable && corepack prepare pnpm@9.15.4 --activate
 
-RUN cd webcomponent && pnpm i --force && pnpm run build
-RUN cd ../admin && pnpm i --force && pnpm prisma generate && pnpm run build
-RUN cd ..
-RUN rm -rf ./.output
-RUN rm -rf ./admin/.output/public/webcomponent
-RUN cp -r webcomponent/dist ./admin/.output/public/webcomponent
-RUN cp -r ./admin/.output ./.output
+WORKDIR /app/webcomponent
+RUN pnpm i --force && pnpm run build
+
+WORKDIR /app/admin
+RUN pnpm i --force && pnpm prisma generate && pnpm run build
+
+WORKDIR /app
+RUN rm -rf ./.output \
+  && rm -rf ./admin/.output/public/webcomponent \
+  && cp -r webcomponent/dist ./admin/.output/public/webcomponent \
+  && cp -r ./admin/.output ./.output
 
 FROM node:22-alpine AS deployment
-
-COPY --from=builder /.output /
+WORKDIR /
+COPY --from=builder /app/.output/ ./
 EXPOSE 3000
 CMD ["node", "./server/index.mjs"]
