@@ -4,7 +4,6 @@ COPY . ./
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 RUN corepack enable
-RUN mkdir /pnpm
 
 RUN pnpm i --force
 RUN pwd
