@@ -7,7 +7,7 @@ RUN corepack enable
 
 RUN pnpm i --force
 RUN pwd
-RUN ls
+RUN ls webcomponent
 
 RUN cd webcomponent && pnpm run build
 RUN cd ../admin && pnpm prisma generate && pnpm run build
