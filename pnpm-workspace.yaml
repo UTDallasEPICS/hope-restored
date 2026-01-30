@@ -1,3 +1,10 @@
+packages:
+  - admin
+  - webcomponent
+
+ignoredBuiltDependencies:
+  - cypress
+
 onlyBuiltDependencies:
   - '@parcel/watcher'
   - '@prisma/client'
@@ -6,7 +13,3 @@ onlyBuiltDependencies:
   - prisma
   - sharp
   - vue-demi
-
-packages:
-  - admin
-  - webcomponent
