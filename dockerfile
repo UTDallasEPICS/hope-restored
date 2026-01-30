@@ -5,7 +5,20 @@ ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 RUN corepack enable
 
-RUN ./build.sh
+RUN cd webcomponent
+RUN pnpm i 
+RUN echo -e "a\n" | pnpm approve-builds
+RUN pnpm run build
+RUN cd ../admin
+RUN pnpm i
+RUN echo -e "a\n" | pnpm approve-builds
+RUN pnpm prisma generate
+RUN pnpm run build
+RUN cd ..
+RUN rm -rf ./.output
+RUN rm -rf ./admin/.output/public/webcomponent
+RUN cp -r webcomponent/dist ./admin/.output/public/webcomponent
+RUN cp -r ./admin/.output ./.output
 
 FROM node:22-alpine AS deployment
 
