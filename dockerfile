@@ -7,7 +7,7 @@ RUN corepack enable
 
 RUN pnpm i --force
 
-RUN cd webcomponent && ls | grep node_modules && pnpm run build
+RUN cd webcomponent && pnpm run build
 RUN cd ../admin && pnpm prisma generate && pnpm run build
 RUN cd ..
 RUN rm -rf ./.output
