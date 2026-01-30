@@ -8,6 +8,10 @@ RUN corepack enable
 RUN cd webcomponent
 RUN pnpm i 
 RUN echo -e "a\n" | pnpm approve-builds
+RUN echo "pwd: \n"
+RUN pwd
+RUN echo "ls: \n"
+RUN ls
 RUN pnpm run build
 RUN cd ../admin
 RUN pnpm i
