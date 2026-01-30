@@ -5,19 +5,8 @@ ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 RUN corepack enable
 
-RUN cd webcomponent
-RUN pnpm i 
-RUN echo -e "a\n" | pnpm approve-builds
-RUN echo "pwd: \n"
-RUN pwd
-RUN echo "ls: \n"
-RUN ls
-RUN pnpm run build
-RUN cd ../admin
-RUN pnpm i
-RUN echo -e "a\n" | pnpm approve-builds
-RUN pnpm prisma generate
-RUN pnpm run build
+RUN cd webcomponent && pnpm i && echo -e "a\n" | pnpm approve-builds && pnpm run build
+RUN cd ../admin && pnpm i && echo -e "a\n" | pnpm approve-builds && pnpm prisma generate && pnpm run build
 RUN cd ..
 RUN rm -rf ./.output
 RUN rm -rf ./admin/.output/public/webcomponent
