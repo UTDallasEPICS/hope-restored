@@ -1,15 +1,17 @@
 FROM node:22-alpine AS builder
-COPY . ./
 
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 RUN corepack enable
 
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 RUN pnpm i --frozen-lockfile
 
+COPY . ./
+
 RUN pnpm --filter webcomponent run build
-RUN pnpm --filter nuxt-app exec prisma generate
-RUN pnpm --filter nuxt-app run build
+RUN pnpm --filter admin exec prisma generate
+RUN pnpm --filter admin run build
 
 RUN rm -rf ./.output
 RUN rm -rf ./admin/.output/public/webcomponent
