@@ -5,10 +5,12 @@ ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 RUN corepack enable
 
-RUN pnpm i --force && pnpm --filter run build
+RUN pnpm i --frozen-lockfile
 
+RUN pnpm --filter webcomponent... run build
+RUN pnpm --filter admin... prisma generate
+RUN pnpm --filter admin... run build
 
-RUN pnpm i --force && pnpm prisma generate && pnpm --filter run build
 RUN rm -rf ./.output
 RUN rm -rf ./admin/.output/public/webcomponent
 RUN cp -r webcomponent/dist ./admin/.output/public/webcomponent
