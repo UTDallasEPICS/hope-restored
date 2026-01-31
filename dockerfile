@@ -6,6 +6,7 @@ ENV PATH="$PNPM_HOME:$PATH"
 RUN corepack enable
 
 WORKDIR webcomponent
+RUN ls
 RUN pnpm i --force && pnpm run build
 WORKDIR admin
 RUN pnpm i --force && pnpm prisma generate && pnpm run build
