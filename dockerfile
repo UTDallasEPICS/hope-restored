@@ -7,9 +7,9 @@ RUN corepack enable
 
 RUN pnpm i --frozen-lockfile
 
-RUN pnpm --filter ./webcomponent run build
-RUN pnpm --filter ./admin exec prisma generate
-RUN pnpm --filter ./admin run build
+RUN pnpm --filter "{./webcomponent}" run build
+RUN pnpm --filter "{./admin}" exec prisma generate
+RUN pnpm --filter "{./admin}" run build
 
 RUN rm -rf ./.output
 RUN rm -rf ./admin/.output/public/webcomponent
