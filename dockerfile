@@ -5,16 +5,11 @@ ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 RUN corepack enable
 
-RUN pnpm -r list --depth -1 || true
-RUN ls -la /app || true
-RUN ls -la /app/pnpm-workspace.yaml || true
-
-
 RUN pnpm i --frozen-lockfile
 
-RUN pnpm --filter webcomponent... run build
-RUN pnpm --filter admin... prisma generate
-RUN pnpm --filter admin... run build
+RUN pnpm --filter webcomponent run build
+RUN pnpm --filter nuxt-app exec prisma generate
+RUN pnpm --filter nuxt-app run build
 
 RUN rm -rf ./.output
 RUN rm -rf ./admin/.output/public/webcomponent
