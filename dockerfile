@@ -5,11 +5,10 @@ ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 RUN corepack enable
 
-WORKDIR webcomponent
-RUN pnpm i --force && echo "ls output: " && ls && pnpm run build
-WORKDIR admin
-RUN pnpm i --force && pnpm prisma generate && pnpm run build
-RUN cd ..
+RUN pnpm i --force && pnpm --filter run build
+
+
+RUN pnpm i --force && pnpm prisma generate && pnpm --filter run build
 RUN rm -rf ./.output
 RUN rm -rf ./admin/.output/public/webcomponent
 RUN cp -r webcomponent/dist ./admin/.output/public/webcomponent
