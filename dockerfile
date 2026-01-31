@@ -5,6 +5,11 @@ ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 RUN corepack enable
 
+RUN pnpm -r list --depth -1 || true
+RUN ls -la /app || true
+RUN ls -la /app/pnpm-workspace.yaml || true
+
+
 RUN pnpm i --frozen-lockfile
 
 RUN pnpm --filter webcomponent... run build
