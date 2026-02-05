@@ -6,7 +6,6 @@ ENV PATH="$PNPM_HOME:$PATH"
 RUN corepack enable
 
 RUN pnpm i --force
-RUN npx prisma generate
 RUN ./build.sh
 
 FROM node:22-alpine AS deployment
