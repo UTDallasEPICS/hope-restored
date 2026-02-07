@@ -3,23 +3,16 @@ FROM node:current-alpine AS builder
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 ENV DATABASE_URL = file:./dev.db
-
-
-RUN npm install -g corepack@latest --force
+RUN echo $PATH
+RUN npm uninstall -g yarn pnpm
+RUN npm install -g corepack --force
 RUN corepack enable
-
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY . ./
+RUN cd webcomponent && npm install --force && pnpm run build
 
-WORKDIR /webcomponent
-RUN pnpm install
-RUN pnpm run build
-
-WORKDIR /admin
-RUN pnpm install && pnpm run build
-RUN pnpm prisma generate
-
-WORKDIR /
+RUN cd admin && npm install --force && pnpm run build
+RUN cd admin && npx prisma generate
 
 RUN rm -rf ./.output
 RUN rm -rf ./admin/.output/public/webcomponent
