@@ -11,11 +11,11 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY . ./
 
 WORKDIR /webcomponent
-RUN pnpm install --force 
+RUN pnpm install
 RUN pnpm run build
 
 WORKDIR /admin
-RUN pnpm install --force && pnpm run build
+RUN pnpm install && pnpm run build
 RUN pnpm prisma generate
 
 WORKDIR /
