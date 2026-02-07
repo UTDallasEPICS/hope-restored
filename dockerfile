@@ -5,7 +5,8 @@ ENV PATH="$PNPM_HOME:$PATH"
 ENV DATABASE_URL = file:./dev.db
 
 
-RUN wget -qO- https://get.pnpm.io/install.sh | ENV="$HOME/.shrc" SHELL="$(which sh)" sh -
+RUN npm install -g corepack@latest --force
+RUN corepack enable
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY . ./
