@@ -4,8 +4,6 @@ ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 ENV DATABASE_URL = file:./dev.db
 
-
-RUN corepack enable
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY . ./
 RUN cd webcomponent && pnpm install --force && pnpm run build
