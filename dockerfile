@@ -1,24 +1,25 @@
-FROM node:22-alpine AS builder
+FROM node:current-alpine AS builder
 
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
+ENV DATABASE_URL = file:./dev.db
+RUN echo $PATH
+RUN npm uninstall -g yarn pnpm
+RUN npm install -g corepack --force
 RUN corepack enable
-
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-RUN pnpm i --frozen-lockfile
-
 COPY . ./
+RUN cd webcomponent && npm install --force && pnpm run build
 
-RUN pnpm --filter webcomponent run build
-RUN pnpm --filter admin exec prisma generate
-RUN pnpm --filter admin run build
+RUN cd admin && npm install --force && pnpm run build
+RUN cd admin && npx prisma generate
 
 RUN rm -rf ./.output
 RUN rm -rf ./admin/.output/public/webcomponent
 RUN cp -r webcomponent/dist ./admin/.output/public/webcomponent
 RUN cp -r ./admin/.output ./.output
 
-FROM node:22-alpine AS deployment
+FROM node:current-alpine AS deployment
 
 COPY --from=builder /.output /
 EXPOSE 3000
