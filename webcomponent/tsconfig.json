@@ -20,6 +20,6 @@
     "jsx": "preserve"
     // "baseUrl": "src" // Move this to another place if needed
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", "vite-env.d.ts", "postcss.config.js"],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", "vite-env.d.ts"],
   "exclude": ["node_modules"]
 }
