@@ -8,7 +8,8 @@ RUN npm install -g pnpm@latest-10
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY . ./
-RUN cd webcomponent && pnpm install --force && pnpm run build
+RUN cd webcomponent && pnpm install --force 
+RUN cd webcomponent && pnpm run build
 
 RUN cd admin && pnpm install --force && pnpm run build
 RUN cd admin && pnpm prisma generate
