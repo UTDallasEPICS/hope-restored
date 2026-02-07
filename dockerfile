@@ -4,7 +4,7 @@ ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 ENV DATABASE_URL = file:./dev.db
 
-npm install -g pnpm@latest-10
+RUN npm install -g pnpm@latest-10
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY . ./
