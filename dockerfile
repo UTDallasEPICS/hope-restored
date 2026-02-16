@@ -11,9 +11,11 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY . ./
 RUN cd webcomponent && npm install --force && pnpm run build
 
-RUN cd admin && npm install --force && pnpm run build
-RUN cd admin && npx prisma generate
+WORKDIR /admin
+RUN npm install --force && pnpm run build
+RUN npx prisma generate
 
+WORKDIR /
 RUN rm -rf ./.output
 RUN rm -rf ./admin/.output/public/webcomponent
 RUN cp -r webcomponent/dist ./admin/.output/public/webcomponent
