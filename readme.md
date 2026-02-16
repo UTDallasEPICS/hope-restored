@@ -181,24 +181,27 @@ root/
 
 ## Project setup
 
-1. Run the setup script
+Here is how to setup the project
 
-   ```bash
-   # Make sure you are in the root directory when you call this
-   npm run setup
-   ```
+1. At the root of the project run
+   node ./scripts/cpenv.js  (Creates the imp env files)
 
-2. Replace placeholder values in the ``.env`` files
-- API keys and any other secrets or environment variables (Currently, the project does not have any secrets)
+2. npm install && cd webcomponent/ (Install root dependencies and enter the webcomponent dir)
+
+3. npm install (Install webcomponent dependencies)
+
+4. cd ../admin/ && npm install (Change into the admin dir and install dependencies)
+
+5. npx prisma migrate dev (Build Prisma database)
 
 
 ## Project operation
 
-1. Run the following command (in the root directory) to start the development server and admin application
+1. Run the following command (in the admin directory) to start the development server and admin application
 
    ```bash
    # Serve with hot reload at localhost:3000 for the private application (Inventory Tracking)
-   npm run admin
+   npm run dev
    ```
 
 2. Run the following command (in the root directory) to start the web-component (public-facing application for community information)
