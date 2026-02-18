@@ -19,7 +19,6 @@
     "@headlessui/vue": "^1.7.23",
     "@heroicons/vue": "^2.2.0",
     "@prisma/client": "^6.5.0",
-    "@tailwindcss/postcss": "^4.0.12",
     "@tailwindcss/vite": "^4.0.14",
     "cors": "^2.8.5",
     "pinia": "^3.0.1",

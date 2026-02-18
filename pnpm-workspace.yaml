@@ -1,3 +1,10 @@
+packages:
+  - admin
+  - webcomponent
+
+ignoredBuiltDependencies:
+  - cypress
+
 onlyBuiltDependencies:
   - '@parcel/watcher'
   - '@prisma/client'
