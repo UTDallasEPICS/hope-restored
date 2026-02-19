@@ -37,7 +37,24 @@ export default defineEventHandler(async (event) => {
       update: {},
       create: { name: entry.gender },
     });
-  
+
+    // Upsert Inventory table for gender/size breakdown (barcode: add-Category-Gender-Size)
+    const invBarcode = `add-${String(entry.category).replace(/\s+/g, '-')}-${String(entry.gender).replace(/\s+/g, '-')}-${String(entry.size || 'OS').replace(/\s+/g, '-')}`;
+    const qtyToAdd = Number(entry.quantity) || 0;
+    if (qtyToAdd > 0) {
+      await prisma.inventory.upsert({
+        where: { barcode: invBarcode },
+        update: { quantity: { increment: qtyToAdd } },
+        create: {
+          barcode: invBarcode,
+          categoryId: category.id,
+          styleId: style.id,
+          sizeId: size.id,
+          genderId: gender.id,
+          quantity: qtyToAdd,
+        },
+      });
+    }
 
       // NOTE: InventoryRecords is the source of truth for available stock.
       // We no longer upsert the Inventory table on quick adds here; instead

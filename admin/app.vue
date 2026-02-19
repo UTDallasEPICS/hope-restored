@@ -1,7 +1,9 @@
 <template>
-    <div>
+    <div class="app-layout">
       <HeaderComponent v-if="route.path != '/'"/>
-      <NuxtPage />
+      <main class="page-content">
+        <NuxtPage />
+      </main>
     </div>
 </template>
   
@@ -20,3 +22,23 @@ onMounted(async () => {
   }
 });
 </script>
+
+<style>
+html, body {
+  margin: 0;
+  padding: 0;
+}
+
+.app-layout {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.page-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+</style>
