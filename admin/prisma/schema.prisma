@@ -2,46 +2,47 @@ datasource db {
   provider = "sqlite"
   url      = env("DATABASE_URL")
 }
+
 generator client {
   provider = "prisma-client-js"
-  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
 }
 
 model User {
   id        Int      @id @default(autoincrement())
   createdAt DateTime @default(now())
-  username  String   @unique              // Unique username for login
-  password  String                        // Password field
-  name      String?                       // Optional name field (can be made required by removing `?`)
-  role      String     @default("USER")       // Role can be USER or ADMIN
+  username  String   @unique // Unique username for login
+  password  String // Password field
+  name      String? // Optional name field (can be made required by removing `?`)
+  role      String   @default("USER") // Role can be USER or ADMIN
 
   @@map("users") // Table name in the database
 }
 
 model Resource {
-  id          Int      @id @default(autoincrement()) // Primary key with auto-increment
-  name        String   @unique
-  description String
-  eligibility String   @default("N/A")// this is the criteria for which a person can be elgible for this resource
-  cost        Float    @default(0)
-  externalLink String?  // A call to action link for the resource 
-  locations Location[] // Backward relation to Location (One-to-many relationship)
-  demographics Demographic[] 
+  id           Int           @id @default(autoincrement()) // Primary key with auto-increment
+  name         String        @unique
+  description  String
+  eligibility  String        @default("N/A") // this is the criteria for which a person can be elgible for this resource
+  cost         Float         @default(0)
+  externalLink String? // A call to action link for the resource 
+  locations    Location[] // Backward relation to Location (One-to-many relationship)
+  demographics Demographic[]
   phoneNumbers PhoneNumber[]
-  emails      Email[]
-  languages Language[]
-  groupId    Int // Foreign key to Groups
-  group      Group @relation(fields: [groupId], references: [id])
-  archived   Boolean  @default(false) // Default value for archived
-  createdAt  DateTime @default(now()) // Default value for createdAt
-  updatedAt  DateTime @updatedAt      // UpdatedAt field
+  emails       Email[]
+  languages    Language[]
+  groupId      Int // Foreign key to Groups
+  group        Group         @relation(fields: [groupId], references: [id])
+  archived     Boolean       @default(false) // Default value for archived
+  createdAt    DateTime      @default(now()) // Default value for createdAt
+  updatedAt    DateTime      @updatedAt // UpdatedAt field
+
   //tags Tags[]
   @@map("resource") // Table name in the database
 }
 
 model Language {
-  id Int              @id @default(autoincrement()) // Primary key with auto-increment
-  name String         @unique
+  id        Int        @id @default(autoincrement()) // Primary key with auto-increment
+  name      String     @unique
   resources Resource[]
 
   @@map("language") // Table name in the database
@@ -57,125 +58,97 @@ model Language {
 //}
 
 model Group {
-  id Int              @id @default(autoincrement()) // Primary key with auto-increment
-  name String         @unique
+  id        Int        @id @default(autoincrement()) // Primary key with auto-increment
+  name      String     @unique
   resources Resource[]
 
   @@map("group") // Table name in the database
 }
 
-model Demographic{
-  id Int                @id @default(autoincrement()) // Primary key with auto-increment
-  name String           @unique
+model Demographic {
+  id        Int        @id @default(autoincrement()) // Primary key with auto-increment
+  name      String     @unique
   resources Resource[]
 
   @@map("demographic") // Table name in the database
 }
 
 model PhoneNumber {
-  id Int                    @id @default(autoincrement()) // Primary key with auto-increment
-  number String             // @unique
-  name String?              // Optional name of the person associated with the phone number
-  description String?       // Optional description of the phone number
-  resourceId Int
-  resource Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  id          Int      @id @default(autoincrement()) // Primary key with auto-increment
+  number      String // @unique
+  name        String? // Optional name of the person associated with the phone number
+  description String? // Optional description of the phone number
+  resourceId  Int
+  resource    Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
 
   @@map("phone_number") // Table name in the database
 }
 
 model Email {
-  id Int                    @id @default(autoincrement()) // Primary key with auto-increment
-  email String              @unique
-  name String?              // Optional name of the person associated with the email
-  description String?       // Optional description of the email
-  resourceId Int
-  resource Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  id          Int      @id @default(autoincrement()) // Primary key with auto-increment
+  email       String   @unique
+  name        String? // Optional name of the person associated with the email
+  description String? // Optional description of the email
+  resourceId  Int
+  resource    Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
 
   @@map("email") // Table name in the database
 }
 
 model Location {
-  id           Int       @id @default(autoincrement()) // Primary key
-  addressLine1 String    //@unique
+  id           Int      @id @default(autoincrement()) // Primary key
+  addressLine1 String //@unique
   addressLine2 String
-  locationName         String?    // name of the location if there are multiple locations
+  locationName String? // name of the location if there are multiple locations
   city         String
   state        String
-  postalCode   String    // Changed from PostalLink Int to String for clarity
-  country      String    @default("USA") // Default value for country
-  longitude    Float?    // Changed from Int to Float
-  latitude     Float?    // Changed from Int to Float
-  resourceId   Int       // Foreign key
+  postalCode   String // Changed from PostalLink Int to String for clarity
+  country      String   @default("USA") // Default value for country
+  longitude    Float? // Changed from Int to Float
+  latitude     Float? // Changed from Int to Float
+  resourceId   Int // Foreign key
   resource     Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
 
   @@map("location") // Table name in the database
 }
 
-//The rest is from Inventory Tracking
-model ItemCategory {
-  id    Int    @id @default(autoincrement())
-  name  String @unique
-
-  inventory Inventory[]
-}
-
-model ItemStyle {
-  id         Int    @id @default(autoincrement())
-  name       String @unique
-
-  inventory Inventory[]
-}
-
-model Size {
-  id       Int    @id @default(autoincrement())
-  sizeCode String @unique // E.g., 'M', 'L', 'XL'
-
-  inventory Inventory[]
-}
-
-model Gender {
-  id    Int    @id @default(autoincrement())
-  name  String @unique  // E.g., "Men", "Women", "Children"
-
-  inventory Inventory[]
-}
-
+//current inventory
 model Inventory {
-  //id          Int   @id @default(autoincrement())
-  barcode     String  @id @unique// Use barcode as primary key
-  quantity    Int     @default(0)
+  id          String   @id @unique @default(cuid())
+  code        String   @unique
+  quantity    Int      @default(0)
   lastUpdated DateTime @default(now())
-
-  categoryId Int? // Can be set to NULL
-  styleId    Int?
-  sizeId     Int?
-  genderId   Int?
-
-  // related by id's, but deleting an entry in the inventory will not delete the corresponding entries in the other tables
-  category ItemCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-  style    ItemStyle?    @relation(fields: [styleId], references: [id], onDelete: SetNull)
-  size     Size?         @relation(fields: [sizeId], references: [id], onDelete: SetNull)
-  gender   Gender?       @relation(fields: [genderId], references: [id], onDelete: SetNull)
-
+  category    String
+  size        String?
+  gender      String?
 }
 
-model InventoryRecords {
-  id        Int      @id @default(autoincrement())
-  date     DateTime 
-  category  String
-  quantity  Int
-}
-
+//everything that has come in
 model Additions {
-  id        Int      @id @default(autoincrement())
+  id        String   @id @unique @default(cuid())
+  code      String   @unique
   category  String
-  dateAdded DateTime 
+  size      String?
+  gender    String?
   quantity  Int
+  dateAdded DateTime
 }
 
+//everything that has gone out
 model Removals {
-  id        Int      @id @default(autoincrement())
+  id        String   @id @unique @default(cuid())
+  code      String   @unique
   category  String
-  dateRemoved DateTime 
+  size      String?
+  gender    String?
   quantity  Int
+  dateAdded DateTime
+}
+
+//removing this blows up the project rn
+model InventoryRecords {
+  id       Int      @id @default(autoincrement())
+  date     DateTime
+  category String
+  quantity Int
 }
