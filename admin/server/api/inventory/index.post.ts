@@ -2,104 +2,53 @@ import { defineEventHandler, readBody } from 'h3';
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
-
-// Define the function that handles the request
-//async function main(event) {
 export default defineEventHandler(async (event) => {
-  // Read the request body (entry data)
   const entry = await readBody(event);
-
   try {
-    // Insert a new category, ONLY if it does not exist already
-    const category = await prisma.itemCategory.upsert({
-      where: { name: entry.category },
-      update: {},
-      create: { name: entry.category },
-    });
-  
-    // Insert a new style, ONLY if it does not exist already
-    const style = await prisma.itemStyle.upsert({
-      where: { name: entry.style },
-      update: {},
-      create: { name: entry.style },
-    });
-  
-    // Insert a new size, ONLY if it does not exist already
-    const size = await prisma.size.upsert({
-      where: { sizeCode: entry.size },
-      update: {},
-      create: { sizeCode: entry.size },
-    });
-  
-    // Insert gender, ONLY if it does not exist already
-    const gender = await prisma.gender.upsert({
-      where: { name: entry.gender },
-      update: {},
-      create: { name: entry.gender },
-    });
-  
-
-      // NOTE: InventoryRecords is the source of truth for available stock.
-      // We no longer upsert the Inventory table on quick adds here; instead
-      // we create an InventoryRecords entry (and an Additions history row).
-      // Record the addition in the Additions table (keeps a history of added quantity)
-      // Record the addition in the Additions table (keeps a history of added quantity)
+      const invCode = entry.category + entry.size + entry.gender
       let additionRecord = null;
       try {
         // Normalize to start of day (local timezone) for consistent date filtering
         const now = new Date();
         const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
         
-        additionRecord = await prisma.additions.create({
-          data: {
+        //additions table shows all items that have arrived - even if removed from inventory
+        additionRecord = await prisma.additions.upsert({
+          where:{code:invCode},
+          create: {
+            code:invCode,
             category: entry.category,
+            gender: entry.gender,
+            size: entry.size,
             dateAdded: startOfDay,
             quantity: entry.quantity,
           },
-          select: {
-            category: true,
-            quantity: true,
-            dateAdded: true,
+          update: {
+            quantity:entry.quantity
           }
         });
 
-        // Also create or update an InventoryRecords entry to represent available stock (used/consumed by checkout)
+        // Also create or update an Inventory entry to represent available stock of each category
         try {
-          const qty = Number(entry.quantity) || 0;
-          if (qty > 0) {
-            const now = new Date();
-            // use day-range (start <= date < nextDay) to find today's row for the category
-            const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-            const nextDay = new Date(startOfDay);
-            nextDay.setDate(startOfDay.getDate() + 1);
-
-            const existing = await prisma.inventoryRecords.findFirst({
-              where: {
-                category: entry.category,
-                date: { gte: startOfDay, lt: nextDay },
-              },
-            });
-
-            if (existing) {
-              await prisma.inventoryRecords.update({
-                where: { id: existing.id },
-                data: { quantity: { increment: qty } },
-              });
-            } else {
-              await prisma.inventoryRecords.create({
-                data: {
-                  date: now,
-                  category: entry.category,
-                  quantity: qty,
-                },
-              });
+           const inv = await prisma.inventory.upsert({
+            where:{code:invCode},
+            create:{
+              code: invCode,
+              category: entry.category,
+              gender: entry.gender,
+              size: entry.size,
+              quantity: entry.quantity
+            },
+            update:{
+              quantity:{
+                increment:entry.quantity
+              }
             }
-          }
+          })
         } catch (recErr) {
           console.error('Error recording inventory record:', recErr);
         }
       } catch (addErr) {
-        // If logging the addition fails, don't block the main operation but log the issue
         console.error('Error recording addition:', addErr);
       }
 
@@ -107,13 +56,9 @@ export default defineEventHandler(async (event) => {
       return { success: true, addition: additionRecord };
   }
   catch (error) {
-    // If there's an error, log it and return an error message
     console.error('Error inserting data:', error);
     return {
       error: 'An error occurred while inserting data.',
     };
   }
 })
-
-// Export the event handler using defineEventHandler
-//export default defineEventHandler(main);
