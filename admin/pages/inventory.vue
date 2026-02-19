@@ -1,7 +1,6 @@
 <!-- pages/inventory.vue -->
 <template>
     <div class="inventory-page-wrapper">
-<<<<<<< HEAD
     <div class="inventory-container">
         <!-- Top 1/3: Category selection buttons -->
         <section class="top-section">
@@ -75,69 +74,6 @@
                         </div>
                     </template>
                     <template v-else>
-=======
-        <div class="inventory-container">
-            <!-- Top 1/3: Category selection buttons -->
-            <section class="top-section">
-                <h1><b>Select a Category to Add</b></h1>
-                <div class="category-grid" role="list" aria-label="Inventory categories">
-                    <button
-                        v-for="cat in categories"
-                        :key="cat"
-                        type="button"
-                        class="category-button"
-                        :aria-pressed="selectedCategory === cat"
-                        :aria-current="selectedCategory === cat ? 'true' : undefined"
-                        :class="{ 'category-button--selected': selectedCategory === cat }"
-                        @click="selectCategory(cat)">
-                        <i class="fas fa-box" aria-hidden="true"></i>
-                        <span class="label">{{ cat }}</span>
-                    </button>
-                </div>
-            </section>
-
-            <!-- Bottom 2/3: Left = DB display, Right = Add form -->
-            <section class="bottom-section">
-                <!-- Left half: Inventory display for selected category -->
-                <div class="inventory-display">
-                    <h2 v-if="selectedCategory">{{ selectedCategory }} – Current Inventory</h2>
-                    <h2 v-else class="inventory-display__placeholder">Select a category above to view inventory</h2>
-                    <div v-if="selectedCategory" class="inventory-details">
-                        <div class="detail-row detail-row--total">
-                            <span class="detail-label">Total quantity:</span>
-                            <span class="detail-value">{{ categoryDetails.catDetails[0]? categoryDetails.catDetails[0].quantity : 0  }}</span>
-                        </div>
-                        <template v-if="!isSimpleCategory">
-                        <div v-for="row in categoryDetails.catDetails[0]?.genders" :key="row.name" class="gender-section">
-                            <h3 class="gender-section__title">{{ row.name  }}</h3>
-                            <p v-if="isShoes && !genderHasAnyInventory(row)" class="inventory-display__empty-gender">
-                                No {{ row.name  }} shoes in Inventory
-                            </p>
-                            <table v-else class="breakdown-table" :aria-label="`${row.name} quantities by size`">
-                                <thead>
-                                    <tr>
-                                        <th>{{ isShoes ? 'Shoe size' : 'Size' }}</th>
-                                        <th>Quantity</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr v-for="inf of row.info" :key="inf.size">
-                                        <td>{{ inf.size  }}</td>
-                                        <td>{{ inf.quantity  }}</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                        </template>
-                    </div>
-                </div>
-
-                <!-- Right half: Add form -->
-                <div class="add-form-panel">
-                    <h2 v-if="selectedCategory">Add {{ selectedCategory }} to Inventory</h2>
-                    <h2 v-else class="add-form__placeholder">Select a category to add items</h2>
-                    <form v-if="selectedCategory" class="add-form" @submit.prevent="confirmAddition">
->>>>>>> Expanded_Inventory
                         <div class="form-group">
                             <label for="add-quantity">Quantity</label>
                             <input
@@ -177,7 +113,6 @@
                             </select>
                         </div>
                         </template>
-<<<<<<< HEAD
                     </template>
                     <div class="form-actions form-actions--bottom">
                         <button type="submit" class="confirm-addition-btn">
@@ -258,54 +193,13 @@
             </div>
         </div>
     </div>
-=======
-                        <div class="form-actions form-actions--bottom">
-                            <button type="submit" class="confirm-addition-btn">
-                                Confirm Addition
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </section>
-
-            <!-- Addition success popup -->
-            <div v-if="showAdditionSuccessPopup" class="modal-overlay" role="alertdialog" aria-labelledby="success-title" aria-describedby="success-message">
-                <div class="modal-content success-modal">
-                    <h2 id="success-title">Success</h2>
-                    <p id="success-message">Your addition has been added to the inventory.</p>
-                    <div class="form-actions">
-                        <button type="button" class="save-button" @click="showAdditionSuccessPopup = false">Ok</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Empty inputs error popup -->
-            <div v-if="showEmptyInputError" class="modal-overlay" role="alertdialog" aria-labelledby="error-title" aria-describedby="error-message">
-                <div class="modal-content error-modal">
-                    <h2 id="error-title">Missing Information</h2>
-                    <p id="error-message">{{ isSimpleCategory ? 'Please enter a quantity.' : 'Please fill in all fields: quantity, gender, and size are required before confirming.' }}</p>
-                    <div class="form-actions">
-                        <button type="button" class="save-button" @click="showEmptyInputError = false">
-                            Ok
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
->>>>>>> Expanded_Inventory
     </div>
 </template>
 
 <script setup lang="ts">
-<<<<<<< HEAD
 import { ref, computed, onMounted, watch } from 'vue';
 
 const categories = ['Shirts', 'Pants', 'Jackets', 'Underwear', 'Shoes', 'Snack Packs', 'Hygiene Packs', 'Blankets', 'Other'];
-=======
-import { ref, computed, onMounted, watch, } from 'vue';
-
-const categories = ['Shirts', 'Pants', 'Jackets', 'Underwear', 'Shoes', 'Snack Packs', 'Hygiene Packs', 'Blankets'];
->>>>>>> Expanded_Inventory
 const sizeOptions = ['XS', 'S', 'M', 'L', 'XL'];
 const shoeSizeOptions = (() => {
   const sizes: string[] = [];
@@ -315,7 +209,6 @@ const shoeSizeOptions = (() => {
 
 const selectedCategory = ref('');
 const categoryDetails = ref<{
-<<<<<<< HEAD
     quantity: number;
     sizes: string[];
     genders: string[];
@@ -327,17 +220,10 @@ const categoryDetails = ref<{
     byGender: {},
 });
 
-=======
-    catDetails:{category:string, quantity:number,genders:{name:string,info:{size:string,quantity:number}[]}[]}[]
-}>({
-    catDetails:[]
-});
->>>>>>> Expanded_Inventory
 const addForm = ref({
     quantity: null as number | null,
     gender: '',
     size: '',
-<<<<<<< HEAD
     otherText: '',
 });
 
@@ -408,78 +294,10 @@ async function fetchCategoryDetails(category: string) {
     }
 }
 
-=======
-});
-
-const showEmptyInputError = ref(false);
-const showAdditionSuccessPopup = ref(false);
-const inventory = ref<any[]>([]);
-
-
-const isShoes = computed(() => selectedCategory.value === 'Shoes');
-const simpleCategories = ['Snack Packs', 'Hygiene Packs', 'Blankets'];
-const isSimpleCategory = computed(() => simpleCategories.includes(selectedCategory.value));
-const formSizeOptions = computed(() => (isShoes.value ? shoeSizeOptions : sizeOptions));
-const formSizeLabel = computed(() => (isShoes.value ? 'Shoe size' : 'Size'));
-
-function sizesToShowForGender(gender:{name:string,info:{size:string,quantity:number}[]}): string[] {
-  console.log(shoeSizeOptions.filter((s) => 
-  gender.info.some((row) => row.size === s && row.quantity > 0)
-))
-  return shoeSizeOptions.filter((s) => 
-  gender.info.some((row) => row.size === s && row.quantity > 0)
-);
-}
-
-function genderHasAnyInventory(gender:{name:string,info:{size:string,quantity:number}[]}): boolean {
-  if (!isShoes.value) return true;
-  return sizesToShowForGender(gender).length > 0;
-}
-
-function selectCategory(cat: string) {
-    selectedCategory.value = cat;
-    addForm.value = { quantity: null, gender: '', size: '' };
-    fetchCategoryDetails(cat);
-}
-
-watch(isShoes, () => {
-    addForm.value.size = '';
-});
-
-async function fetchCategoryDetails(category: string) {
-    try {
-        const data = await $fetch('/api/inventory', {
-            params: { category },
-        });
-        categoryDetails.value = {catDetails:data.length > 0? data : [{
-            category, 
-            quantity:0,
-            genders:[
-                {
-                    name:"Unisex",
-                    info:{size:"XS",quantity:0}
-                },
-                {
-                    name:"Male",
-                    info:{size:"XS",quantity:0}
-                },
-                {
-                    name:"Female",
-                    info:{size:"XS",quantity:0}
-                }
-                ]}]};
-    } catch (err) {
-        console.error('Error fetching category details:', err);
-        categoryDetails.value = { catDetails:[]};
-    }
-}
-
->>>>>>> Expanded_Inventory
 async function confirmAddition() {
     const qty = addForm.value.quantity;
     const isSimple = isSimpleCategory.value;
 
-<<<<<<< HEAD
     if (isOther.value) {
         const text = (addForm.value.otherText || '').trim();
         if (!text) {
@@ -507,8 +325,6 @@ async function confirmAddition() {
         return;
     }
 
-=======
->>>>>>> Expanded_Inventory
     if (qty == null || qty < 1) {
         showEmptyInputError.value = true;
         return;
@@ -527,10 +343,7 @@ async function confirmAddition() {
             method: 'POST',
             body: {
                 category: selectedCategory.value,
-<<<<<<< HEAD
                 style: 'Misc.',
-=======
->>>>>>> Expanded_Inventory
                 gender: isSimple ? 'Unisex' : addForm.value.gender,
                 size: isSimple ? 'N/A' : addForm.value.size,
                 quantity: qty,
@@ -573,7 +386,6 @@ async function getInventory() {
     }
 }
 
-<<<<<<< HEAD
 async function getItem(id: any) {
     try {
         const item: any = await $fetch(`/api/inventory/${id}`, { method: 'GET' });
@@ -626,8 +438,6 @@ async function editItem(edited: any) {
     await getInventory();
 }
 
-=======
->>>>>>> Expanded_Inventory
 onMounted(getInventory);
 
 // Refetch category details when inventory updates (e.g. after adding)
