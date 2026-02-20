@@ -34,7 +34,7 @@
   "devDependencies": {
     "@sidebase/nuxt-auth": "^0.6.7",
     "@types/node": "^22.7.5",
-    "prisma": "^6.17.1",
+    "prisma": "6.17.1",
     "tsx": "^4.19.2",
     "typescript": "^5.9.3"
   }
