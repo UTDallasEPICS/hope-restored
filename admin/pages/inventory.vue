@@ -2,24 +2,50 @@
 <template>
     <div class="inventory-page-wrapper">
     <div class="inventory-container">
-        <!-- Top 1/3: Category selection buttons -->
-        <section class="top-section">
-            <h1><b>Select a Category to Add</b></h1>
-            <div class="category-grid" role="list" aria-label="Inventory categories">
-                <button
-                    v-for="cat in categories"
-                    :key="cat"
-                    type="button"
-                    class="category-button"
-                    :aria-pressed="selectedCategory === cat"
-                    :aria-current="selectedCategory === cat ? 'true' : undefined"
-                    :class="{ 'category-button--selected': selectedCategory === cat }"
-                    @click="selectCategory(cat)">
-                    <i class="fas fa-box" aria-hidden="true"></i>
-                    <span class="label">{{ cat }}</span>
-                </button>
-            </div>
-        </section>
+            <!-- Top 1/3: Category selection -->
+            <section class="top-section">
+                <h1><b>Select a Category to Add</b></h1>
+                <!-- Desktop: category grid -->
+                <div class="category-grid" role="list" aria-label="Inventory categories">
+                    <button
+                        v-for="cat in categories"
+                        :key="cat"
+                        type="button"
+                        class="category-button"
+                        :aria-pressed="selectedCategory === cat"
+                        :aria-current="selectedCategory === cat ? 'true' : undefined"
+                        :class="{ 'category-button--selected': selectedCategory === cat }"
+                        @click="selectCategory(cat)">
+                        <i class="fas fa-box" aria-hidden="true"></i>
+                        <span class="label">{{ cat }}</span>
+                    </button>
+                </div>
+                <!-- Mobile: accordion dropdown -->
+                <div class="category-accordion">
+                    <button
+                        type="button"
+                        class="accordion-trigger"
+                        :aria-expanded="accordionOpen"
+                        aria-haspopup="listbox"
+                        aria-label="Select category"
+                        @click="accordionOpen = !accordionOpen">
+                        <span class="accordion-trigger-label">{{ selectedCategory || 'Select category' }}</span>
+                        <i class="fas" :class="accordionOpen ? 'fa-chevron-up' : 'fa-chevron-down'" aria-hidden="true"></i>
+                    </button>
+                    <div v-show="accordionOpen" class="accordion-dropdown" role="listbox">
+                        <button
+                            v-for="cat in categories"
+                            :key="cat"
+                            type="button"
+                            role="option"
+                            class="accordion-option"
+                            :aria-selected="selectedCategory === cat"
+                            @click="selectCategory(cat); accordionOpen = false">
+                            {{ cat }}
+                        </button>
+                    </div>
+                </div>
+            </section>
 
         <!-- Bottom 2/3: Left = DB display, Right = Add form -->
         <section class="bottom-section">
@@ -197,7 +223,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue';
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
+
 
 const categories = ['Shirts', 'Pants', 'Jackets', 'Underwear', 'Shoes', 'Snack Packs', 'Hygiene Packs', 'Blankets', 'Other'];
 const sizeOptions = ['XS', 'S', 'M', 'L', 'XL'];
@@ -242,6 +269,16 @@ const genderOrder = computed(() => {
     const g = Object.keys(categoryDetails.value.byGender || {});
     return [...order, ...g.filter(x => !order.includes(x))];
 });
+
+const accordionOpen = ref(false);
+const isMobileView = ref(false);
+const MOBILE_BREAKPOINT = 960;
+
+function updateMobileView() {
+    isMobileView.value = typeof window !== 'undefined' && window.innerWidth < MOBILE_BREAKPOINT;
+    if (!isMobileView.value) accordionOpen.value = false;
+}
+
 
 const isShoes = computed(() => selectedCategory.value === 'Shoes');
 const simpleCategories = ['Snack Packs', 'Hygiene Packs', 'Blankets'];
@@ -438,7 +475,26 @@ async function editItem(edited: any) {
     await getInventory();
 }
 
-onMounted(getInventory);
+onMounted(() => {
+    getInventory();
+    updateMobileView();
+    if (typeof window !== 'undefined') {
+        window.addEventListener('resize', updateMobileView);
+    }
+});
+
+onUnmounted(() => {
+    if (typeof window !== 'undefined') {
+        window.removeEventListener('resize', updateMobileView);
+    }
+});
+
+// Refetch category details when inventory updates (e.g. after adding)
+watch(inventory, () => {
+    if (selectedCategory.value) {
+        fetchCategoryDetails(selectedCategory.value);
+    }
+}, { deep: true });
 
 // Refetch category details when inventory updates (e.g. after adding)
 watch(inventory, () => {
@@ -471,9 +527,10 @@ watch(inventory, () => {
 }
 
 h1 {
-    font-size: 2.5em;
+    font-size: 3.15em;
     color: #3f51b5;
-    margin-bottom: 1em;
+    margin-top: 0;
+    margin-bottom: 2rem;
     text-align: center;
 }
 
@@ -489,8 +546,20 @@ h1 {
 .category-grid {
     display: grid;
     grid-template-columns: repeat(8, minmax(0, 1fr));
-    gap: 0.6rem;
+    gap: clamp(0.4rem, 1.2vw, 0.75rem);
     align-items: stretch;
+}
+
+@media (min-width: 960px) and (max-width: 1280px) {
+    .category-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}
+
+@media (min-width: 960px) and (max-width: 1100px) {
+    .category-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
 }
 
 .category-button {
@@ -498,10 +567,10 @@ h1 {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 0.4rem;
-    aspect-ratio: 4 / 3;
-    padding: clamp(0.35rem, 1vw, 0.6rem);
-    border-radius: 8px;
+    gap: clamp(0.25rem, 0.8vw, 0.5rem);
+    min-height: clamp(2.5rem, 8vw, 4rem);
+    padding: clamp(0.35rem, 1.2vw, 0.65rem);
+    border-radius: clamp(6px, 1vw, 8px);
     border: 2px solid rgba(0, 0, 0, 0.08);
     background: #fff;
     color: #333;
@@ -524,10 +593,82 @@ h1 {
 }
 
 .category-button .label {
-    font-size: clamp(0.75rem, 2vw, 1.5rem);
+    font-size: clamp(0.6rem, 1.5vw + 0.5rem, 1.5rem);
     text-align: center;
     line-height: 1.1;
     word-break: break-word;
+}
+
+/* Mobile: accordion (visible when width < half of 16/9 ~ 960px) */
+.category-accordion {
+    display: none;
+    width: 100%;
+    position: relative;
+}
+
+.accordion-trigger {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #333;
+    background: #fff;
+    border: 2px solid rgba(0, 0, 0, 0.08);
+    border-radius: 8px;
+    cursor: pointer;
+    text-align: left;
+}
+
+.accordion-trigger:hover {
+    border-color: rgba(63, 81, 181, 0.4);
+}
+
+.accordion-trigger-label {
+    flex: 1;
+}
+
+.accordion-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    margin-top: 0.25rem;
+    background: #fff;
+    border: 2px solid rgba(0, 0, 0, 0.08);
+    border-radius: 8px;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+    max-height: 280px;
+    overflow-y: auto;
+    z-index: 10;
+}
+
+.accordion-option {
+    display: block;
+    width: 100%;
+    padding: 0.65rem 1rem;
+    font-size: 0.95rem;
+    text-align: left;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #333;
+    border-bottom: 1px solid #eee;
+}
+
+.accordion-option:last-child {
+    border-bottom: none;
+}
+
+.accordion-option:hover {
+    background: #f0f2f5;
+}
+
+.accordion-option[aria-selected="true"] {
+    background: #3f51b5;
+    color: #fff;
 }
 
 /* Bottom 2/3 */
@@ -753,6 +894,53 @@ h1 {
 .cancel-button {
     background: #757575;
     color: #fff;
+}
+
+@media (max-width: 960px) {
+    .category-grid {
+        display: none;
+    }
+    .category-accordion {
+        display: block;
+    }
+    .inventory-page-wrapper {
+        max-height: none;
+        height: auto;
+        min-height: 100vh;
+        overflow: auto;
+    }
+    .inventory-container {
+        padding: 1rem;
+        min-height: auto;
+        overflow: visible;
+    }
+    .top-section {
+        padding-bottom: 0.75rem;
+    }
+    h1 {
+        font-size: 1.95rem;
+        margin-top: 0;
+        margin-bottom: 1rem;
+    }
+    .bottom-section {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+        min-height: auto;
+    }
+    .inventory-display,
+    .add-form-panel {
+        min-width: 0;
+    }
+    .inventory-display h2,
+    .add-form-panel h2 {
+        font-size: 1.1rem;
+    }
+    .breakdown-table {
+        font-size: 0.9rem;
+    }
+    .add-form .form-group {
+        margin-bottom: 0.75rem;
+    }
 }
 
 @media (max-width: 768px) {
