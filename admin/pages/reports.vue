@@ -2,7 +2,16 @@
 <template>
     <div class="reports-container">
         <h1 style="color: red;"> NOTE: Please enter data in chronological order from earliest date to the most recent date/today. Do NOT enter data for a date without entering any previous days' data. In addition, for each date, please enter all additions first and then all removals. This ensures that the reports and inventory show correct data for all dates. </h1>
-
+        <div>
+            <button @click="getReport">
+                    CLICK FOR GET
+            </button>
+        </div>
+        <div>
+            <button @click="makeReport">
+                    CLICK FOR POST
+            </button>
+        </div>
         <!-- Actions Row: View Previous Reports + Amend Data -->
         <div class="actions-row">
             <button @click="showPreviousReportsModal = true" class="monthly-reports-button">
@@ -296,9 +305,12 @@
                 <thead>
                     <tr>
                         <th>Category</th>
-                        <th>Total</th>
+                        <th>Gender</th>
+                        <th>Size</th>
+                        <th>Start Quantity</th>
                         <th>Added</th>
                         <th>Removed</th>
+                        <th>End Quantity</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -308,19 +320,54 @@
                         <td>{{ row.added }}</td>
                         <td>{{ row.removed }}</td>
                     </tr>
+                    <tr v-for="row in fullReport" :key="row.code">
+
+                        <td>{{ row.category }}</td>
+                        <td>{{ row.gender }}</td>
+                        <td>{{ row.size }}</td>
+                        <td>{{ row.startQuant }}</td>
+                        <td>{{ row.additions }}</td>
+                        <td>{{ row.removals }}</td>
+                        <td>{{ row.lastQuant }}</td>
+                    </tr>
                 </tbody>
             </table>
         </div>
     </div>
+
+    
+
 </template>
 
 <script setup>
 import { ref, watchEffect, getCurrentInstance } from 'vue';
 import { useFetch } from '#app';
 
+const fullReport = ref([]);
+
+
 // Reports data (SSR-friendly): fetch at top-level so renders data immediately
 const reportRows = ref([]);
 const { data: summaryData, error: summaryError, refresh: refreshSummary } = await useFetch('/api/reports/summary');
+
+async function getReport(){
+    const Report = await  $fetch('/api/reports',{
+        query:{
+            startDate: new Date('2026-02-01').toISOString(),
+            endDate: new Date().toISOString('2026-02-28'),
+        }
+    })
+    fullReport.value=Report
+    console.log("Report:", fullReport.value);
+}
+async function makeReport(){
+    const Report = await  $fetch('/api/reports',{
+        method:"POST"
+    })
+    fullReport.value=Report
+    console.log("Report:", fullReport.value);
+}
+
 
 watchEffect(() => {
   if (summaryError?.value) {

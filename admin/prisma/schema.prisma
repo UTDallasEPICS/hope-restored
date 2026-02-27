@@ -117,38 +117,23 @@ model Inventory {
   id          String   @id @unique @default(cuid())
   code        String   @unique
   quantity    Int      @default(0)
+  additions   Int      @default(0)
+  removals    Int      @default(0)
   lastUpdated DateTime @default(now())
   category    String
   size        String?
   gender      String?
 }
-
-//everything that has come in
-model Additions {
-  id        String   @id @unique @default(cuid())
-  code      String   @unique
-  category  String
-  size      String?
-  gender    String?
-  quantity  Int
-  dateAdded DateTime
-}
-
-//everything that has gone out
-model Removals {
-  id        String   @id @unique @default(cuid())
-  code      String   @unique
-  category  String
-  size      String?
-  gender    String?
-  quantity  Int
-  dateAdded DateTime
-}
-
 //removing this blows up the project rn
 model InventoryRecords {
-  id       Int      @id @default(autoincrement())
+  id       String      @id  @unique @default(cuid())
   date     DateTime
-  category String
-  quantity Int
+  code        String
+  quantity    Int      @default(0)
+  additions   Int      @default(0)
+  removals    Int      @default(0)
+  lastUpdated DateTime @default(now())
+  category    String
+  size        String?
+  gender      String?
 }
