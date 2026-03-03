@@ -31,6 +31,9 @@
                         @click="accordionOpen = !accordionOpen">
                         <span class="accordion-trigger-label">{{ selectedCategory || 'Select category' }}</span>
                         <i class="fas" :class="accordionOpen ? 'fa-chevron-up' : 'fa-chevron-down'" aria-hidden="true"></i>
+                        <span class="accordion-angles-icon" aria-hidden="true">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" class="accordion-angles-svg" fill="currentColor"><path d="M342.6 534.6C330.1 547.1 309.8 547.1 297.3 534.6L137.3 374.6C124.8 362.1 124.8 341.8 137.3 329.3C149.8 316.8 170.1 316.8 182.6 329.3L320 466.7L457.4 329.4C469.9 316.9 490.2 316.9 502.7 329.4C515.2 341.9 515.2 362.2 502.7 374.7L342.7 534.7zM502.6 182.6L342.6 342.6C330.1 355.1 309.8 355.1 297.3 342.6L137.3 182.6C124.8 170.1 124.8 149.8 137.3 137.3C149.8 124.8 170.1 124.8 182.6 137.3L320 274.7L457.4 137.4C469.9 124.9 490.2 124.9 502.7 137.4C515.2 149.9 515.2 170.2 502.7 182.7z"/></svg>
+                        </span>
                     </button>
                     <div v-show="accordionOpen" class="accordion-dropdown" role="listbox">
                         <button
@@ -118,13 +121,16 @@
                         </div>
                         <div class="form-group">
                             <label for="add-size">{{ formSizeLabel }}</label>
-                            <select
-                                id="add-size"
-                                v-model="addForm.size"
-                                aria-required="true">
-                                <option value="">Select {{ formSizeLabel.toLowerCase() }}</option>
-                                <option v-for="s in formSizeOptions" :key="s" :value="s">{{ s }}</option>
-                            </select>
+                            <div class="select-with-icon">
+                                <select
+                                    id="add-size"
+                                    v-model="addForm.size"
+                                    aria-required="true">
+                                    <option value="">Select {{ formSizeLabel.toLowerCase() }}</option>
+                                    <option v-for="s in formSizeOptions" :key="s" :value="s">{{ s }}</option>
+                                </select>
+                                <i class="fas fa-chevron-down select-dropdown-icon" aria-hidden="true"></i>
+                            </div>
                         </div>
                         </template>
                         <div class="form-actions form-actions--bottom">
@@ -192,7 +198,7 @@ const inventory = ref<any[]>([]);
 
 const accordionOpen = ref(false);
 const isMobileView = ref(false);
-const MOBILE_BREAKPOINT = 960;
+const MOBILE_BREAKPOINT = 1100;
 
 function updateMobileView() {
     isMobileView.value = typeof window !== 'undefined' && window.innerWidth < MOBILE_BREAKPOINT;
@@ -439,7 +445,7 @@ h1 {
     word-break: break-word;
 }
 
-/* Mobile: accordion (visible when width < half of 16/9 ~ 960px) */
+/* Mobile: accordion (visible when grid would be 4×2, i.e. width ≤ 1100px) */
 .category-accordion {
     display: none;
     width: 100%;
@@ -468,6 +474,19 @@ h1 {
 
 .accordion-trigger-label {
     flex: 1;
+}
+
+.accordion-angles-icon {
+    flex-shrink: 0;
+    margin-left: 0.35em;
+    opacity: 0.85;
+    display: inline-flex;
+    align-items: center;
+}
+
+.accordion-angles-icon .accordion-angles-svg {
+    width: 1em;
+    height: 1em;
 }
 
 .accordion-dropdown {
@@ -736,7 +755,7 @@ h1 {
     color: #fff;
 }
 
-@media (max-width: 960px) {
+@media (max-width: 1100px) {
     .category-grid {
         display: none;
     }
