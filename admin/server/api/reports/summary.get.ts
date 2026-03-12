@@ -92,11 +92,6 @@ export default defineEventHandler(async (event) => {
     : rangeEnd;
 
   // Aggregate additions
-  const addRows = await prisma.additions.groupBy({
-    by: ['category'],
-    where: { dateAdded: { gte: rangeStart, lt: addRemoveEnd } },
-    _sum: { quantity: true },
-  });
 
   // Aggregate removals
   const removeRows = await prisma.removals.groupBy({
@@ -107,7 +102,6 @@ export default defineEventHandler(async (event) => {
 
   // Build lookup maps
   const totalsMap = new Map(totalRows.map(r => [r.category, r._sum.quantity ?? 0]));
-  const addsMap = new Map(addRows.map(r => [r.category, r._sum.quantity ?? 0]));
   const removesMap = new Map(removeRows.map(r => [r.category, r._sum.quantity ?? 0]));
 
   // Check if there's any InventoryRecords for this date range
@@ -130,7 +124,6 @@ export default defineEventHandler(async (event) => {
   // Append any categories outside the canonical list
   const extras = new Set<string>([
     ...totalRows.map(r => r.category),
-    ...addRows.map(r => r.category),
     ...removeRows.map(r => r.category),
   ]);
   

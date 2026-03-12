@@ -25,12 +25,14 @@ export default defineEventHandler(async (event) => {
       //{size:"asc"},
     ],
   })
-  let groupedData:{category:string,quantity:number,genders:{name:string,info:{size:string,quantity:number}[]}[]}[] = []
+  let groupedData:{category:string,quantity:number,additions:number,removals:number,genders:{name:string,info:{size:string,quantity:number,additions:number,removals:number}[]}[]}[] = []
 
   for(const cat of catList){
     groupedData.push({
       category:cat.category,
       quantity:0,
+      additions:0,
+      removals:0,
       genders:[{
           name:"Unisex",
           info:[]
@@ -52,12 +54,16 @@ for(const item of inv){
   for(const row of groupedData){
     if(item.category === row.category){
       row.quantity += item.quantity
+      row.additions+= item.additions
+      row.removals+= item.removals
       for(const gender of row.genders){
         if(item.gender === gender.name){
           if(item.category !== 'Shoes' || item.quantity > 0)
           gender.info.push({
             size:item.size? item.size : "",
-            quantity:item.quantity
+            quantity:item.quantity,
+            additions:item.additions,
+            removals:item.removals
           })
         }
       }
