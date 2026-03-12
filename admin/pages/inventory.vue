@@ -61,7 +61,10 @@
                             <span class="detail-label">Total quantity:</span>
                             <span class="detail-value">{{ categoryDetails.catDetails[0]? categoryDetails.catDetails[0].quantity : 0  }}</span>
                         </div>
-                        <template v-if="!isSimpleCategory">
+                        <p v-if="isOtherItems && (!categoryDetails.catDetails[0]?.genders?.length)" class="inventory-display__empty-gender">
+                            No other items in inventory.
+                        </p>
+                        <template v-if="!isSimpleCategory || isOtherItems">
                         <div v-for="row in categoryDetails.catDetails[0]?.genders" :key="row.name" class="gender-section">
                             <h3 class="gender-section__title">{{ row.name  }}</h3>
                             <p v-if="isShoes && !genderHasAnyInventory(row)" class="inventory-display__empty-gender">
@@ -70,12 +73,12 @@
                             <table v-else class="breakdown-table" :aria-label="`${row.name} quantities by size`">
                                 <thead>
                                     <tr>
-                                        <th>{{ isShoes ? 'Shoe size' : 'Size' }}</th>
+                                        <th>{{ isOtherItems ? 'Item' : (isShoes ? 'Shoe size' : 'Size') }}</th>
                                         <th>Quantity</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr v-for="inf of row.info" :key="inf.size">
+                                    <tr v-for="(inf, idx) in row.info" :key="isOtherItems ? (row.name + '-' + inf.size + '-' + idx) : inf.size">
                                         <td>{{ inf.size  }}</td>
                                         <td>{{ inf.quantity  }}</td>
                                     </tr>
@@ -101,7 +104,31 @@
                                 placeholder="Enter quantity"
                                 aria-required="true" />
                         </div>
-                        <template v-if="!isSimpleCategory">
+                        <template v-if="isOtherItems">
+                        <div class="form-group">
+                            <label for="add-item-name">Item name</label>
+                            <input
+                                id="add-item-name"
+                                v-model.trim="addForm.itemName"
+                                type="text"
+                                placeholder="e.g. Toaster, Diapers"
+                                aria-required="true" />
+                        </div>
+                        <div class="form-group">
+                            <label for="add-subcategory">Category</label>
+                            <div class="select-with-icon">
+                                <select
+                                    id="add-subcategory"
+                                    v-model="addForm.size"
+                                    aria-required="true">
+                                    <option value="">Select category</option>
+                                    <option v-for="sub in otherItemsSubcategories" :key="sub" :value="sub">{{ sub }}</option>
+                                </select>
+                                <i class="fas fa-chevron-down select-dropdown-icon" aria-hidden="true"></i>
+                            </div>
+                        </div>
+                        </template>
+                        <template v-else-if="!isSimpleCategory">
                         <div class="form-group">
                             <label>Gender</label>
                             <div class="checkbox-group" role="group" aria-label="Select gender">
@@ -157,10 +184,50 @@
             <div v-if="showEmptyInputError" class="modal-overlay" role="alertdialog" aria-labelledby="error-title" aria-describedby="error-message">
                 <div class="modal-content error-modal">
                     <h2 id="error-title">Missing Information</h2>
-                    <p id="error-message">{{ isSimpleCategory ? 'Please enter a quantity.' : 'Please fill in all fields: quantity, gender, and size are required before confirming.' }}</p>
+                    <p id="error-message">{{ isSimpleCategory && !isOtherItems ? 'Please enter a quantity.' : isOtherItems ? 'Please fill in item name, category, and quantity.' : 'Please fill in all fields: quantity, gender, and size are required before confirming.' }}</p>
                     <div class="form-actions">
                         <button type="button" class="save-button" @click="showEmptyInputError = false">
                             Ok
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Add failed error popup -->
+            <div v-if="addErrorMessage" class="modal-overlay" role="alertdialog" aria-labelledby="add-error-title">
+                <div class="modal-content error-modal">
+                    <h2 id="add-error-title">Could not add item</h2>
+                    <p>{{ addErrorMessage }}</p>
+                    <div class="form-actions">
+                        <button type="button" class="save-button" @click="addErrorMessage = ''">Ok</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Other Items confirmation popup -->
+            <div
+                v-if="showOtherItemsConfirm"
+                class="modal-overlay"
+                role="alertdialog"
+                aria-labelledby="confirm-other-title"
+                aria-describedby="confirm-other-message">
+                <div class="modal-content">
+                    <h2 id="confirm-other-title">Confirm Other Item Details</h2>
+                    <p id="confirm-other-message">
+                        Please double check that the information below is correct, especially the
+                        <strong>item name spelling</strong>, before adding it to the inventory.
+                    </p>
+                    <ul style="margin-top: 0.5rem; padding-left: 1.2rem; font-size: 0.95rem;">
+                        <li><strong>Quantity:</strong> {{ addForm.quantity }}</li>
+                        <li><strong>Item name:</strong> {{ addForm.itemName }}</li>
+                        <li><strong>Category:</strong> {{ addForm.size || 'Not selected' }}</li>
+                    </ul>
+                    <div class="form-actions">
+                        <button type="button" class="cancel-button" @click="showOtherItemsConfirm = false">
+                            Go Back
+                        </button>
+                        <button type="button" class="save-button" @click="confirmOtherItemsAddition">
+                            Confirm Addition
                         </button>
                     </div>
                 </div>
@@ -172,8 +239,9 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 
-const categories = ['Shirts', 'Pants', 'Jackets', 'Underwear', 'Shoes', 'Snack Packs', 'Hygiene Packs', 'Blankets'];
+const categories = ['Shirts', 'Pants', 'Jackets', 'Underwear', 'Shoes', 'Snack Packs', 'Hygiene Packs', 'Blankets', 'Other Items'];
 const sizeOptions = ['XS', 'S', 'M', 'L', 'XL'];
+const otherItemsSubcategories = ['Appliances', 'Infant care', 'Hardware', 'Electronics', 'Furniture', 'Bedding', 'Kitchen', 'Toys', 'School supplies', 'Personal care', 'Cleaning supplies', 'Other'];
 const shoeSizeOptions = (() => {
   const sizes: string[] = [];
   for (let n = 5; n <= 14.5; n += 0.5) sizes.push(String(n));
@@ -190,10 +258,13 @@ const addForm = ref({
     quantity: null as number | null,
     gender: '',
     size: '',
+    itemName: '' as string,
 });
 
 const showEmptyInputError = ref(false);
 const showAdditionSuccessPopup = ref(false);
+const addErrorMessage = ref('');
+const showOtherItemsConfirm = ref(false);
 const inventory = ref<any[]>([]);
 
 const accordionOpen = ref(false);
@@ -208,6 +279,7 @@ function updateMobileView() {
 
 const isShoes = computed(() => selectedCategory.value === 'Shoes');
 const simpleCategories = ['Snack Packs', 'Hygiene Packs', 'Blankets'];
+const isOtherItems = computed(() => selectedCategory.value === 'Other Items');
 const isSimpleCategory = computed(() => simpleCategories.includes(selectedCategory.value));
 const formSizeOptions = computed(() => (isShoes.value ? shoeSizeOptions : sizeOptions));
 const formSizeLabel = computed(() => (isShoes.value ? 'Shoe size' : 'Size'));
@@ -228,7 +300,7 @@ function genderHasAnyInventory(gender:{name:string,info:{size:string,quantity:nu
 
 function selectCategory(cat: string) {
     selectedCategory.value = cat;
-    addForm.value = { quantity: null, gender: '', size: '' };
+    addForm.value = { quantity: null, gender: '', size: '', itemName: '' };
     fetchCategoryDetails(cat);
 }
 
@@ -239,25 +311,16 @@ watch(isShoes, () => {
 async function fetchCategoryDetails(category: string) {
     try {
         const data = await $fetch('/api/inventory', {
-            params: { category },
+            params: { category, _t: Date.now() },
         });
-        categoryDetails.value = {catDetails:data.length > 0? data : [{
-            category, 
-            quantity:0,
-            genders:[
-                {
-                    name:"Unisex",
-                    info:{size:"XS",quantity:0}
-                },
-                {
-                    name:"Male",
-                    info:{size:"XS",quantity:0}
-                },
-                {
-                    name:"Female",
-                    info:{size:"XS",quantity:0}
-                }
-                ]}]};
+        const fallbackGenders = category === 'Other Items'
+            ? []
+            : [
+                { name: 'Unisex', info: [{ size: 'XS', quantity: 0 }] },
+                { name: 'Male', info: [{ size: 'XS', quantity: 0 }] },
+                { name: 'Female', info: [{ size: 'XS', quantity: 0 }] },
+            ];
+        categoryDetails.value = { catDetails: data.length > 0 ? data : [{ category, quantity: 0, genders: fallbackGenders }] };
     } catch (err) {
         console.error('Error fetching category details:', err);
         categoryDetails.value = { catDetails:[]};
@@ -272,7 +335,14 @@ async function confirmAddition() {
         showEmptyInputError.value = true;
         return;
     }
-    if (!isSimple) {
+    if (isOtherItems.value) {
+        const itemName = addForm.value.itemName.trim();
+        const subcategory = addForm.value.size;
+        if (!itemName || !subcategory) {
+            showEmptyInputError.value = true;
+            return;
+        }
+    } else if (!isSimple) {
         const gender = addForm.value.gender.trim();
         const size = addForm.value.size;
         if (!gender || !size) {
@@ -281,22 +351,48 @@ async function confirmAddition() {
         }
     }
 
+    if (isOtherItems.value) {
+        // Show confirmation modal for Other Items before actually saving
+        showOtherItemsConfirm.value = true;
+        return;
+    }
+
+    await performAddition(qty, isSimple);
+}
+
+async function confirmOtherItemsAddition() {
+    const qty = addForm.value.quantity;
+    const isSimple = isSimpleCategory.value;
+    showOtherItemsConfirm.value = false;
+    await performAddition(qty, isSimple);
+}
+
+async function performAddition(qty: number | null, isSimple: boolean) {
     try {
-        await $fetch('/api/inventory/', {
-            method: 'POST',
-            body: {
+        const body = isOtherItems.value
+            ? {
+                category: 'Other Items',
+                gender: addForm.value.itemName.trim(),
+                size: addForm.value.size,
+                quantity: qty,
+            }
+            : {
                 category: selectedCategory.value,
                 gender: isSimple ? 'Unisex' : addForm.value.gender,
                 size: isSimple ? 'N/A' : addForm.value.size,
                 quantity: qty,
-            },
+            };
+        await $fetch('/api/inventory/', {
+            method: 'POST',
+            body,
         });
         await getInventory();
         await fetchCategoryDetails(selectedCategory.value);
-        addForm.value = { quantity: null, gender: '', size: '' };
+        addForm.value = { quantity: null, gender: '', size: '', itemName: '' };
         showAdditionSuccessPopup.value = true;
-    } catch (err) {
+    } catch (err: any) {
         console.error('Error adding item:', err);
+        addErrorMessage.value = err?.data?.error ?? err?.message ?? 'The item could not be saved. Please try again.';
     }
 }
 
@@ -391,20 +487,21 @@ h1 {
 
 .category-grid {
     display: grid;
-    grid-template-columns: repeat(8, minmax(0, 1fr));
-    gap: clamp(0.4rem, 1.2vw, 0.75rem);
+    grid-template-columns: repeat(9, minmax(0, 1fr));
+    gap: clamp(0.35rem, 1vw, 0.6rem);
     align-items: stretch;
 }
 
 @media (min-width: 960px) and (max-width: 1280px) {
     .category-grid {
-        grid-template-columns: repeat(4, minmax(0, 1fr));
+        grid-template-columns: repeat(9, minmax(0, 1fr));
+        gap: clamp(0.3rem, 0.8vw, 0.5rem);
     }
 }
 
 @media (min-width: 960px) and (max-width: 1100px) {
     .category-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-columns: repeat(5, minmax(0, 1fr));
     }
 }
 
@@ -413,9 +510,10 @@ h1 {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: clamp(0.25rem, 0.8vw, 0.5rem);
-    min-height: clamp(2.5rem, 8vw, 4rem);
-    padding: clamp(0.35rem, 1.2vw, 0.65rem);
+    gap: clamp(0.2rem, 0.6vw, 0.4rem);
+    height: 75px;
+    min-height: 75px;
+    padding: clamp(0.35rem, 1vw, 0.6rem);
     border-radius: clamp(6px, 1vw, 8px);
     border: 2px solid rgba(0, 0, 0, 0.08);
     background: #fff;
@@ -439,7 +537,7 @@ h1 {
 }
 
 .category-button .label {
-    font-size: clamp(0.6rem, 1.5vw + 0.5rem, 1.5rem);
+    font-size: clamp(0.55rem, 1.2vw + 0.45rem, 1.25rem);
     text-align: center;
     line-height: 1.1;
     word-break: break-word;
@@ -656,6 +754,7 @@ h1 {
 }
 
 .form-group input[type="number"],
+.form-group input[type="text"],
 .form-group select {
     width: 100%;
     padding: 0.5rem;
@@ -767,38 +866,101 @@ h1 {
         height: auto;
         min-height: 100vh;
         overflow: auto;
+        -webkit-overflow-scrolling: touch;
     }
     .inventory-container {
-        padding: 1rem;
+        padding: clamp(0.5rem, 2.5vw, 1rem);
         min-height: auto;
         overflow: visible;
+        display: flex;
+        flex-direction: column;
+        gap: clamp(0.5rem, 2vw, 1rem);
     }
     .top-section {
         padding-bottom: 0.75rem;
+        flex-shrink: 0;
     }
     h1 {
-        font-size: 1.95rem;
+        font-size: clamp(1.5rem, 4.5vw + 0.5rem, 1.95rem);
         margin-top: 0;
-        margin-bottom: 1rem;
+        margin-bottom: clamp(0.5rem, 2vw, 1rem);
     }
     .bottom-section {
         grid-template-columns: 1fr;
-        gap: 1rem;
-        min-height: auto;
+        grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
+        gap: clamp(0.75rem, 2.5vw, 1rem);
+        min-height: min(70vh, 600px);
+        flex: 1 1 auto;
+    }
+    /* When accordion is visible (mobile), show add form on top, inventory below */
+    .add-form-panel {
+        order: -1;
+    }
+    .inventory-display {
+        order: 0;
     }
     .inventory-display,
     .add-form-panel {
         min-width: 0;
+        min-height: 180px;
+        padding: clamp(0.75rem, 3vw, 1.25rem);
+        font-size: clamp(0.85rem, 2.2vw + 0.4rem, 1rem);
     }
     .inventory-display h2,
     .add-form-panel h2 {
-        font-size: 1.1rem;
+        font-size: clamp(1rem, 2.8vw + 0.4rem, 1.1rem);
+        margin-bottom: clamp(0.5rem, 1.5vw, 1rem);
+    }
+    .detail-row,
+    .detail-label,
+    .detail-value {
+        font-size: clamp(0.8rem, 2vw + 0.35rem, 0.95rem);
+    }
+    .detail-label {
+        min-width: 100px;
+    }
+    .gender-section__title {
+        font-size: clamp(0.9rem, 2.2vw + 0.35rem, 1rem);
     }
     .breakdown-table {
-        font-size: 0.9rem;
+        font-size: clamp(0.75rem, 2vw + 0.35rem, 0.9rem);
+    }
+    .breakdown-table th,
+    .breakdown-table td {
+        padding: 0.35rem 0.5rem;
     }
     .add-form .form-group {
-        margin-bottom: 0.75rem;
+        margin-bottom: clamp(0.5rem, 1.5vw, 0.75rem);
+    }
+    .form-group label {
+        font-size: clamp(0.85rem, 2vw + 0.35rem, 0.95rem);
+    }
+    .form-group input[type="number"],
+    .form-group input[type="text"],
+    .form-group select {
+        padding: clamp(0.4rem, 1.5vw, 0.5rem);
+        font-size: clamp(0.9rem, 2vw + 0.35rem, 1rem);
+    }
+    .checkbox-label {
+        font-size: clamp(0.85rem, 2vw + 0.35rem, 0.95rem);
+    }
+    .confirm-addition-btn {
+        padding: clamp(0.5rem, 2vw, 0.6rem) clamp(0.75rem, 2.5vw, 1.25rem);
+        font-size: clamp(0.9rem, 2vw + 0.35rem, 1rem);
+    }
+}
+
+@media (max-width: 480px) {
+    .inventory-container {
+        padding: 0.5rem;
+    }
+    .bottom-section {
+        min-height: min(65vh, 500px);
+    }
+    .inventory-display,
+    .add-form-panel {
+        min-height: 160px;
+        padding: 0.75rem;
     }
 }
 
