@@ -13,7 +13,7 @@ async function seed() {
 
   const clothes_categories = ["Shirts", "Pants", "Jackets","Underwear"];
   const sizes = ["XS", "S", "M", "L", "XL"];
-  const genders = ["Unisex", "Male", "Female"];
+  const genders = ["Child", "Male", "Female"];
   const simple_categories = ["Snack Packs", "Hygiene Packs", "Blankets"];
   const shoeSizeOptions = (() => {
   const sizes: string[] = [];

@@ -307,13 +307,13 @@ function getTodayRange() {
     return { start, end };
 }
 
-async function checkAndCreateNewDay() {
-    try {
-        await $fetch('/api/inventory/check-new-day', { method: 'POST' });
-    } catch (error) {
-        console.error('Failed to check/create new day:', error);
-    }
-}
+// async function checkAndCreateNewDay() {
+//     try {
+//         await $fetch('/api/inventory/check-new-day', { method: 'POST' });
+//     } catch (error) {
+//         console.error('Failed to check/create new day:', error);
+//     }
+// }
 
 async function getInventory() {
     try {
