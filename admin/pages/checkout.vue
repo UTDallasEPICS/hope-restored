@@ -3,7 +3,7 @@
     <div class="layout">
 
       <!-- LEFT SIDE -->
-      <div class="left-panel">
+      <div class="left-panel" ref="leftPanelRef" :style="leftPanelHeight ? { height: leftPanelHeight + 'px' } : {}">
         <div class="left-panel-header">
           <h3>Inventory Database</h3>
           <div ref="filtersWrapperRef" class="filters-wrapper" :class="{ 'filters-dropdown-open': filtersDropdownOpen }">
@@ -91,7 +91,7 @@
       </div>
 
       <!-- RIGHT SIDE -->
-      <div class="right-panel">
+      <div class="right-panel" ref="rightPanelRef">
 
         <h2><b>Item Removal Form</b></h2>
 
@@ -138,31 +138,40 @@
             <tr v-for="item in items" :key="item.name">
               <td>{{ item.name }}</td>
 
-              <!-- Size Dropdown -->
+              <!-- Size / Other item input -->
               <td>
-                <select
-                  v-model="item.size"
-                  :disabled="!item.hasSize"
-                >
-                  <option v-if="!item.hasSize" value="N/A">N/A</option>
+                <template v-if="item.name === 'Other Items'">
+                  <input
+                    type="text"
+                    v-model="item.otherItemName"
+                    placeholder="e.g. Toaster, Diapers"
+                  />
+                </template>
+                <template v-else>
+                  <select
+                    v-model="item.size"
+                    :disabled="!item.hasSize"
+                  >
+                    <option v-if="!item.hasSize" value="N/A">N/A</option>
 
-                  <option
-                    v-for="size in sizeOptions"
-                    v-if="item.hasSize && item.name !== 'Shoes'"
-                    :key="size"
-                    :value="size"
-                  >
+                    <option
+                      v-for="size in sizeOptions"
+                      v-if="item.hasSize && item.name !== 'Shoes'"
+                      :key="size"
+                      :value="size"
+                    >
+                      {{ size }}
+                    </option>
+                    <option
+                      v-for="size in shoeSizeOptions"
+                      v-if="item.hasSize&&item.name === 'Shoes'"
+                      :key="size"
+                      :value="size"
+                    >
                     {{ size }}
-                  </option>
-                  <option
-                    v-for="size in shoeSizeOptions"
-                    v-if="item.hasSize&&item.name === 'Shoes'"
-                    :key="size"
-                    :value="size"
-                  >
-                  {{ size }}
-                  </option>
-                </select>
+                    </option>
+                  </select>
+                </template>
               </td>
 
               <!-- Quantity -->
@@ -226,7 +235,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from "vue";
 import { useFetch, useRouter } from "#app";
 
@@ -242,6 +251,11 @@ const todayDate = ref(new Date().toISOString().split("T")[0]);
 
 const sizeOptions = ["XS", "S", "M", "L", "XL"];
 
+// Panel height sync refs
+const leftPanelRef = ref(null);
+const rightPanelRef = ref(null);
+const leftPanelHeight = ref(null);
+
 const categories = [
   { name: "Shirts", hasSize: true },
   { name: "Pants", hasSize: true },
@@ -250,7 +264,8 @@ const categories = [
   { name: "Shoes", hasSize: true },
   { name: "Snack Packs", hasSize: false },
   { name: "Hygiene Packs", hasSize: false },
-  { name: "Blankets", hasSize: false }
+  { name: "Blankets", hasSize: false },
+  { name: "Other Items", hasSize: false },
 ];
 
 const items = ref(
@@ -258,7 +273,8 @@ const items = ref(
     name: cat.name,
     hasSize: cat.hasSize,
     size: cat.hasSize ? "M" : "N/A",
-    quantity: 0
+    quantity: 0,
+    otherItemName: "",
   }))
 );
 
@@ -269,6 +285,7 @@ const items = ref(
 const availableMap = ref({});
 
 const inventoryRows = ref([]);
+const otherItemsInventory = ref<any | null>(null);
 const loadingInventory = ref(false);
 const filtersDropdownOpen = ref(false);
 const filtersWrapperRef = ref(null);
@@ -281,6 +298,7 @@ const currentPage = ref(1);
 // Category-specific rules
 const apparelCategories = ['Shirts','Pants','Jackets','Underwear'];
 const simpleCategories = ['Snack Packs','Hygiene Packs','Blankets'];
+const otherItemsCategory = 'Other Items';
 const shoeCategory = 'Shoes';
 const apparelSizes = ['XS','S','M','L','XL'];
 const shoeSizes = (() => {
@@ -338,6 +356,16 @@ const inventoryDisplay = computed(() => {
       quantity:0,
       genders:[]
       })
+  }
+
+  // Inject Other Items with full breakdown if available
+  if ((!categoryFilter.value || categoryFilter.value === otherItemsCategory) && otherItemsInventory.value) {
+    const oi = otherItemsInventory.value;
+    aggregated.push({
+      category: otherItemsCategory,
+      quantity: oi.quantity || 0,
+      genders: oi.genders || [],
+    });
   }
   
 for(const item of inv){
@@ -423,7 +451,10 @@ async function loadInventory() {
         }
       }
       // Build rows according to category type
-      if (apparelCategories.includes(catName)) {
+      if (catName === otherItemsCategory) {
+        // Keep full structure for Other Items so it can be displayed with subcategories + item names
+        otherItemsInventory.value = InventoryInfo;
+      } else if (apparelCategories.includes(catName)) {
         for (const g of InventoryInfo.genders) {
           for (const s of apparelSizes) {
             const infoEntry = g.info.find((row) => row.size === s);
@@ -458,9 +489,25 @@ async function loadInventory() {
   inventoryRows.value = normalized;
   availableMap.value = map;
   loadingInventory.value = false;
+
+  // After inventory loads, resync panel heights (right panel may have changed)
+  syncPanelHeights();
 }
 
-onMounted(loadInventory);
+function syncPanelHeights() {
+  if (!leftPanelRef.value || !rightPanelRef.value) return;
+  const rightEl = rightPanelRef.value as HTMLElement;
+  leftPanelHeight.value = rightEl.offsetHeight;
+}
+
+onMounted(() => {
+  loadInventory();
+  // Initial sync after first render
+  setTimeout(syncPanelHeights, 0);
+  if (typeof window !== "undefined") {
+    window.addEventListener("resize", syncPanelHeights);
+  }
+});
 
 let filtersClickOutsideHandler = null;
 watch(filtersDropdownOpen, (isOpen) => {
@@ -481,6 +528,9 @@ onUnmounted(() => {
   if (filtersClickOutsideHandler) {
     document.removeEventListener("click", filtersClickOutsideHandler);
   }
+  if (typeof window !== "undefined") {
+    window.removeEventListener("resize", syncPanelHeights);
+  }
 });
 
 /* ----------------------
@@ -494,7 +544,11 @@ const removedListServer = ref([]);
 const removedList = computed(() =>
   items.value
     .filter(i => i.quantity > 0)
-    .map(i => `${i.quantity} ${i.name} (${i.size})`)
+    .map(i =>
+      i.name === 'Other Items'
+        ? `${i.quantity} ${i.otherItemName || 'Other Items'}`
+        : `${i.quantity} ${i.name} (${i.size})`
+    )
 );
 
 function openCheckoutConfirm() {
@@ -506,6 +560,10 @@ function openCheckoutConfirm() {
   console.log("removals", removals)
   console.log("available map", availableMap.value)
   for (const r of removals) {
+    if (r.name === 'Other Items') {
+      // Skip strict availability check for Other Items (uses free-text name)
+      continue;
+    }
     const available = availableMap.value[r.name+selectedGender.value+r.size] + availableMap.value[r.name+'Unisex'+r.size] ?? 0;
     if (r.quantity > available) {
       alert(`${r.name}: Requested ${r.quantity}, Available ${available}`);
@@ -521,12 +579,20 @@ async function confirmCheckout() {
 
   const removals = items.value
     .filter(i => i.quantity > 0)
-    .map(i => ({
-      category: i.name,
-      size: i.size,
-      quantity: i.quantity,
-      gender: selectedGender.value
-    }));
+    .map(i => i.name === 'Other Items'
+      ? {
+          category: 'Other Items',
+          size: 'N/A',
+          quantity: i.quantity,
+          gender: i.otherItemName?.trim() || ''
+        }
+      : {
+          category: i.name,
+          size: i.size,
+          quantity: i.quantity,
+          gender: selectedGender.value
+        }
+    );
 
   await $fetch("/api/checkout", {
     method: "POST",
@@ -536,8 +602,10 @@ async function confirmCheckout() {
   // Refresh local inventory display after successful checkout
   await loadInventory();
 
-  removedListServer.value = removals.map(
-    r => `${r.quantity} ${r.category} (${r.size})`
+  removedListServer.value = removals.map(r =>
+    r.category === 'Other Items'
+      ? `${r.quantity} ${r.gender || 'Other Items'}`
+      : `${r.quantity} ${r.category} (${r.size})`
   );
 
   showRemovedModal.value = true;
@@ -562,7 +630,7 @@ onMounted(newCheckout)
 <style scoped>
 .checkout-page {
   background: #f0f2f5;
-  min-height: 100vh;
+  min-height: auto;
   padding: 2rem;
   display: flex;
   flex-direction: column;
@@ -580,7 +648,7 @@ onMounted(newCheckout)
   grid-template-columns: 1fr 1fr;
   grid-template-rows: auto;
   gap: 1.5rem;
-  align-items: start;
+  align-items: stretch;
 }
 
 .layout > * {
@@ -600,15 +668,38 @@ onMounted(newCheckout)
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
   box-sizing: border-box;
-  height: fit-content;
 }
 
 .left-panel {
+  display: flex;
+  flex-direction: column;
+  overflow-y: hidden;
   border: 1px solid rgba(0, 0, 0, 0.06);
 }
 
 .right-panel {
   border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.form-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.form-meta > div {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.form-meta input {
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background-color: #fff;
 }
 
 @media (max-width: 959px) {
@@ -728,7 +819,7 @@ onMounted(newCheckout)
 .hrm-table th,
 .hrm-table td {
   border: 1px solid #ccc;
-  padding: 10px;
+  padding: 6px 10px;
   text-align: center;
   overflow: hidden;
 }
@@ -745,6 +836,9 @@ onMounted(newCheckout)
 
 .inventory-table {
   margin-top: 0.5rem;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
 }
 .inventory-table table {
   width: 100%;
