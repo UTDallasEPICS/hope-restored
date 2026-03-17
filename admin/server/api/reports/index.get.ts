@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import { it } from 'node:test';
 import prisma from '~/lib/prisma';
 
 export default defineEventHandler(async (event) =>{
@@ -19,33 +20,15 @@ export default defineEventHandler(async (event) =>{
             ed[1] = new Date(); ed[1].setHours(23,59,59,0);
             sd[1] = ed[1]; ed[0] = sd[1];
         }
-        const firstDates = await prisma.inventoryRecords.findMany({
-            where:{
-                date:{
-                    gte:sd[0],
-                    lte:sd[1]
-                },
-            },
-            select:{
-                date:true,
-                code:true,
-                quantity:true
-            },
-            orderBy:{
-                date:'asc'
-            }
-        });
+        const catList = await prisma.inventory.groupBy({
+            by:['category'],
+        })
          const lastDates = await prisma.inventoryRecords.findMany({
             where:{
                 date:{
                     gte:ed[0],
                     lte:ed[1]
                 }
-            },
-            select:{
-                date:true,
-                code:true,
-                quantity:true
             },
             orderBy:{
                 date:'asc'
@@ -64,46 +47,96 @@ export default defineEventHandler(async (event) =>{
                 additions:true,
                 removals:true
             },
-            orderBy:{
-                category:'asc',
-            }
+            // orderBy:{
+            //     category:'asc',
+            // }
         });
-        const fullReport:{
-            code:string,
+        let groupedData:{
             category:string,
-            gender:string|null,
-            size:string|null,
-            startQuant:number,
-            lastQuant:number, 
+            quantity:number,
             additions:number,
-            removals:number
-        }[] = [];
-        for(const item of aggregations){
-            fullReport.push({
-                code:item.code,
-                category:item.category,
-                gender:item.gender,
-                size:item.size,
-                additions:item._sum.additions? item._sum.additions : 0 ,
-                removals:item._sum.removals? item._sum.removals : 0,
-                startQuant:0,
-                lastQuant:0
+            removals:number,
+            genders:{
+                name:string,
+                info:{
+                    size:string,
+                    quantity:number,
+                    additions:number,
+                    removals:number}[]
+                }[]
+            }[] = []
+        for(const cat of catList){
+            groupedData.push({
+            category:cat.category,
+            quantity:0,
+            additions:0,
+            removals:0,
+            genders:[{
+                name:"Child",
+                info:[]
+                },
+                {
+                name:"Male",
+                info:[]
+                },
+                {
+                name:"Female",
+                info:[]
+                },
+            ]
             })
         }
-        for(const reportRow of fullReport){
-            for(const item of firstDates){
-                if(reportRow.code == item.code){
-                    reportRow.startQuant = item.quantity
-                }
-            }
-            for(const item of lastDates){
-                if(reportRow.code == item.code){
-                    reportRow.startQuant = item.quantity
+        for(const item of lastDates){
+            for(const row of groupedData){
+                if(item.category === row.category){
+                    for(const gender of row.genders){
+                        if(item.gender === gender.name){
+                                gender.info.push({
+                                    size:item.size? item.size : "",
+                                    quantity:0,
+                                    additions: 0,
+                                    removals:0
+                                })
+                        }
+                    }
                 }
             }
         }
-        return fullReport
-
+        for(const item of aggregations){
+            for(const row of groupedData){
+                if(item.category === row.category){
+                    row.additions+= item._sum.additions ? item._sum.additions : 0
+                    row.removals+= item._sum.removals? item._sum.removals : 0
+                    for(const gender of row.genders){
+                        if(item.gender === gender.name){
+                            for(const i of gender.info){
+                                if(item.size == i.size){
+                                    i.additions+=item._sum.additions? item._sum.additions : 0,
+                                    i.removals+=item._sum.removals? item._sum.removals : 0
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        for(const item of lastDates){
+            for(const row of groupedData){
+                if(item.category === row.category){
+                    row.quantity += item.quantity
+                    for(const gender of row.genders){
+                        if(item.gender === gender.name){
+                            for(const i of gender.info){
+                                if(item.size == i.size){
+                                    i.quantity += item.quantity
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return groupedData
     }catch(error){
         console.log("error finding report", error);
     }

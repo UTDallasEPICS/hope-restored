@@ -205,24 +205,32 @@
                 <thead>
                     <tr>
                         <th>Category</th>
-                        <!-- <th>Gender</th>
-                        <th>Size</th> -->
                         <th>Quantity</th>
                         <th>Added</th>
                         <th>Removed</th>
+                        <th>Details</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr v-for="row in fullReport" :key="row.category">
                         <td>{{ row.category }}</td>
-                        <!-- <td>{{ row.gender }}</td>
-                        <td>{{ row.size }}</td> -->
                         <td>{{ row.quantity }}</td>
                         <td>{{ row.additions }}</td>
                         <td>{{ row.removals }}</td>
+                        <td>
+                            <button v-if="!simpleCategores.includes(row.category)" @click="getDetails(row.genders)" class="bg-blue-700 rounded-md p-2 text-white">
+                                View Sizes
+                            </button>
+                        </td>
                     </tr>
                 </tbody>
             </table>
+        </div>
+        <div  v-if="showDetails" class="fixed top-0 left-0 w-full h-full bg-[rgba(20,20,20,0.45)] flex items-center justify-center z-20">
+            <CategoryDetails  
+                :genders=detailRow
+                :close-function="closeDetails"
+            />
         </div>
     </div>
 </template>
@@ -230,15 +238,21 @@
 <script setup>
 import { ref, watchEffect, getCurrentInstance } from 'vue';
 import { useFetch } from '#app';
+import CategoryDetails from '../components/categoryDetails.vue';
 
 const fullReport = ref([]);
 const showPreviousReportsModal = ref(false);
 
 const ChooseDailyReport = ref(false);
 
+const showDetails=ref(false);
 
 const currentInventory = await $fetch('/api/inventory');
 fullReport.value = currentInventory;
+
+const simpleCategores = ['Blankets', 'Snack Packs', 'Hygiene Packs'];
+
+const detailRow = ref();
 
 // Fetch the first inventory date dynamically
 const firstInventoryDate = ref(null);
@@ -250,7 +264,10 @@ watchEffect(() => {
 });
 
 
-
+function getDetails(row){
+    detailRow.value = row;
+    showDetails.value = true;
+}
 
 async function getReport(){
     const Report = await  $fetch('/api/reports',{
@@ -260,6 +277,7 @@ async function getReport(){
         }
     })
     fullReport.value=Report
+    console.log(fullReport.value)
 }
 
 //function for temp button - creates report off current inventory 
@@ -270,6 +288,10 @@ async function makeReport(){
     fullReport.value=Report
 }
 
+function closeDetails(){
+    detailRow.value = null;
+    showDetails.value = false;
+}
 
 
 

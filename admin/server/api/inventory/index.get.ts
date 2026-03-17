@@ -20,9 +20,7 @@ export default defineEventHandler(async (event) => {
       }
     },
     orderBy:[
-      //{category:"asc"},
       {gender:"asc"},
-      //{size:"asc"},
     ],
   })
   let groupedData:{category:string,quantity:number,additions:number,removals:number,genders:{name:string,info:{size:string,quantity:number,additions:number,removals:number}[]}[]}[] = []
@@ -34,7 +32,7 @@ export default defineEventHandler(async (event) => {
       additions:0,
       removals:0,
       genders:[{
-          name:"Unisex",
+          name:"Child",
           info:[]
         },
         {
@@ -58,7 +56,6 @@ for(const item of inv){
       row.removals+= item.removals
       for(const gender of row.genders){
         if(item.gender === gender.name){
-          if(item.category !== 'Shoes' || item.quantity > 0)
           gender.info.push({
             size:item.size? item.size : "",
             quantity:item.quantity,
