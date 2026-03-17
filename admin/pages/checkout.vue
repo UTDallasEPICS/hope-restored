@@ -3,36 +3,52 @@
     <div class="layout">
 
       <!-- LEFT SIDE -->
-      <div class="left-panel">
-        <h3>Inventory Database</h3>
+      <div class="left-panel" ref="leftPanelRef" :style="leftPanelHeight ? { height: leftPanelHeight + 'px' } : {}">
+        <div class="left-panel-header">
+          <h3>Inventory Database</h3>
+          <div ref="filtersWrapperRef" class="filters-wrapper" :class="{ 'filters-dropdown-open': filtersDropdownOpen }">
+            <div class="filters-trigger-wrap">
+              <button
+                type="button"
+                class="filters-icon-btn btn"
+                :aria-expanded="filtersDropdownOpen"
+                aria-haspopup="true"
+                aria-label="Open filter options"
+                @click="filtersDropdownOpen = !filtersDropdownOpen"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" class="filters-icon-svg" aria-hidden="true"><path d="M342.6 534.6C330.1 547.1 309.8 547.1 297.3 534.6L137.3 374.6C124.8 362.1 124.8 341.8 137.3 329.3C149.8 316.8 170.1 316.8 182.6 329.3L320 466.7L457.4 329.4C469.9 316.9 490.2 316.9 502.7 329.4C515.2 341.9 515.2 362.2 502.7 374.7L342.7 534.7zM502.6 182.6L342.6 342.6C330.1 355.1 309.8 355.1 297.3 342.6L137.3 182.6C124.8 170.1 124.8 149.8 137.3 137.3C149.8 124.8 170.1 124.8 182.6 137.3L320 274.7L457.4 137.4C469.9 124.9 490.2 124.9 502.7 137.4C515.2 149.9 515.2 170.2 502.7 182.7z"/></svg>
+                <span v-if="categoryFilter || genderFilter || clothingSizeFilter || shoeSizeFilter" class="filters-active-dot" aria-hidden="true"></span>
+              </button>
+              <div v-show="filtersDropdownOpen" class="filters-dropdown-panel">
+                <div class="filters-dropdown-inner">
+                  <label>Category</label>
+                  <select v-model="categoryFilter">
+                    <option value="">All categories</option>
+                    <option v-for="c in categoryOptions" :key="c" :value="c">{{ c }}</option>
+                  </select>
+                  <label>Gender</label>
+                  <select v-model="genderFilter">
+                    <option value="">All genders</option>
+                    <option v-for="g in genderOptions" :key="g" :value="g">{{ g }}</option>
+                  </select>
+                  <label>Clothing size</label>
+                  <select v-model="clothingSizeFilter">
+                    <option value="">All clothing sizes</option>
+                    <option v-for="s in clothingSizeOptions" :key="s" :value="s">{{ s }}</option>
+                  </select>
+                  <label>Shoe size</label>
+                  <select v-model="shoeSizeFilter">
+                    <option value="">All shoe sizes</option>
+                    <option v-for="s in shoeSizeOptions" :key="s" :value="s">{{ s }}</option>
+                  </select>
+                  <button type="button" class="btn filters-refresh-btn" @click="loadInventory">Refresh</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
 
         <div class="inventory-table">
-          <div class="inventory-actions">
-              <select v-model="categoryFilter">
-                <option value="">All categories</option>
-                <option v-for="c in categoryOptions" :key="c" :value="c">{{ c }}</option>
-              </select>
-
-              <select v-model="genderFilter">
-                <option value="">All genders</option>
-                <option v-for="g in genderOptions" :key="g" :value="g">{{ g }}</option>
-              </select>
-
-              <select v-model="clothingSizeFilter">
-                <option value="">All clothing sizes</option>
-                <option v-for="s in clothingSizeOptions" :key="s" :value="s">{{ s }}</option>
-              </select>
-
-              <select v-model="shoeSizeFilter">
-                <option value="">All shoe sizes</option>
-                <option v-for="s in shoeSizeOptions" :key="s" :value="s">{{ s }}</option>
-              </select>
-
-              
-
-              <button class="btn" @click="loadInventory">Refresh</button>
-          </div>
-
           <table>
             <template v-if="loadingInventory">
               <td colspan="2">Loading...</td>
@@ -57,12 +73,7 @@
                 </tr>
                 
                 <template v-if="genders.info.length>0" v-for="info in genders.info">
-                  <tr  v-if="info.quantity !== 0">
-                    <td>Sizes</td>
-                    <td>Available</td>
-                  </tr>
                   <tr v-if="info.quantity !== 0">
-                    
                     <td>{{ info.size }}</td>
                     <td>{{ info.quantity }}</td>
                   </tr>
@@ -80,7 +91,7 @@
       </div>
 
       <!-- RIGHT SIDE -->
-      <div class="right-panel">
+      <div class="right-panel" ref="rightPanelRef">
 
         <h2><b>Item Removal Form</b></h2>
 
@@ -127,31 +138,40 @@
             <tr v-for="item in items" :key="item.name">
               <td>{{ item.name }}</td>
 
-              <!-- Size Dropdown -->
+              <!-- Size / Other item input -->
               <td>
-                <select
-                  v-model="item.size"
-                  :disabled="!item.hasSize"
-                >
-                  <option v-if="!item.hasSize" value="N/A">N/A</option>
+                <template v-if="item.name === 'Other Items'">
+                  <input
+                    type="text"
+                    v-model="item.otherItemName"
+                    placeholder="e.g. Toaster, Diapers"
+                  />
+                </template>
+                <template v-else>
+                  <select
+                    v-model="item.size"
+                    :disabled="!item.hasSize"
+                  >
+                    <option v-if="!item.hasSize" value="N/A">N/A</option>
 
-                  <option
-                    v-for="size in sizeOptions"
-                    v-if="item.hasSize && item.name !== 'Shoes'"
-                    :key="size"
-                    :value="size"
-                  >
+                    <option
+                      v-for="size in sizeOptions"
+                      v-if="item.hasSize && item.name !== 'Shoes'"
+                      :key="size"
+                      :value="size"
+                    >
+                      {{ size }}
+                    </option>
+                    <option
+                      v-for="size in shoeSizeOptions"
+                      v-if="item.hasSize&&item.name === 'Shoes'"
+                      :key="size"
+                      :value="size"
+                    >
                     {{ size }}
-                  </option>
-                  <option
-                    v-for="size in shoeSizeOptions"
-                    v-if="item.hasSize&&item.name === 'Shoes'"
-                    :key="size"
-                    :value="size"
-                  >
-                  {{ size }}
-                  </option>
-                </select>
+                    </option>
+                  </select>
+                </template>
               </td>
 
               <!-- Quantity -->
@@ -215,8 +235,8 @@
   </div>
 </template>
 
-<script setup>
-import { ref, computed, onMounted, watch } from "vue";
+<script setup lang="ts">
+import { ref, computed, onMounted, onUnmounted, watch } from "vue";
 import { useFetch, useRouter } from "#app";
 
 const router = useRouter();
@@ -231,6 +251,11 @@ const todayDate = ref(new Date().toISOString().split("T")[0]);
 
 const sizeOptions = ["XS", "S", "M", "L", "XL"];
 
+// Panel height sync refs
+const leftPanelRef = ref(null);
+const rightPanelRef = ref(null);
+const leftPanelHeight = ref(null);
+
 const categories = [
   { name: "Shirts", hasSize: true },
   { name: "Pants", hasSize: true },
@@ -239,7 +264,8 @@ const categories = [
   { name: "Shoes", hasSize: true },
   { name: "Snack Packs", hasSize: false },
   { name: "Hygiene Packs", hasSize: false },
-  { name: "Blankets", hasSize: false }
+  { name: "Blankets", hasSize: false },
+  { name: "Other Items", hasSize: false },
 ];
 
 const items = ref(
@@ -247,7 +273,8 @@ const items = ref(
     name: cat.name,
     hasSize: cat.hasSize,
     size: cat.hasSize ? "M" : "N/A",
-    quantity: 0
+    quantity: 0,
+    otherItemName: "",
   }))
 );
 
@@ -258,7 +285,10 @@ const items = ref(
 const availableMap = ref({});
 
 const inventoryRows = ref([]);
+const otherItemsInventory = ref<any | null>(null);
 const loadingInventory = ref(false);
+const filtersDropdownOpen = ref(false);
+const filtersWrapperRef = ref(null);
 const categoryFilter = ref('');
 const genderFilter = ref('');
 const clothingSizeFilter = ref('');
@@ -268,6 +298,7 @@ const currentPage = ref(1);
 // Category-specific rules
 const apparelCategories = ['Shirts','Pants','Jackets','Underwear'];
 const simpleCategories = ['Snack Packs','Hygiene Packs','Blankets'];
+const otherItemsCategory = 'Other Items';
 const shoeCategory = 'Shoes';
 const apparelSizes = ['XS','S','M','L','XL'];
 const shoeSizes = (() => {
@@ -326,6 +357,16 @@ const inventoryDisplay = computed(() => {
       genders:[]
       })
   }
+
+  // Inject Other Items with full breakdown if available
+  if ((!categoryFilter.value || categoryFilter.value === otherItemsCategory) && otherItemsInventory.value) {
+    const oi = otherItemsInventory.value;
+    aggregated.push({
+      category: otherItemsCategory,
+      quantity: oi.quantity || 0,
+      genders: oi.genders || [],
+    });
+  }
   
 for(const item of inv){
   for(const row of aggregated){
@@ -335,7 +376,6 @@ for(const item of inv){
         if(item.gender === gender.name){
           if(item.category !== 'Shoes'){
             if(clothingSizeFilter.value && item.size !== clothingSizeFilter.value || item.quantity === 0) continue;
-            console.log(item.quantity)
             gender.info.push({
               size:item.size? item.size : "",
               quantity:item.quantity
@@ -354,7 +394,6 @@ for(const item of inv){
     }
   }
 }
-console.log(aggregated);
   return aggregated;
 });
 
@@ -398,21 +437,12 @@ async function loadInventory() {
     try {
       const data = await $fetch('/api/inventory', { params: { category: catName } });
       const InventoryInfo = data.length > 0? data[0] :{
-            category, 
+            category: catName,
             quantity:0,
             genders:[
-                {
-                    name:"Unisex",
-                    info:{size:"XS",quantity:0}
-                },
-                {
-                    name:"Male",
-                    info:{size:"XS",quantity:0}
-                },
-                {
-                    name:"Female",
-                    info:{size:"XS",quantity:0}
-                }
+                { name:"Unisex", info:[] },
+                { name:"Male", info:[] },
+                { name:"Female", info:[] }
                 ]}
       const totalQty = Number(InventoryInfo.quantity || 0);
       for(const gender of InventoryInfo.genders){
@@ -421,7 +451,10 @@ async function loadInventory() {
         }
       }
       // Build rows according to category type
-      if (apparelCategories.includes(catName)) {
+      if (catName === otherItemsCategory) {
+        // Keep full structure for Other Items so it can be displayed with subcategories + item names
+        otherItemsInventory.value = InventoryInfo;
+      } else if (apparelCategories.includes(catName)) {
         for (const g of InventoryInfo.genders) {
           for (const s of apparelSizes) {
             const infoEntry = g.info.find((row) => row.size === s);
@@ -435,7 +468,7 @@ async function loadInventory() {
         }
       } else if (catName === shoeCategory) {
         for (const g of InventoryInfo.genders) {
-          for (const s of shoeSizes) {;
+          for (const s of shoeSizes) {
             const infoEntry = g.info.find((row) => row.size === s);
             normalized.push({
               category: catName,
@@ -446,7 +479,6 @@ async function loadInventory() {
           }
         }
       } else if (simpleCategories.includes(catName)) {
-        // only a single row representing quantity
         normalized.push({ category: catName, gender: 'Unisex', size: 'N/A', quantity: totalQty });
       }
     } catch (e) {
@@ -457,9 +489,49 @@ async function loadInventory() {
   inventoryRows.value = normalized;
   availableMap.value = map;
   loadingInventory.value = false;
+
+  // After inventory loads, resync panel heights (right panel may have changed)
+  syncPanelHeights();
 }
 
-onMounted(loadInventory);
+function syncPanelHeights() {
+  if (!leftPanelRef.value || !rightPanelRef.value) return;
+  const rightEl = rightPanelRef.value as HTMLElement;
+  leftPanelHeight.value = rightEl.offsetHeight;
+}
+
+onMounted(() => {
+  loadInventory();
+  // Initial sync after first render
+  setTimeout(syncPanelHeights, 0);
+  if (typeof window !== "undefined") {
+    window.addEventListener("resize", syncPanelHeights);
+  }
+});
+
+let filtersClickOutsideHandler = null;
+watch(filtersDropdownOpen, (isOpen) => {
+  if (filtersClickOutsideHandler) {
+    document.removeEventListener("click", filtersClickOutsideHandler);
+    filtersClickOutsideHandler = null;
+  }
+  if (isOpen) {
+    filtersClickOutsideHandler = (e) => {
+      if (filtersWrapperRef.value && !filtersWrapperRef.value.contains(e.target)) {
+        filtersDropdownOpen.value = false;
+      }
+    };
+    setTimeout(() => document.addEventListener("click", filtersClickOutsideHandler), 0);
+  }
+});
+onUnmounted(() => {
+  if (filtersClickOutsideHandler) {
+    document.removeEventListener("click", filtersClickOutsideHandler);
+  }
+  if (typeof window !== "undefined") {
+    window.removeEventListener("resize", syncPanelHeights);
+  }
+});
 
 /* ----------------------
    Checkout Logic
@@ -472,7 +544,11 @@ const removedListServer = ref([]);
 const removedList = computed(() =>
   items.value
     .filter(i => i.quantity > 0)
-    .map(i => `${i.quantity} ${i.name} (${i.size})`)
+    .map(i =>
+      i.name === 'Other Items'
+        ? `${i.quantity} ${i.otherItemName || 'Other Items'}`
+        : `${i.quantity} ${i.name} (${i.size})`
+    )
 );
 
 function openCheckoutConfirm() {
@@ -484,6 +560,10 @@ function openCheckoutConfirm() {
   console.log("removals", removals)
   console.log("available map", availableMap.value)
   for (const r of removals) {
+    if (r.name === 'Other Items') {
+      // Skip strict availability check for Other Items (uses free-text name)
+      continue;
+    }
     const available = availableMap.value[r.name+selectedGender.value+r.size] + availableMap.value[r.name+'Unisex'+r.size] ?? 0;
     if (r.quantity > available) {
       alert(`${r.name}: Requested ${r.quantity}, Available ${available}`);
@@ -499,12 +579,20 @@ async function confirmCheckout() {
 
   const removals = items.value
     .filter(i => i.quantity > 0)
-    .map(i => ({
-      category: i.name,
-      size: i.size,
-      quantity: i.quantity,
-      gender: selectedGender.value
-    }));
+    .map(i => i.name === 'Other Items'
+      ? {
+          category: 'Other Items',
+          size: 'N/A',
+          quantity: i.quantity,
+          gender: i.otherItemName?.trim() || ''
+        }
+      : {
+          category: i.name,
+          size: i.size,
+          quantity: i.quantity,
+          gender: selectedGender.value
+        }
+    );
 
   await $fetch("/api/checkout", {
     method: "POST",
@@ -514,8 +602,10 @@ async function confirmCheckout() {
   // Refresh local inventory display after successful checkout
   await loadInventory();
 
-  removedListServer.value = removals.map(
-    r => `${r.quantity} ${r.category} (${r.size})`
+  removedListServer.value = removals.map(r =>
+    r.category === 'Other Items'
+      ? `${r.quantity} ${r.gender || 'Other Items'}`
+      : `${r.quantity} ${r.category} (${r.size})`
   );
 
   showRemovedModal.value = true;
@@ -540,28 +630,162 @@ onMounted(newCheckout)
 <style scoped>
 .checkout-page {
   background: #f0f2f5;
-  min-height: 100vh;
+  min-height: auto;
   padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
 }
 
 .layout {
-  display: flex;
-  gap: 2rem;
+  min-width: 0;
+  width: 100%;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto;
+  gap: 1.5rem;
+  align-items: stretch;
+}
+
+.layout > * {
+  min-height: 0;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.left-panel,
+.right-panel {
+  background: #fff;
+  border-radius: 8px;
+  padding: 1.25rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  box-sizing: border-box;
 }
 
 .left-panel {
-  flex: 1;
-  background: white;
-  padding: 1rem;
-  border: 1px solid #ddd;
+  display: flex;
+  flex-direction: column;
+  overflow-y: hidden;
+  border: 1px solid rgba(0, 0, 0, 0.06);
 }
 
 .right-panel {
-  flex: 1;
-  background: white;
-  padding: 1.5rem;
-  border: 1px solid #ddd;
+  border: 1px solid rgba(0, 0, 0, 0.06);
 }
+
+.form-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.form-meta > div {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.form-meta input {
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background-color: #fff;
+}
+
+@media (max-width: 959px) {
+  .layout {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto;
+    gap: clamp(0.75rem, 2.5vw, 1rem);
+    width: 100%;
+  }
+  .right-panel {
+    order: -1;
+    width: 100%;
+    max-width: 100%;
+  }
+  .left-panel {
+    order: 0;
+    width: 100%;
+    max-width: 100%;
+  }
+  .left-panel,
+  .right-panel {
+    min-width: 0;
+    padding: clamp(0.75rem, 3vw, 1.25rem);
+  }
+  .right-panel h2,
+  .right-panel .gender-toggle,
+  .right-panel .form-meta,
+  .right-panel .hrm-table,
+  .right-panel .checkout-button {
+    min-width: 0;
+    width: 100%;
+    max-width: 100%;
+  }
+  .right-panel .hrm-table {
+    width: 100%;
+    table-layout: fixed;
+  }
+  .right-panel .hrm-table th,
+  .right-panel .hrm-table td {
+    word-break: break-word;
+  }
+  .form-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+  .form-meta input {
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+  .right-panel .checkout-button {
+    width: 100%;
+  }
+  .right-panel .checkout-btn {
+    width: 100%;
+    box-sizing: border-box;
+  }
+}
+
+@media (max-width: 768px) {
+  .layout {
+    grid-template-columns: 1fr;
+    width: 100%;
+  }
+  .checkout-page {
+    padding: 1rem;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .checkout-page {
+    padding: 0.5rem;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+  .left-panel,
+  .right-panel {
+    min-height: 160px;
+    padding: 0.75rem;
+    width: 100%;
+    max-width: 100%;
+  }
+}
+
 
 .gender-toggle {
   display: flex;
@@ -586,27 +810,35 @@ onMounted(newCheckout)
 
 .hrm-table {
   width: 100%;
+  max-width: 100%;
   border-collapse: collapse;
   margin-top: 1rem;
+  table-layout: fixed;
 }
 
 .hrm-table th,
 .hrm-table td {
   border: 1px solid #ccc;
-  padding: 10px;
+  padding: 6px 10px;
   text-align: center;
+  overflow: hidden;
 }
 
 .hrm-table select,
 .hrm-table input {
   width: 90%;
+  max-width: 100%;
   padding: 6px;
   text-align: center;
   border: 1px solid #ccc;
+  box-sizing: border-box;
 }
 
 .inventory-table {
   margin-top: 0.5rem;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
 }
 .inventory-table table {
   width: 100%;
@@ -618,11 +850,110 @@ onMounted(newCheckout)
   padding: 8px;
   text-align: left;
 }
-.inventory-actions {
+/* Left panel: title + filter icon on same row */
+.left-panel-header {
   display: flex;
-  justify-content: flex-end;
-  margin-bottom: 8px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
 }
+
+.left-panel-header h3 {
+  margin: 0;
+  flex: 1;
+}
+
+/* Filters: icon button on right; options in popup */
+.filters-wrapper {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.filters-trigger-wrap {
+  position: relative;
+}
+
+.filters-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  min-width: 36px;
+  min-height: 36px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  background: #fff;
+  color: #333;
+  cursor: pointer;
+}
+
+.filters-icon-btn:hover {
+  border-color: #3f51b5;
+  color: #3f51b5;
+}
+
+.filters-icon-btn.btn {
+  border: 1px solid #ccc;
+}
+
+.filters-icon-svg {
+  width: 1.25rem;
+  height: 1.25rem;
+  fill: currentColor;
+}
+
+.filters-active-dot {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #3f51b5;
+}
+
+.filters-dropdown-panel {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 4px;
+  min-width: 200px;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  padding: 0.75rem;
+  z-index: 10;
+}
+
+.filters-dropdown-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.filters-dropdown-inner label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-top: 0.25rem;
+}
+
+.filters-dropdown-inner label:first-child {
+  margin-top: 0;
+}
+
+.filters-dropdown-inner select {
+  width: 100%;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+.filters-refresh-btn {
+  margin-top: 0.25rem;
+}
+
 .inventory-search {
   padding: 6px 8px;
   border: 1px solid #ccc;
@@ -630,6 +961,7 @@ onMounted(newCheckout)
   margin-right: 8px;
   min-width: 140px;
 }
+
 .inventory-actions select {
   margin-right: 8px;
   padding: 6px 8px;

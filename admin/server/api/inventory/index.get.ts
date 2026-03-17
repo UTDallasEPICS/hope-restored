@@ -3,21 +3,51 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
+const OTHER_ITEMS = 'Other Items';
+
 export default defineEventHandler(async (event) => {
   const query = getQuery(event);
+  const categoryFilter = query.category !== undefined && query.category !== '' ? String(query.category).trim() : undefined;
+
+  if (categoryFilter === OTHER_ITEMS) {
+    const items = await prisma.inventory.findMany({
+      where: { category: { in: [OTHER_ITEMS, 'Other items'] } },
+      orderBy: [{ size: 'asc' }, { gender: 'asc' }],
+    });
+    const subcategoryMap = new Map<string, { size: string; quantity: number }[]>();
+    let totalQty = 0;
+    for (const item of items) {
+      totalQty += item.quantity;
+      const sub = (item.size ?? 'Other').trim() || 'Other';
+      if (!subcategoryMap.has(sub)) subcategoryMap.set(sub, []);
+      const list = subcategoryMap.get(sub)!;
+      const itemName = (item.gender ?? '').trim();
+      const existing = list.find((entry) => entry.size === itemName);
+      if (existing) {
+        existing.quantity += item.quantity;
+      } else {
+        list.push({
+          size: itemName,
+          quantity: item.quantity,
+        });
+      }
+    }
+    const genders = Array.from(subcategoryMap.entries()).map(([name, info]) => ({ name, info }));
+    return [{ category: OTHER_ITEMS, quantity: totalQty, genders }];
+  }
 
   const catList = await prisma.inventory.groupBy({
-    by:['category'],
-    where:{
-      category: query.category !== undefined? String(query.category) : undefined,
-    }
-  })
+    by: ['category'],
+    where: {
+      category: categoryFilter ?? undefined,
+    },
+  });
   const inv = await prisma.inventory.findMany({
-    where:{
-      category: query.category !== undefined? String(query.category) : undefined,
+    where: {
+      category: categoryFilter ?? undefined,
       quantity: {
-         gt: query.category === "Shoes"? 0 : -1
-      }
+        gt: categoryFilter === 'Shoes' ? 0 : -1,
+      },
     },
     orderBy:[
       {gender:"asc"},
@@ -25,7 +55,7 @@ export default defineEventHandler(async (event) => {
   })
   let groupedData:{category:string,quantity:number,additions:number,removals:number,genders:{name:string,info:{size:string,quantity:number,additions:number,removals:number}[]}[]}[] = []
 
-  for(const cat of catList){
+  for (const cat of catList) {
     groupedData.push({
       category:cat.category,
       quantity:0,
