@@ -1,5 +1,5 @@
 <template>
-    <div class="rounded-md p-2 shadow-2xl relative w-3/4 h-full bg-white z-50">
+    <div class="rounded-md p-2 shadow-2xl relative w-3/4 h-3/4 bg-white z-50">
         <!-- send in selected date range and category -->
         <h1 class="text-center text-3xl">Viewing Report for: 12/31 - 12/31 Jackets{{ }}</h1> 
         <div class="flex justify-around my-4">          
