@@ -426,7 +426,7 @@ const router = useRouter();
 const selectedGender = ref("Male");
 const personName = ref("");
 const todayDate = ref(new Date().toISOString().split("T")[0]);
-const visibleGenders = ["Male", "Female", "Children"];
+const visibleGenders = ["Male", "Female", "Child"];
 
 const sizeOptions = ["XS", "S", "M", "L", "XL"];
 

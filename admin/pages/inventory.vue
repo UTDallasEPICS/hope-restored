@@ -498,7 +498,7 @@ const shoeSizeOptions = (() => {
   for (let n = 5; n <= 14.5; n += 0.5) sizes.push(String(n));
   return sizes;
 })();
-const visibleGenders = ["Male", "Female", "Children"];
+const visibleGenders = ["Male", "Female", "Child"];
 
 const selectedCategory = ref("");
 const categoryDetails = ref<{
@@ -650,8 +650,8 @@ async function performAddition(qty: number | null, isSimple: boolean) {
     const body = isOtherItems.value
       ? {
           category: "Other Items",
-          gender: addForm.value.itemName.trim(),
-          size: addForm.value.size,
+          gender: addForm.value.size,
+          size: addForm.value.itemName.trim(),
           quantity: qty,
         }
       : {
