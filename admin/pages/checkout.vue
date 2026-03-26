@@ -110,6 +110,20 @@
           >
             Female
           </button>
+
+          <button
+            :class="['gender-btn', selectedGender === 'Unisex' ? 'active' : '']"
+            @click="selectedGender = 'Unisex'"
+          >
+            Unisex
+          </button>
+
+          <button
+            :class="['gender-btn', selectedGender === 'Children' ? 'active' : '']"
+            @click="selectedGender = 'Children'"
+          >
+            Children
+          </button>
         </div>
 
         <!-- Name + Date -->
@@ -416,7 +430,7 @@ const categoryOptions = computed(() => {
 
 const genderOptions = computed(() => {
   // Standard order for non-tech users
-  return ['Male','Female','Unisex'];
+  return ['Male','Female','Unisex','Children'];
 });
 
 const clothingSizeOptions = computed(() => apparelSizes);

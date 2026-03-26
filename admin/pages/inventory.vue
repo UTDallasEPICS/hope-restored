@@ -144,6 +144,10 @@
                                     <input v-model="addForm.gender" type="radio" value="Unisex" />
                                     Unisex
                                 </label>
+                                <label class="checkbox-label">
+                                    <input v-model="addForm.gender" type="radio" value="Children" />
+                                    Children
+                                </label>
                             </div>
                         </div>
                         <div class="form-group">
@@ -319,6 +323,7 @@ async function fetchCategoryDetails(category: string) {
                 { name: 'Unisex', info: [{ size: 'XS', quantity: 0 }] },
                 { name: 'Male', info: [{ size: 'XS', quantity: 0 }] },
                 { name: 'Female', info: [{ size: 'XS', quantity: 0 }] },
+                { name: 'Children', info: [{ size: 'XS', quantity: 0 }] },
             ];
         categoryDetails.value = { catDetails: data.length > 0 ? data : [{ category, quantity: 0, genders: fallbackGenders }] };
     } catch (err) {

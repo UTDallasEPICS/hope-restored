@@ -61,6 +61,7 @@ export default defineEventHandler(async (event) => {
         { name: 'Unisex', info: [] },
         { name: 'Male', info: [] },
         { name: 'Female', info: [] },
+        { name: 'Children', info: [] },
       ],
     });
   }
