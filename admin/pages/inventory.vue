@@ -372,8 +372,8 @@ async function performAddition(qty: number | null, isSimple: boolean) {
         const body = isOtherItems.value
             ? {
                 category: 'Other Items',
-                gender: addForm.value.itemName.trim(),
-                size: addForm.value.size,
+                gender: addForm.value.size,
+                size: addForm.value.itemName.trim(),
                 quantity: qty,
             }
             : {

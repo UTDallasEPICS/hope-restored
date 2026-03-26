@@ -16,7 +16,8 @@ export default defineEventHandler(async (event) => {
           category: entry.category,
           gender: entry.gender,
           size: entry.size,
-          quantity: entry.quantity
+          quantity: entry.quantity,
+          additions: entry.quantity
         },
         update:{
           quantity:{

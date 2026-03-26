@@ -2,23 +2,8 @@
     <div class="rounded-md p-2 shadow-2xl relative w-3/4 h-full bg-white z-50">
         <!-- send in selected date range and category -->
         <h1 class="text-center text-3xl">Viewing Report for: 12/31 - 12/31 Jackets{{ }}</h1> 
-        <div class="flex justify-around my-4">
-            <div class="hidden md:grid grid-cols-4 items-stretch gap-4 ">
-                <span>Select a clothing type: </span>
-                <button 
-                    v-for="g in genderList"
-                    class="flex-col items-center justify-center gap-1 min-h-10 p-1.5 rounded-md  border-2 cursor-pointer
-                    font-bold transition-[transform,box-shadow,background-color,border-color] duration-100 ease-in mx-3
-                    hover:shadow-lg hover:border-[rgba(63,81,181,0.4)] **transition hover:-translate-y-0.5**" 
-                    :class="{ 'bg-[#3f51b5] text-white border-[#3f51b5] shadow-[rgba(63,81,181,0.4)]': gender==g, 
-                    'bg-white text-[#333] border-[rgba(0,0,0,0.08)]': gender !=g }"
-                    @click="changeData(g)"
-                >
-                    <i class="fas fa-box" aria-hidden="true"></i>
-                    <span>{{ g }}</span> 
-                </button> 
-            </div>          
-            <div class="w-1/4 relative md:hidden">
+        <div class="flex justify-around my-4">          
+            <div class="w-1/4 relative">
                 <button class="w-full flex items-center content-between p-3 text-lg font-bold text-[#333] bg-white border-2 border-[rgba(0,0,0,0.08)]
                     rounded-lg cursor-pointer text-left hover:border-[rgba(63,81,181,0.4)]" 
                     @click="accordionOpen = !accordionOpen">
@@ -76,16 +61,22 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 
     const props = defineProps<{
         genders:{name:string, info:{size:string,quantity:number,additions:number,removals:number}[]}[]
         closeFunction:() => void;
     }>();
 
-    const genderList = ['Male','Female','Child'];
-
-    const gender = ref('Male');
+    const genderList = ref<string[]>([]);
+    const gender = ref<string>();
+    onMounted(()=>{
+        for(const gender of props.genders){
+            genderList.value.push(gender.name)
+        }
+        gender.value = genderList.value[0];
+        console.log(props.genders);
+    })
     const accordionOpen = ref(false);
     const tableData = computed(()=>{
         for(const g of props.genders){
@@ -96,7 +87,6 @@ import { computed, ref } from 'vue';
     })
     function changeData(newGender:string){
         gender.value = newGender;
-        console.log(gender.value);
-        console.log(tableData.value);
+        accordionOpen.value = false;
     }
 </script>

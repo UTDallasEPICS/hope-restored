@@ -8,34 +8,6 @@ const OTHER_ITEMS = 'Other Items';
 export default defineEventHandler(async (event) => {
   const query = getQuery(event);
   const categoryFilter = query.category !== undefined && query.category !== '' ? String(query.category).trim() : undefined;
-
-  if (categoryFilter === OTHER_ITEMS) {
-    const items = await prisma.inventory.findMany({
-      where: { category: { in: [OTHER_ITEMS, 'Other items'] } },
-      orderBy: [{ size: 'asc' }, { gender: 'asc' }],
-    });
-    const subcategoryMap = new Map<string, { size: string; quantity: number }[]>();
-    let totalQty = 0;
-    for (const item of items) {
-      totalQty += item.quantity;
-      const sub = (item.size ?? 'Other').trim() || 'Other';
-      if (!subcategoryMap.has(sub)) subcategoryMap.set(sub, []);
-      const list = subcategoryMap.get(sub)!;
-      const itemName = (item.gender ?? '').trim();
-      const existing = list.find((entry) => entry.size === itemName);
-      if (existing) {
-        existing.quantity += item.quantity;
-      } else {
-        list.push({
-          size: itemName,
-          quantity: item.quantity,
-        });
-      }
-    }
-    const genders = Array.from(subcategoryMap.entries()).map(([name, info]) => ({ name, info }));
-    return [{ category: OTHER_ITEMS, quantity: totalQty, genders }];
-  }
-
   const catList = await prisma.inventory.groupBy({
     by: ['category'],
     where: {
@@ -61,7 +33,7 @@ export default defineEventHandler(async (event) => {
       quantity:0,
       additions:0,
       removals:0,
-      genders:[{
+      genders:cat.category !== "Other Items"? [{
           name:"Child",
           info:[]
         },
@@ -73,7 +45,19 @@ export default defineEventHandler(async (event) => {
           name:"Female",
           info:[]
         },
-      ]
+      ] :[
+        {name:'Appliances',info:[]},
+        {name: 'Infant care',info:[] },
+        {name:'Hardware',info:[] },
+        {name:'Electronics',info:[] },
+        {name:'Furniture',info:[]}, 
+        {name:'Bedding',info:[] },
+        {name:'Kitchen',info:[] },
+        {name:'Toys', info:[]},
+        {name:'School supplies',info:[] },
+        {name:'Personal care',info:[] },
+        {name:'Cleaning supplies',info:[] },
+       { name:'Other',info:[]}]
       })
   }
 
