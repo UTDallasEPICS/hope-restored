@@ -197,7 +197,7 @@
         <!-- Gender Toggle -->
         <div class="flex flex-wrap gap-2 mb-4">
           <button
-            v-for="gender in ['Male', 'Female', 'Unisex', 'Children']"
+            v-for="gender in visibleGenders"
             :key="gender"
             :class="[
               'px-4 py-2 rounded-md border text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-indigo-500',
@@ -383,7 +383,39 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from "vue";
-import { useFetch, useRouter } from "#app";
+import { $fetch } from "ofetch";
+import { useRouter } from "vue-router";
+
+type InventoryInfoRow = {
+  size: string;
+  quantity: number;
+};
+
+type InventoryGenderGroup = {
+  name: string;
+  info: InventoryInfoRow[];
+};
+
+type InventoryCategoryGroup = {
+  category: string;
+  quantity: number;
+  genders: InventoryGenderGroup[];
+};
+
+type InventoryRow = {
+  category: string;
+  gender: string;
+  size: string;
+  quantity: number;
+};
+
+type CheckoutItem = {
+  name: string;
+  hasSize: boolean;
+  size: string;
+  quantity: number;
+  otherItemName: string;
+};
 
 const router = useRouter();
 
@@ -394,13 +426,14 @@ const router = useRouter();
 const selectedGender = ref("Male");
 const personName = ref("");
 const todayDate = ref(new Date().toISOString().split("T")[0]);
+const visibleGenders = ["Male", "Female", "Children"];
 
 const sizeOptions = ["XS", "S", "M", "L", "XL"];
 
 // Panel height sync refs
-const leftPanelRef = ref(null);
-const rightPanelRef = ref(null);
-const leftPanelHeight = ref(null);
+const leftPanelRef = ref<HTMLElement | null>(null);
+const rightPanelRef = ref<HTMLElement | null>(null);
+const leftPanelHeight = ref<number | null>(null);
 
 const categories = [
   { name: "Shirts", hasSize: true },
@@ -414,7 +447,7 @@ const categories = [
   { name: "Other Items", hasSize: false },
 ];
 
-const items = ref(
+const items = ref<CheckoutItem[]>(
   categories.map((cat) => ({
     name: cat.name,
     hasSize: cat.hasSize,
@@ -428,13 +461,13 @@ const items = ref(
    Inventory
 ---------------------- */
 
-const availableMap = ref({});
+const availableMap = ref<Record<string, number>>({});
 
-const inventoryRows = ref([]);
-const otherItemsInventory = ref<any | null>(null);
+const inventoryRows = ref<InventoryRow[]>([]);
+const otherItemsInventory = ref<InventoryCategoryGroup | null>(null);
 const loadingInventory = ref(false);
 const filtersDropdownOpen = ref(false);
-const filtersWrapperRef = ref(null);
+const filtersWrapperRef = ref<HTMLElement | null>(null);
 const categoryFilter = ref("");
 const genderFilter = ref("");
 const clothingSizeFilter = ref("");
@@ -456,10 +489,7 @@ const shoeSizes = (() => {
 const inventoryDisplay = computed(() => {
   // Aggregate to one row per category. Quantity is the sum of matching size/gender rows
   const inv = inventoryRows.value || [];
-  const catNames = categories
-    .map((c) => c.name)
-    .filter((cn) => !categoryFilter.value || cn === categoryFilter.value);
-  let aggregated = [];
+  const aggregated: InventoryCategoryGroup[] = [];
 
   for (const cat of apparelCategories) {
     if (categoryFilter.value && cat !== categoryFilter.value) continue;
@@ -467,8 +497,8 @@ const inventoryDisplay = computed(() => {
       category: cat,
       quantity: 0,
       genders: (() => {
-        let catGenders = [];
-        for (const g of ["Unisex", "Male", "Female"]) {
+        const catGenders: InventoryGenderGroup[] = [];
+        for (const g of visibleGenders) {
           if (genderFilter.value && g !== genderFilter.value) continue;
           catGenders.push({
             name: g,
@@ -484,8 +514,8 @@ const inventoryDisplay = computed(() => {
       category: shoeCategory,
       quantity: 0,
       genders: (() => {
-        let catGenders = [];
-        for (const g of ["Unisex", "Male", "Female"]) {
+        const catGenders: InventoryGenderGroup[] = [];
+        for (const g of visibleGenders) {
           if (genderFilter.value && g !== genderFilter.value) continue;
           catGenders.push({
             name: g,
@@ -568,7 +598,7 @@ const categoryOptions = computed(() => {
 
 const genderOptions = computed(() => {
   // Standard order for non-tech users
-  return ["Male", "Female", "Unisex", "Children"];
+  return visibleGenders;
 });
 
 const clothingSizeOptions = computed(() => apparelSizes);
@@ -583,27 +613,26 @@ watch(
 
 async function loadInventory() {
   loadingInventory.value = true;
-  const map = {};
-  const normalized = [];
+  const map: Record<string, number> = {};
+  const normalized: InventoryRow[] = [];
 
   // For each known category, fetch detailed breakdown and build rows of category/gender/size/quantity
   const catNames = categories.map((c) => c.name);
   for (const catName of catNames) {
     try {
-      const data = await $fetch("/api/inventory", {
+      const data = await $fetch<InventoryCategoryGroup[]>("/api/inventory", {
         params: { category: catName },
       });
-      const InventoryInfo =
+      const InventoryInfo: InventoryCategoryGroup =
         data.length > 0
           ? data[0]
           : {
               category: catName,
               quantity: 0,
-              genders: [
-                { name: "Unisex", info: [] },
-                { name: "Male", info: [] },
-                { name: "Female", info: [] },
-              ],
+              genders: visibleGenders.map((gender) => ({
+                name: gender,
+                info: [],
+              })),
             };
       const totalQty = Number(InventoryInfo.quantity || 0);
       for (const gender of InventoryInfo.genders) {
@@ -618,7 +647,9 @@ async function loadInventory() {
       } else if (apparelCategories.includes(catName)) {
         for (const g of InventoryInfo.genders) {
           for (const s of apparelSizes) {
-            const infoEntry = g.info.find((row) => row.size === s);
+            const infoEntry = g.info.find(
+              (row: InventoryInfoRow) => row.size === s,
+            );
             normalized.push({
               category: catName,
               gender: g.name,
@@ -630,7 +661,9 @@ async function loadInventory() {
       } else if (catName === shoeCategory) {
         for (const g of InventoryInfo.genders) {
           for (const s of shoeSizes) {
-            const infoEntry = g.info.find((row) => row.size === s);
+            const infoEntry = g.info.find(
+              (row: InventoryInfoRow) => row.size === s,
+            );
             normalized.push({
               category: catName,
               gender: g.name,
@@ -675,25 +708,23 @@ onMounted(() => {
   }
 });
 
-let filtersClickOutsideHandler = null;
+let filtersClickOutsideHandler: ((e: MouseEvent) => void) | null = null;
 watch(filtersDropdownOpen, (isOpen) => {
   if (filtersClickOutsideHandler) {
     document.removeEventListener("click", filtersClickOutsideHandler);
     filtersClickOutsideHandler = null;
   }
   if (isOpen) {
-    filtersClickOutsideHandler = (e) => {
+    filtersClickOutsideHandler = (e: MouseEvent) => {
       if (
         filtersWrapperRef.value &&
-        !filtersWrapperRef.value.contains(e.target)
+        !filtersWrapperRef.value.contains(e.target as Node)
       ) {
         filtersDropdownOpen.value = false;
       }
     };
-    setTimeout(
-      () => document.addEventListener("click", filtersClickOutsideHandler),
-      0,
-    );
+    const clickHandler = filtersClickOutsideHandler;
+    setTimeout(() => document.addEventListener("click", clickHandler), 0);
   }
 });
 onUnmounted(() => {
@@ -711,7 +742,7 @@ onUnmounted(() => {
 
 const showCheckoutConfirm = ref(false);
 const showRemovedModal = ref(false);
-const removedListServer = ref([]);
+const removedListServer = ref<string[]>([]);
 
 const removedList = computed(() =>
   items.value
@@ -736,9 +767,15 @@ function openCheckoutConfirm() {
       // Skip strict availability check for Other Items (uses free-text name)
       continue;
     }
+    const usesSharedInventory = simpleCategories.includes(r.name);
+    const requestedGender = usesSharedInventory
+      ? "Unisex"
+      : selectedGender.value;
     const available =
-      availableMap.value[r.name + selectedGender.value + r.size] +
-        availableMap.value[r.name + "Unisex" + r.size] ?? 0;
+      (availableMap.value[r.name + requestedGender + r.size] ?? 0) +
+      (usesSharedInventory
+        ? 0
+        : (availableMap.value[r.name + "Unisex" + r.size] ?? 0));
     if (r.quantity > available) {
       alert(`${r.name}: Requested ${r.quantity}, Available ${available}`);
       return;
@@ -765,7 +802,9 @@ async function confirmCheckout() {
             category: i.name,
             size: i.size,
             quantity: i.quantity,
-            gender: selectedGender.value,
+            gender: simpleCategories.includes(i.name)
+              ? "Unisex"
+              : selectedGender.value,
           },
     );
 

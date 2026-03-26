@@ -133,7 +133,7 @@
             </p>
             <template v-if="!isSimpleCategory || isOtherItems">
               <div
-                v-for="row in categoryDetails.catDetails[0]?.genders"
+                v-for="row in visibleCategoryGenders"
                 :key="row.name"
                 class="border border-gray-200 rounded-lg p-3"
               >
@@ -277,48 +277,17 @@
                   aria-label="Select gender"
                 >
                   <label
+                    v-for="gender in visibleGenders"
+                    :key="gender"
                     class="flex items-center gap-2 text-sm font-medium text-gray-700"
                   >
                     <input
                       v-model="addForm.gender"
                       type="radio"
-                      value="Male"
+                      :value="gender"
                       class="text-indigo-600 focus:ring-indigo-500"
                     />
-                    Male
-                  </label>
-                  <label
-                    class="flex items-center gap-2 text-sm font-medium text-gray-700"
-                  >
-                    <input
-                      v-model="addForm.gender"
-                      type="radio"
-                      value="Female"
-                      class="text-indigo-600 focus:ring-indigo-500"
-                    />
-                    Female
-                  </label>
-                  <label
-                    class="flex items-center gap-2 text-sm font-medium text-gray-700"
-                  >
-                    <input
-                      v-model="addForm.gender"
-                      type="radio"
-                      value="Unisex"
-                      class="text-indigo-600 focus:ring-indigo-500"
-                    />
-                    Unisex
-                  </label>
-                  <label
-                    class="flex items-center gap-2 text-sm font-medium text-gray-700"
-                  >
-                    <input
-                      v-model="addForm.gender"
-                      type="radio"
-                      value="Children"
-                      class="text-indigo-600 focus:ring-indigo-500"
-                    />
-                    Children
+                    {{ gender }}
                   </label>
                 </div>
               </div>
@@ -529,6 +498,7 @@ const shoeSizeOptions = (() => {
   for (let n = 5; n <= 14.5; n += 0.5) sizes.push(String(n));
   return sizes;
 })();
+const visibleGenders = ["Male", "Female", "Children"];
 
 const selectedCategory = ref("");
 const categoryDetails = ref<{
@@ -573,6 +543,11 @@ const formSizeOptions = computed(() =>
   isShoes.value ? shoeSizeOptions : sizeOptions,
 );
 const formSizeLabel = computed(() => (isShoes.value ? "Shoe size" : "Size"));
+const visibleCategoryGenders = computed(() =>
+  (categoryDetails.value.catDetails[0]?.genders || []).filter(
+    (gender) => gender.name !== "Unisex",
+  ),
+);
 
 function sizesToShowForGender(gender: {
   name: string;
@@ -614,12 +589,10 @@ async function fetchCategoryDetails(category: string) {
     const fallbackGenders =
       category === "Other Items"
         ? []
-        : [
-            { name: "Unisex", info: [{ size: "XS", quantity: 0 }] },
-            { name: "Male", info: [{ size: "XS", quantity: 0 }] },
-            { name: "Female", info: [{ size: "XS", quantity: 0 }] },
-            { name: "Children", info: [{ size: "XS", quantity: 0 }] },
-          ];
+        : visibleGenders.map((gender) => ({
+            name: gender,
+            info: [{ size: "XS", quantity: 0 }],
+          }));
     categoryDetails.value = {
       catDetails:
         data.length > 0
