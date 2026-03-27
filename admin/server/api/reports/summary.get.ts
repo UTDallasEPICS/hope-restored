@@ -92,17 +92,25 @@ export default defineEventHandler(async (event) => {
     : rangeEnd;
 
   // Aggregate additions
+  // @ts-expect-error - Prisma groupBy return type inference issue
+  const addRows = await prisma.inventoryRecords.groupBy({
+    by: ['category'],
+    where: { date: { gte: rangeStart, lt: addRemoveEnd } },
+    _sum: { additions: true },
+  });
 
   // Aggregate removals
-  const removeRows = await prisma.removals.groupBy({
+  // @ts-expect-error - Prisma groupBy return type inference issue
+  const removeRows = await prisma.inventoryRecords.groupBy({
     by: ['category'],
-    where: { dateRemoved: { gte: rangeStart, lt: addRemoveEnd } },
-    _sum: { quantity: true },
+    where: { date: { gte: rangeStart, lt: addRemoveEnd } },
+    _sum: { removals: true },
   });
 
   // Build lookup maps
   const totalsMap = new Map(totalRows.map(r => [r.category, r._sum.quantity ?? 0]));
-  const removesMap = new Map(removeRows.map(r => [r.category, r._sum.quantity ?? 0]));
+  const addsMap = new Map(addRows.map(r => [r.category, r._sum.additions ?? 0]));
+  const removesMap = new Map(removeRows.map(r => [r.category, r._sum.removals ?? 0]));
 
   // Check if there's any InventoryRecords for this date range
   const hasInventoryRecords = totalRows.length > 0;
@@ -124,6 +132,7 @@ export default defineEventHandler(async (event) => {
   // Append any categories outside the canonical list
   const extras = new Set<string>([
     ...totalRows.map(r => r.category),
+    ...addRows.map(r => r.category),
     ...removeRows.map(r => r.category),
   ]);
   
