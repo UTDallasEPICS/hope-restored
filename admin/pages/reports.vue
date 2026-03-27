@@ -236,25 +236,41 @@
 </template>
 
 <script setup>
-import { ref, watchEffect, getCurrentInstance } from 'vue';
+import { computed, ref, watchEffect } from 'vue';
 import { useFetch } from '#app';
 import CategoryDetails from '../components/categoryDetails.vue';
 
 const fullReport = ref([]);
 const showPreviousReportsModal = ref(false);
-
 const ChooseDailyReport = ref(false);
+const ChooseWeeklyReport = ref(false);
+const ChooseMonthlyReport = ref(false);
+const viewingSelectedReport = ref(false);
+const selectedReportRows = ref([]);
+const selectedReportTitle = ref('');
+const isLoadingSelected = ref(false);
+const selectedError = ref(null);
+const lastReportType = ref(null);
+const selectedDate = ref(null);
 
-const showDetails=ref(false);
+const monthNames = [
+    'January','February','March','April','May','June',
+    'July','August','September','October','November','December',
+];
+const weekDayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+const today = getTodayInCentralTime();
+const currentMonth = ref(today.getMonth());
+const currentYear = ref(today.getFullYear());
+const displayYear = ref(today.getFullYear());
+
+const showDetails = ref(false);
+const detailRow = ref();
+const simpleCategores = ['Blankets', 'Snack Packs', 'Hygiene Packs'];
 
 const currentInventory = await $fetch('/api/inventory');
 fullReport.value = currentInventory;
 
-const simpleCategores = ['Blankets', 'Snack Packs', 'Hygiene Packs'];
-
-const detailRow = ref();
-
-// Fetch the first inventory date dynamically
 const firstInventoryDate = ref(null);
 const { data: firstDateData } = await useFetch('/api/inventory/first-date');
 watchEffect(() => {
@@ -263,6 +279,329 @@ watchEffect(() => {
   }
 });
 
+const firstAllowedDate = computed(() => {
+    if (firstInventoryDate.value instanceof Date && !isNaN(firstInventoryDate.value.getTime())) {
+        return firstInventoryDate.value;
+    }
+    return new Date(2020, 0, 1);
+});
+
+const visibleDays = computed(() => {
+    const year = currentYear.value;
+    const month = currentMonth.value;
+    const firstOfMonth = new Date(year, month, 1);
+    const startDay = firstOfMonth.getDay();
+    const gridStart = new Date(year, month, 1 - startDay);
+
+    const days = [];
+    for (let i = 0; i < 42; i++) {
+        const d = new Date(gridStart);
+        d.setDate(gridStart.getDate() + i);
+        const inMonth = d.getMonth() === month;
+        let isSelected = false;
+
+        if (selectedDate.value instanceof Date) {
+            isSelected = d.toDateString() === selectedDate.value.toDateString();
+        } else if (selectedDate.value?.weekStart && selectedDate.value?.weekEnd) {
+            isSelected = d >= selectedDate.value.weekStart && d <= selectedDate.value.weekEnd;
+        }
+
+        days.push({
+            date: d,
+            inMonth,
+            key: `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}-${i}`,
+            isSelected,
+        });
+    }
+
+    return days;
+});
+
+function getTodayInCentralTime() {
+    const now = new Date();
+    const centralTimeString = now.toLocaleString('en-US', {
+        timeZone: 'America/Chicago',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+    });
+    const [month, day, year] = centralTimeString.split('/');
+    const centralDate = new Date(parseInt(year, 10), parseInt(month, 10) - 1, parseInt(day, 10));
+    centralDate.setHours(0, 0, 0, 0);
+    return centralDate;
+}
+
+function resetCalendarToToday() {
+    const t = getTodayInCentralTime();
+    currentMonth.value = t.getMonth();
+    currentYear.value = t.getFullYear();
+    displayYear.value = t.getFullYear();
+    selectedDate.value = null;
+}
+
+function toMidnight(date) {
+    const normalized = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    normalized.setHours(0, 0, 0, 0);
+    return normalized;
+}
+
+function isDayDisabled(date) {
+    const checkDate = toMidnight(date);
+    const firstDate = toMidnight(firstAllowedDate.value);
+    const todayDate = getTodayInCentralTime();
+    return checkDate < firstDate || checkDate > todayDate;
+}
+
+function isWeekDisabled(date) {
+    const d = toMidnight(date);
+    const day = d.getDay();
+    const weekStart = new Date(d);
+    weekStart.setDate(d.getDate() - day);
+    weekStart.setHours(0, 0, 0, 0);
+
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekStart.getDate() + 6);
+    weekEnd.setHours(23, 59, 59, 999);
+
+    const firstDate = toMidnight(firstAllowedDate.value);
+    const todayDate = getTodayInCentralTime();
+    todayDate.setHours(23, 59, 59, 999);
+
+    const intersectionStart = Math.max(weekStart.getTime(), firstDate.getTime());
+    const intersectionEnd = Math.min(weekEnd.getTime(), todayDate.getTime());
+
+    return intersectionStart > intersectionEnd;
+}
+
+function isMonthDisabled(year, monthIndex) {
+    const monthStart = new Date(year, monthIndex, 1);
+    monthStart.setHours(0, 0, 0, 0);
+    const monthEnd = new Date(year, monthIndex + 1, 0);
+    monthEnd.setHours(23, 59, 59, 999);
+
+    const firstDate = toMidnight(firstAllowedDate.value);
+    const todayDate = getTodayInCentralTime();
+    todayDate.setHours(23, 59, 59, 999);
+
+    const intersectionStart = Math.max(monthStart.getTime(), firstDate.getTime());
+    const intersectionEnd = Math.min(monthEnd.getTime(), todayDate.getTime());
+
+    return intersectionStart > intersectionEnd;
+}
+
+function prevMonth() {
+    if (currentMonth.value === 0) {
+        currentMonth.value = 11;
+        currentYear.value -= 1;
+    } else {
+        currentMonth.value -= 1;
+    }
+}
+
+function nextMonth() {
+    if (currentMonth.value === 11) {
+        currentMonth.value = 0;
+        currentYear.value += 1;
+    } else {
+        currentMonth.value += 1;
+    }
+}
+
+function prevYear() {
+    displayYear.value -= 1;
+}
+
+function nextYear() {
+    displayYear.value += 1;
+}
+
+function openMonthlyFromPrevious() {
+    showPreviousReportsModal.value = false;
+    resetCalendarToToday();
+    ChooseMonthlyReport.value = true;
+}
+
+function openWeeklyFromPrevious() {
+    showPreviousReportsModal.value = false;
+    resetCalendarToToday();
+    ChooseWeeklyReport.value = true;
+}
+
+function openDailyFromPrevious() {
+    showPreviousReportsModal.value = false;
+    resetCalendarToToday();
+    ChooseDailyReport.value = true;
+}
+
+function closeMonthlyReport() {
+    ChooseMonthlyReport.value = false;
+    selectedDate.value = null;
+}
+
+function closeWeeklyReport() {
+    ChooseWeeklyReport.value = false;
+    selectedDate.value = null;
+}
+
+function closeDailyReport() {
+    ChooseDailyReport.value = false;
+    selectedDate.value = null;
+}
+
+function goBackToCalendar() {
+    viewingSelectedReport.value = false;
+    if (lastReportType.value === 'daily') {
+        ChooseDailyReport.value = true;
+    } else if (lastReportType.value === 'weekly') {
+        ChooseWeeklyReport.value = true;
+    } else if (lastReportType.value === 'monthly') {
+        ChooseMonthlyReport.value = true;
+    }
+}
+
+function selectDate(date) {
+    if (isDayDisabled(date)) return;
+    const d = toMidnight(date);
+
+    if (selectedDate.value instanceof Date && selectedDate.value.toDateString() === d.toDateString()) {
+        selectedDate.value = null;
+        return;
+    }
+
+    selectedDate.value = d;
+}
+
+function selectWeek(date) {
+    if (isWeekDisabled(date)) return;
+
+    const d = toMidnight(date);
+    const day = d.getDay();
+    const start = new Date(d);
+    start.setDate(d.getDate() - day);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(start);
+    end.setDate(start.getDate() + 6);
+    end.setHours(23, 59, 59, 999);
+
+    if (selectedDate.value?.weekStart && selectedDate.value?.weekEnd) {
+        const existingStart = new Date(selectedDate.value.weekStart);
+        const existingEnd = new Date(selectedDate.value.weekEnd);
+        if (existingStart.toDateString() === start.toDateString() && existingEnd.toDateString() === end.toDateString()) {
+            selectedDate.value = null;
+            return;
+        }
+    }
+
+    selectedDate.value = { weekStart: start, weekEnd: end };
+}
+
+function selectMonth(monthIndex) {
+    if (isMonthDisabled(displayYear.value, monthIndex)) return;
+
+    if (selectedDate.value?.year !== undefined && selectedDate.value?.month !== undefined) {
+        if (selectedDate.value.year === displayYear.value && selectedDate.value.month === monthIndex) {
+            selectedDate.value = null;
+            return;
+        }
+    }
+
+    selectedDate.value = { year: displayYear.value, month: monthIndex };
+}
+
+function formatLocalDate(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
+function mapApiResponseToRows(apiData) {
+    if (!apiData) return [];
+    if (Array.isArray(apiData)) return apiData;
+
+    return Object.keys(apiData).map((key) => {
+        const value = apiData[key] || {};
+        return {
+            category: key,
+            total: value.total ?? value.count ?? value.quantity ?? 0,
+            added: value.added ?? value.additions ?? 0,
+            removed: value.removed ?? value.removals ?? 0,
+        };
+    });
+}
+
+async function saveMonthly() {
+    if (!selectedDate.value || selectedDate.value.year === undefined || selectedDate.value.month === undefined) {
+        return;
+    }
+
+    isLoadingSelected.value = true;
+    selectedError.value = null;
+    lastReportType.value = 'monthly';
+
+    try {
+        const year = selectedDate.value.year;
+        const month = selectedDate.value.month + 1;
+        const data = await $fetch(`/api/reports/summary?year=${year}&month=${String(month).padStart(2, '0')}`);
+        selectedReportRows.value = Array.isArray(data) ? data : mapApiResponseToRows(data);
+        selectedReportTitle.value = `${monthNames[selectedDate.value.month]} ${selectedDate.value.year}`;
+        viewingSelectedReport.value = true;
+        ChooseMonthlyReport.value = false;
+        selectedDate.value = null;
+    } catch (err) {
+        selectedError.value = err?.message || String(err);
+    } finally {
+        isLoadingSelected.value = false;
+    }
+}
+
+async function saveWeekly() {
+    if (!selectedDate.value?.weekStart || !selectedDate.value?.weekEnd) return;
+
+    isLoadingSelected.value = true;
+    selectedError.value = null;
+    lastReportType.value = 'weekly';
+
+    try {
+        const start = formatLocalDate(selectedDate.value.weekStart);
+        const end = formatLocalDate(selectedDate.value.weekEnd);
+        const data = await $fetch(`/api/reports/summary?start=${start}&end=${end}`);
+        selectedReportRows.value = Array.isArray(data) ? data : mapApiResponseToRows(data);
+
+        const startDisplay = `${monthNames[selectedDate.value.weekStart.getMonth()]} ${selectedDate.value.weekStart.getDate()}`;
+        const endDisplay = `${monthNames[selectedDate.value.weekEnd.getMonth()]} ${selectedDate.value.weekEnd.getDate()}`;
+        selectedReportTitle.value = `${startDisplay} - ${endDisplay} ${selectedDate.value.weekEnd.getFullYear()}`;
+        viewingSelectedReport.value = true;
+        ChooseWeeklyReport.value = false;
+        selectedDate.value = null;
+    } catch (err) {
+        selectedError.value = err?.message || String(err);
+    } finally {
+        isLoadingSelected.value = false;
+    }
+}
+
+async function saveDaily() {
+    if (!(selectedDate.value instanceof Date)) return;
+
+    isLoadingSelected.value = true;
+    selectedError.value = null;
+    lastReportType.value = 'daily';
+
+    try {
+        const date = formatLocalDate(selectedDate.value);
+        const data = await $fetch(`/api/reports/summary?date=${date}`);
+        selectedReportRows.value = Array.isArray(data) ? data : mapApiResponseToRows(data);
+        selectedReportTitle.value = `${monthNames[selectedDate.value.getMonth()]} ${selectedDate.value.getDate()} ${selectedDate.value.getFullYear()}`;
+        viewingSelectedReport.value = true;
+        ChooseDailyReport.value = false;
+        selectedDate.value = null;
+    } catch (err) {
+        selectedError.value = err?.message || String(err);
+    } finally {
+        isLoadingSelected.value = false;
+    }
+}
 
 function getDetails(row){
     detailRow.value = row;
@@ -280,7 +619,6 @@ async function getReport(){
     console.log(fullReport.value)
 }
 
-//function for temp button - creates report off current inventory 
 async function makeReport(){
     const Report = await  $fetch('/api/reports',{
         method:"POST"
@@ -292,32 +630,6 @@ function closeDetails(){
     detailRow.value = null;
     showDetails.value = false;
 }
-
-
-
-
-
-
-
-
-// watchEffect(() => {
-//   if (summaryError?.value) {
-//     // eslint-disable-next-line no-console
-//     console.error('Failed to load report summary', summaryError.value);
-//     reportRows.value = [];
-//   } else if (summaryData?.value) {
-//     reportRows.value = Array.isArray(summaryData.value) ? summaryData.value : [];
-//   }
-// });
-
-
-
-// // Expose refreshSummary and firstInventoryDate to the Options API part via the instance
-// const instance = getCurrentInstance();
-// if (instance) {
-//   instance.appContext.config.globalProperties.$refreshSummaryData = refreshSummary;
-//   instance.appContext.config.globalProperties.$firstInventoryDate = firstInventoryDate;
-// }
 </script>
 
 <script>
