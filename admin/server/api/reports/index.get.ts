@@ -4,11 +4,13 @@ import prisma from '~/lib/prisma';
 
 export default defineEventHandler(async (event) =>{
     const params = getQuery(event);
+    console.log("params: ", params);
     const {startDate, endDate} = params;
-    //console.log(params);
   try{
         let sd = [];
         let ed = [];
+        const todayStart = new Date(); todayStart.setHours(0,0,0,0);
+        const todayEnd = new Date(); todayEnd.setHours(23,59,59,0);
         if(startDate && endDate){
             sd[0] = new Date(String(startDate)); sd[0].setHours(0,0,0,0);
             sd[1] = new Date(String(startDate)); sd[1].setHours(23,59,59,99);
@@ -16,41 +18,40 @@ export default defineEventHandler(async (event) =>{
             ed[1] = new Date(String(endDate)); ed[1].setHours(23,59,59,0);
         }else{
             //default to today
-            sd[0] = new Date(); sd[0].setHours(0,0,0,0);
-            ed[1] = new Date(); ed[1].setHours(23,59,59,0);
-            sd[1] = ed[1]; ed[0] = sd[1];
+            sd[0] = todayStart;
+            ed[1] = todayEnd;
+            sd[1] = ed[1]; ed[0] = sd[0];
         }
+        console.log(sd);
+        console.log(ed);
         const catList = await prisma.inventory.groupBy({
             by:['category'],
         })
          const lastDates = await prisma.inventoryRecords.findMany({
             where:{
                 date:{
-                    gte:ed[0],
-                    lte:ed[1]
+                    gte:ed[0] <= todayStart ? ed[0] : todayStart,
+                    lte:ed[1] <= todayEnd ? ed[1] : todayEnd
                 }
             },
             orderBy:{
                 date:'asc'
             }
         });
-
         const aggregations = await prisma.inventoryRecords.groupBy({
             by:['code','category','gender','size'],
             where:{
                 date:{ 
                     gte:sd[0],
-                    lte:ed[1],
+                    lte:ed[1] <= todayEnd? ed[1] : todayEnd,
                 }
             },
             _sum:{
                 additions:true,
                 removals:true
             },
-            // orderBy:{
-            //     category:'asc',
-            // }
         });
+        console.log(aggregations);
         let groupedData:{
             category:string,
             quantity:number,

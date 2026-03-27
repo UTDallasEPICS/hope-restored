@@ -1,7 +1,7 @@
 <template>
-    <div class="rounded-md p-2 shadow-2xl relative w-3/4 h-3/4 bg-white z-50">
+    <div class="rounded-md p-2 shadow-2xl relative w-3/4 h-4/5 overflow-y-auto bg-white z-50">
         <!-- send in selected date range and category -->
-        <h1 class="text-center text-3xl">Viewing Report for: 12/31 - 12/31 Jackets{{ }}</h1> 
+        <h1 class="text-center text-3xl"> Viewing Details for {{ category }}</h1> 
         <div class="flex justify-around my-4">          
             <div class="w-1/4 relative">
                 <button class="w-full flex items-center content-between p-3 text-lg font-bold text-[#333] bg-white border-2 border-[rgba(0,0,0,0.08)]
@@ -32,13 +32,13 @@
             </div>
             
             <div class="flex gap-2">
-                <button class="flex-col items-center justify-center gap-1 min-h-10 p-1.5 rounded-md  border-2 cursor-pointer bg-[#b53f3f] border-[#b53f3f]
-                    font-bold transition-[transform,box-shadow,background-color,border-color] duration-100 ease-in mx-3 text-white
+                <button class="flex-col items-center justify-center gap-1 min-h-5 max-h-10 p-1.5 rounded-md  border-2 cursor-pointer bg-[#b53f3f] border-[#b53f3f]
+                    font-bold transition-[transform,box-shadow,background-color,border-color] duration-100 ease-in mx-3 text-white text-center
                     hover:shadow-lg hover:border-[rgba(181,79,63,0.4)] **transition hover:-translate-y-0.5**" @click="props.closeFunction">Close</button>
                 <!-- <button>Print Report</button> -->
             </div>
         </div>
-        <table class="w-full h-3/4">
+        <table class="w-full">
             <thead class=" bg-[#3f51b5] text-white font-bold">
                 <tr>
                     <th class="p-4 border-b-[#ddd] border-b-2 text-center">Size</th>
@@ -65,6 +65,7 @@ import { computed, onMounted, ref } from 'vue';
 
     const props = defineProps<{
         genders:{name:string, info:{size:string,quantity:number,additions:number,removals:number}[]}[]
+        category:string
         closeFunction:() => void;
     }>();
 

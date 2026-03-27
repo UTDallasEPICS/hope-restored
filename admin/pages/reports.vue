@@ -1,16 +1,6 @@
 <!-- pages/reports.vue -->
 <template>
     <div class="reports-container">
-        <div>
-            <button @click="getReport">
-                    CLICK FOR GET
-            </button>
-        </div>
-        <div>
-            <button @click="makeReport">
-                    CLICK FOR POST
-            </button>
-        </div>
         <!-- Actions Row: View Previous Reports -->
         <div class="actions-row">
             <button @click="showPreviousReportsModal = true" class="monthly-reports-button">
@@ -161,7 +151,7 @@
 
         <!-- Selected report results modal -->
         <div v-if="viewingSelectedReport" class="modal-overlay" >
-            <div class="modal-content">
+            <div class="modal-content overflow-y-auto">
                 <button class="back-button" @click="goBackToCalendar"> Back
                 </button>
                 <h2>Report for: {{ selectedReportTitle }}</h2>
@@ -178,14 +168,20 @@
                                         <th>Total</th>
                                         <th>Added</th>
                                         <th>Removed</th>
+                                        <th>Details</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <tr v-for="r in selectedReportRows" :key="r.category">
                                         <td>{{ r.category }}</td>
-                                        <td>{{ r.total }}</td>
-                                        <td>{{ r.added }}</td>
-                                        <td>{{ r.removed }}</td>
+                                        <td>{{ r.quantity }}</td>
+                                        <td>{{ r.additions }}</td>
+                                        <td>{{ r.removals }}</td>
+                                        <td>
+                                            <button v-if="!simpleCategores.includes(r.category)" @click="getDetails(r.category,r.genders)" class="bg-blue-700 rounded-md p-1 text-white">
+                                                View Sizes
+                                            </button>
+                                        </td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -218,7 +214,7 @@
                         <td>{{ row.additions }}</td>
                         <td>{{ row.removals }}</td>
                         <td>
-                            <button v-if="!simpleCategores.includes(row.category)" @click="getDetails(row.genders)" class="bg-blue-700 rounded-md p-2 text-white">
+                            <button v-if="!simpleCategores.includes(row.category)" @click="getDetails(row.category,row.genders)" class="bg-blue-700 rounded-md p-2 text-white">
                                 View Sizes
                             </button>
                         </td>
@@ -230,6 +226,7 @@
             <CategoryDetails  
                 :genders=detailRow
                 :close-function="closeDetails"
+                :category="detailCategory"
             />
         </div>
     </div>
@@ -266,6 +263,7 @@ const displayYear = ref(today.getFullYear());
 
 const showDetails = ref(false);
 const detailRow = ref();
+const detailCategory = ref();
 const simpleCategores = ['Blankets', 'Snack Packs', 'Hygiene Packs'];
 
 const currentInventory = await $fetch('/api/inventory');
@@ -523,9 +521,9 @@ function mapApiResponseToRows(apiData) {
         const value = apiData[key] || {};
         return {
             category: key,
-            total: value.total ?? value.count ?? value.quantity ?? 0,
-            added: value.added ?? value.additions ?? 0,
-            removed: value.removed ?? value.removals ?? 0,
+            quantity: value.total ?? value.count ?? value.quantity ?? 0,
+            additions: value.added ?? value.additions ?? 0,
+            removlas: value.removed ?? value.removals ?? 0,
         };
     });
 }
@@ -540,9 +538,12 @@ async function saveMonthly() {
     lastReportType.value = 'monthly';
 
     try {
+
         const year = selectedDate.value.year;
         const month = selectedDate.value.month + 1;
-        const data = await $fetch(`/api/reports/summary?year=${year}&month=${String(month).padStart(2, '0')}`);
+        const startDate = new Date(year,month-1,1);
+        const endDate = new Date(year,month,0);
+        const data = await $fetch(`/api/reports?startDate=${startDate}&endDate=${endDate}`);
         selectedReportRows.value = Array.isArray(data) ? data : mapApiResponseToRows(data);
         selectedReportTitle.value = `${monthNames[selectedDate.value.month]} ${selectedDate.value.year}`;
         viewingSelectedReport.value = true;
@@ -565,7 +566,7 @@ async function saveWeekly() {
     try {
         const start = formatLocalDate(selectedDate.value.weekStart);
         const end = formatLocalDate(selectedDate.value.weekEnd);
-        const data = await $fetch(`/api/reports/summary?start=${start}&end=${end}`);
+        const data = await $fetch(`/api/reports?startDate=${selectedDate.value.weekStart}&endDate=${selectedDate.value.weekEnd}`);
         selectedReportRows.value = Array.isArray(data) ? data : mapApiResponseToRows(data);
 
         const startDisplay = `${monthNames[selectedDate.value.weekStart.getMonth()]} ${selectedDate.value.weekStart.getDate()}`;
@@ -590,7 +591,7 @@ async function saveDaily() {
 
     try {
         const date = formatLocalDate(selectedDate.value);
-        const data = await $fetch(`/api/reports/summary?date=${date}`);
+        const data = await $fetch(`/api/reports?startDate=${selectedDate.value}&endDate=${selectedDate.value}`);
         selectedReportRows.value = Array.isArray(data) ? data : mapApiResponseToRows(data);
         selectedReportTitle.value = `${monthNames[selectedDate.value.getMonth()]} ${selectedDate.value.getDate()} ${selectedDate.value.getFullYear()}`;
         viewingSelectedReport.value = true;
@@ -603,8 +604,9 @@ async function saveDaily() {
     }
 }
 
-function getDetails(row){
+function getDetails(category, row){
     detailRow.value = row;
+    detailCategory.value = category;
     showDetails.value = true;
 }
 
@@ -630,734 +632,6 @@ function closeDetails(){
     detailRow.value = null;
     showDetails.value = false;
 }
-</script>
-
-<script>
-// export default {
-//     name: 'ReportsLandingPage',
-//     data() {
-//         // Calculate today in Central Time before returning data
-//         const now = new Date();
-//         const centralTimeString = now.toLocaleString('en-US', { 
-//             timeZone: 'America/Chicago',
-//             year: 'numeric',
-//             month: '2-digit',
-//             day: '2-digit'
-//         });
-//         const [month, day, year] = centralTimeString.split('/');
-//         const todayCentral = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-//         todayCentral.setHours(0, 0, 0, 0);
-        
-//         return {
-//             // Controls the "Previous Reports" chooser modal
-//             showPreviousReportsModal: false,
-
-//             // Individual report modals
-//             ChooseMonthlyReport: false,
-//             ChooseWeeklyReport: false,
-//             ChooseDailyReport: false,
-//             // Calendar state (shared by daily and weekly views)
-//             today: todayCentral,
-//             currentMonth: todayCentral.getMonth(),
-//             currentYear: todayCentral.getFullYear(),
-//             selectedDate: null,
-//             // Monthly view year display
-//             displayYear: new Date().getFullYear(),
-//             showAmendData: false,
-//             showAmendForm: false,
-//             showSuccess: false,           
-//             lastAmendDate: null,
-//             // The date that was amended (the day the user intended to change)
-//             lastAmendedFor: null,
-//             // Number of items changed in the last amendment (positive integer)
-//             lastAmendedCount: null,
-//             // Action of the last amendment: 'Add' or 'Remove'
-//             lastAmendAction: '',
-//             // Category of the last amendment (e.g. 'Shirts')
-//             lastAmendedCategory: '',
-//             errorMessage: '',
-//             form: { category: '', quantity: null, action: '' },
-//             categories: ['Shirts','Jackets','Pants','Underwear','Shoes','Snack Packs','Hygiene Packs','Blankets'],
-//             // Selected-report popup
-//                 // the date range currently shown in the selected-report modal
-//                 lastViewedRangeStart: null,
-//                 lastViewedRangeEnd: null,
-//             viewingSelectedReport: false,
-//             selectedReportRows: [],
-//             selectedReportTitle: '',
-//             isLoadingSelected: false,
-//             selectedError: null,
-//             lastReportType: null, // Track which report type was selected (daily, weekly, or monthly)
-//             // map of yyyy-mm-dd -> true when that day has amended data
-//             amendmentsByDate: {},
-//         }
-//     },
-//     methods: {
-//         // Get today's date in US Central Time
-//         getTodayInCentralTime() {
-//             const now = new Date();
-//             // Get the date/time components in Central Time
-//             const centralTimeString = now.toLocaleString('en-US', { 
-//                 timeZone: 'America/Chicago',
-//                 year: 'numeric',
-//                 month: '2-digit',
-//                 day: '2-digit'
-//             });
-//             // Parse the MM/DD/YYYY format
-//             const [month, day, year] = centralTimeString.split('/');
-//             // Create a new date at midnight
-//             const centralDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-//             centralDate.setHours(0, 0, 0, 0);
-//             return centralDate;
-//         },
-//         // Reset calendar state to today and clear any selection
-//         resetCalendarToToday() {
-//             const t = this.getTodayInCentralTime();
-//             this.today = new Date(t);
-//             this.currentMonth = t.getMonth();
-//             this.currentYear = t.getFullYear();
-//             this.displayYear = t.getFullYear();
-//             this.selectedDate = null;
-//         },
-//         // Helper method to check if a date (day) is disabled
-//         // Helper method to check if a date (day) is disabled
-//         isDayDisabled(date) {
-//             // Normalize all dates to midnight for accurate comparison
-//             const checkDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-//             checkDate.setHours(0, 0, 0, 0);
-            
-//             // Get today in Central Time
-//             const todayDate = this.getTodayInCentralTime();
-            
-//             const firstDate = new Date(this.firstAllowedDate.getFullYear(), this.firstAllowedDate.getMonth(), this.firstAllowedDate.getDate());
-//             firstDate.setHours(0, 0, 0, 0);
-            
-//             // Disable if before first allowed date or after today (allow today)
-//             return checkDate < firstDate || checkDate > todayDate;
-//         },
-        
-//         // Helper method to check if a week is disabled
-//         isWeekDisabled(date) {
-//             // Calculate the week start (Sunday) for the clicked date
-//             const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-//             const day = d.getDay();
-//             const weekStart = new Date(d);
-//             weekStart.setDate(d.getDate() - day);
-//             weekStart.setHours(0, 0, 0, 0);
-            
-//             // Calculate week end (Saturday) at end of day
-//             const weekEnd = new Date(weekStart);
-//             weekEnd.setDate(weekStart.getDate() + 6);
-//             weekEnd.setHours(23, 59, 59, 999);
-            
-//             // Get first allowed date and today
-//             const firstDate = new Date(this.firstAllowedDate.getFullYear(), this.firstAllowedDate.getMonth(), this.firstAllowedDate.getDate());
-//             firstDate.setHours(0, 0, 0, 0);
-            
-//             const today = this.getTodayInCentralTime();
-//             today.setHours(23, 59, 59, 999); // Include all of today
-            
-//             // The week is valid only if the intersection of [weekStart, weekEnd] and [firstDate, today] is non-empty
-//             // Intersection is non-empty if: max(weekStart, firstDate) <= min(weekEnd, today)
-//             const intersectionStart = Math.max(weekStart.getTime(), firstDate.getTime());
-//             const intersectionEnd = Math.min(weekEnd.getTime(), today.getTime());
-            
-//             const hasValidDates = intersectionStart <= intersectionEnd;
-            
-//             return !hasValidDates;
-//         },
-        
-//         // Helper method to check if a month is disabled
-//         isMonthDisabled(year, monthIndex) {
-//             // Create date for last day of the selected month at end of day
-//             const selectedMonthEnd = new Date(year, monthIndex + 1, 0);
-//             selectedMonthEnd.setHours(23, 59, 59, 999);
-            
-//             // Create first day of selected month at start of day
-//             const selectedMonthStart = new Date(year, monthIndex, 1);
-//             selectedMonthStart.setHours(0, 0, 0, 0);
-            
-//             // Get first allowed date and today
-//             const firstDate = new Date(this.firstAllowedDate.getFullYear(), this.firstAllowedDate.getMonth(), this.firstAllowedDate.getDate());
-//             firstDate.setHours(0, 0, 0, 0);
-            
-//             const today = this.getTodayInCentralTime();
-//             today.setHours(23, 59, 59, 999); // Include all of today
-            
-//             // The month is valid only if the intersection of [monthStart, monthEnd] and [firstDate, today] is non-empty
-//             // Intersection is non-empty if: max(monthStart, firstDate) <= min(monthEnd, today)
-//             const intersectionStart = Math.max(selectedMonthStart.getTime(), firstDate.getTime());
-//             const intersectionEnd = Math.min(selectedMonthEnd.getTime(), today.getTime());
-            
-//             const hasValidDates = intersectionStart <= intersectionEnd;
-            
-//             return !hasValidDates;
-//         },
-        
-//         closePreviousReportsModal() {
-//             this.showPreviousReportsModal = false;
-//         },
-//         closeMonthlyReport() {
-//             this.ChooseMonthlyReport = false;
-//             this.selectedDate = null;
-//         },
-//         closeWeeklyReport() {
-//             this.ChooseWeeklyReport = false;
-//             this.selectedDate = null;
-//         },
-//         closeDailyReport() {
-//             this.ChooseDailyReport = false;
-//             this.selectedDate = null;
-//         },
-//         closeAmendData() {
-//             this.showAmendData = false;
-//             this.selectedDate = null;
-//         },
-//         // Close the success modal and clear last-amend tracking fields
-//         closeSuccess() {
-//             this.showSuccess = false;
-//             this.lastAmendDate = null;
-//             this.lastAmendedFor = null;
-//             this.lastAmendedCount = null;
-//             this.lastAmendAction = '';
-//             this.lastAmendedCategory = '';
-//         },
-//         openMonthlyFromPrevious() {
-//             this.showPreviousReportsModal = false;
-//             this.resetCalendarToToday();
-//             // load amendment flags for the whole year (so months can show indicators)
-//             const year = this.displayYear;
-//             const startY = new Date(year, 0, 1);
-//             const endY = new Date(year, 11, 31);
-//             this.loadAmendmentsForRange(startY, endY);
-//             this.ChooseMonthlyReport = true;
-//         },
-//         openWeeklyFromPrevious() {
-//             this.showPreviousReportsModal = false;
-//             this.resetCalendarToToday();
-//             // load amendments for the currently displayed month
-//             const startW = new Date(this.currentYear, this.currentMonth, 1);
-//             const endW = new Date(this.currentYear, this.currentMonth + 1, 0);
-//             this.loadAmendmentsForRange(startW, endW);
-//             this.ChooseWeeklyReport = true;
-//         },
-//         openDailyFromPrevious() {
-//             this.showPreviousReportsModal = false;
-//             this.resetCalendarToToday();
-//             // load amendments for the current month so day markers appear
-//             const startD = new Date(this.currentYear, this.currentMonth, 1);
-//             const endD = new Date(this.currentYear, this.currentMonth + 1, 0);
-//             this.loadAmendmentsForRange(startD, endD);
-//             this.ChooseDailyReport = true;
-//         },
-//         openAmendData() {
-//             this.showAmendData = true;
-//             this.resetCalendarToToday();
-//         },
-//         goBackToCalendar() {
-//             // Close the report view
-//             this.viewingSelectedReport = false;
-//             // Reopen the appropriate calendar modal based on last report type
-//             if (this.lastReportType === 'daily') {
-//                 this.ChooseDailyReport = true;
-//             } else if (this.lastReportType === 'weekly') {
-//                 this.ChooseWeeklyReport = true;
-//             } else if (this.lastReportType === 'monthly') {
-//                 this.ChooseMonthlyReport = true;
-//             }
-//         },
-//         selectDateForAmend() {
-//             if (!this.selectedDate || !(this.selectedDate instanceof Date)) {
-//                 // No date selected, do nothing
-//                 return;
-//             }
-//             // Close calendar pop-up
-//             this.showAmendData = false;
-//             // Open amend form modal
-//             this.showAmendForm = true;
-//         },
-//         // Helper: produce YYYY-MM-DD key for a Date
-//         dateKey(date) {
-//             const y = date.getFullYear();
-//             const m = String(date.getMonth() + 1).padStart(2, '0');
-//             const d = String(date.getDate()).padStart(2, '0');
-//             return `${y}-${m}-${d}`;
-//         },
-
-//         // Load amendment flags for a date range.
-//         // The API may return either an array of date-strings (YYYY-MM-DD) or an array of objects
-//         // with fields like { date: 'YYYY-MM-DD', changedAt: '2025-10-19T14:32:00Z' }.
-//         // We normalize into this.amendmentsByDate[YYYY-MM-DD] = [ { changedAt: Date|null, amendedFor: YYYY-MM-DD }, ... ]
-//         async loadAmendmentsForRange(startDate, endDate) {
-//             try {
-//                 const s = this.dateKey(startDate);
-//                 const e = this.dateKey(endDate);
-//                 const res = await fetch(`/api/reports/amendments?start=${s}&end=${e}`);
-//                 if (!res.ok) throw new Error(`API error ${res.status}`);
-//                 const list = await res.json();
-//                 if (!Array.isArray(list)) return;
-
-//                 // Normalize each item
-//                 list.forEach(item => {
-//                     let amendedFor = null;
-//                     let changedAt = null;
-
-//                     if (typeof item === 'string') {
-//                         // item is the date that was amended (no timestamp available)
-//                         amendedFor = item;
-//                     } else if (item && typeof item === 'object') {
-//                         // try common key names
-//                         amendedFor = item.date || item.day || item.amendedDate || item.amended_for || item.amended || null;
-//                         const ts = item.changedAt || item.changed_at || item.timestamp || item.updatedAt || item.updated_at || item.modifiedAt || item.modified_at || item.when;
-//                         if (ts) {
-//                             try { changedAt = new Date(ts); if (isNaN(changedAt)) changedAt = null; } catch (e) { changedAt = null; }
-//                         }
-//                     }
-
-//                     // If amendedFor missing but we have a changedAt, derive the amendedFor key from changedAt local date
-//                     if (!amendedFor && changedAt instanceof Date) {
-//                         const y = changedAt.getFullYear();
-//                         const m = String(changedAt.getMonth() + 1).padStart(2, '0');
-//                         const d = String(changedAt.getDate()).padStart(2, '0');
-//                         amendedFor = `${y}-${m}-${d}`;
-//                     }
-
-//                     if (!amendedFor) return; // can't map this record
-
-//                     // ensure array exists
-//                     if (!this.amendmentsByDate[amendedFor]) this.amendmentsByDate[amendedFor] = [];
-//                     this.amendmentsByDate[amendedFor].push({ changedAt: changedAt instanceof Date ? changedAt : null, amendedFor });
-//                 });
-//             } catch (err) {
-//                 // eslint-disable-next-line no-console
-//                 console.warn('Failed to load amendments for range', err);
-//             }
-//         },
-
-//         // Return true if any day in a given month/year has amendments (checks the map)
-//         monthHasAmendment(year, monthIndex) {
-//             const start = new Date(year, monthIndex, 1);
-//             const end = new Date(year, monthIndex + 1, 0);
-//             for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-//                 if (this.amendmentsByDate[this.dateKey(d)]) return true;
-//             }
-//             return false;
-//         },
-//         // Calendar helpers
-//         prevMonth() {
-//             if (this.currentMonth === 0) {
-//                 this.currentMonth = 11;
-//                 this.currentYear -= 1;
-//             } else {
-//                 this.currentMonth -= 1;
-//             }
-//         },
-//         nextMonth() {
-//             if (this.currentMonth === 11) {
-//                 this.currentMonth = 0;
-//                 this.currentYear += 1;
-//             } else {
-//                 this.currentMonth += 1;
-//             }
-//         },
-//         // Select a specific date for daily report
-//         selectDate(date) {
-//             // Check if date is disabled
-//             if (this.isDayDisabled(date)) {
-//                 return;
-//             }
-            
-//             const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-//             // if already selected same day, deselect
-//             if (this.selectedDate instanceof Date && this.selectedDate.toDateString() === d.toDateString()) {
-//                 this.selectedDate = null;
-//                 return;
-//             }
-//             this.selectedDate = d;
-//         },
-//         // Select a week containing the clicked date (for weekly report)
-//         selectWeek(date) {
-//             // Check if week is disabled
-//             if (this.isWeekDisabled(date)) {
-//                 return;
-//             }
-            
-//             // compute week start (Sunday) and end (Saturday)
-//             const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-//             const day = d.getDay();
-//             const start = new Date(d);
-//             start.setDate(d.getDate() - day);
-//             start.setHours(0,0,0,0);
-//             const end = new Date(start);
-//             end.setDate(start.getDate() + 6);
-//             end.setHours(23,59,59,999);
-//             // if same week already selected, deselect
-//             if (this.selectedDate && this.selectedDate.weekStart) {
-//                 const existingStart = new Date(this.selectedDate.weekStart);
-//                 const existingEnd = new Date(this.selectedDate.weekEnd);
-//                 if (existingStart.toDateString() === start.toDateString() && existingEnd.toDateString() === end.toDateString()) {
-//                     this.selectedDate = null;
-//                     return;
-//                 }
-//             }
-//             // store or load weekly report for the range start..end
-//             this.selectedDate = { weekStart: start, weekEnd: end };
-//         },
-//         // Monthly navigation and selection
-//         prevYear() {
-//             this.displayYear -= 1;
-//         },
-//         nextYear() {
-//             this.displayYear += 1;
-//         },
-//         selectMonth(monthIndex) {
-//             // Check if month is disabled
-//             if (this.isMonthDisabled(this.displayYear, monthIndex)) {
-//                 return;
-//             }
-            
-//             // If current selectedDate is a month selection
-//             if (this.selectedDate && this.selectedDate.year !== undefined && this.selectedDate.month !== undefined) {
-//                 if (this.selectedDate.year === this.displayYear && this.selectedDate.month === monthIndex) {
-//                     // toggle off
-//                     this.selectedDate = null;
-//                     return;
-//                 }
-//             }
-//             // set month selection
-//             this.selectedDate = { year: this.displayYear, month: monthIndex };
-//         },
-//         async submitAmend() {
-//             this.errorMessage = '';
-//             const { category, quantity, action } = this.form;
-            
-//             if (!category || !quantity || !action || quantity <= 0) {
-//                 this.errorMessage = 'Please fill all fields with valid values.';
-//                 return;
-//             }
-
-//             try {
-//                 // Use native fetch API with JSON serialization
-//                 const response = await fetch('/api/amend', {
-//                     method: 'POST',
-//                     headers: {
-//                         'Content-Type': 'application/json'
-//                     },
-//                     body: JSON.stringify({
-//                         selectedDate: this.selectedDate,
-//                         category,
-//                         quantity,
-//                         action
-//                     })
-//                 });
-                
-//                 if (!response.ok) {
-//                     const errorData = await response.json().catch(() => ({}));
-//                     throw new Error(errorData.message || `HTTP error ${response.status}`);
-//                 }
-
-//                 const res = await response.json();
-                
-//                 if (res.success) {
-//                     // Determine the change timestamp: prefer server-provided timestamp if present, else use now
-//                     let changedAt = null;
-//                     const ts = res.changedAt || res.changed_at || res.timestamp || res.updatedAt || res.updated_at || res.modifiedAt || res.modified_at || res.when;
-//                     if (ts) {
-//                         try { const d = new Date(ts); if (!isNaN(d)) changedAt = d; } catch (e) { changedAt = null; }
-//                     }
-//                     if (!changedAt) changedAt = new Date();
-
-//                     if (this.selectedDate && this.selectedDate instanceof Date) {
-//                         // Use the change timestamp as the lastAmendDate so success UI shows when the change occurred
-//                         this.lastAmendDate = new Date(changedAt.getTime());
-//                         // Record which day was amended (the amended-for day) so the success UI shows that day
-//                         this.lastAmendedFor = new Date(this.selectedDate.getFullYear(), this.selectedDate.getMonth(), this.selectedDate.getDate());
-//                         // Record the number, action and category so the success UI can display what changed
-//                         this.lastAmendedCount = this.form.quantity;
-//                         this.lastAmendAction = this.form.action;
-//                         this.lastAmendedCategory = this.form.category;
-//                         // map keyed by the amended-for day
-//                         const k = this.dateKey(this.selectedDate);
-//                         if (!this.amendmentsByDate[k]) this.amendmentsByDate[k] = [];
-//                         this.amendmentsByDate[k].push({ changedAt: new Date(changedAt.getTime()), amendedFor: k });
-//                     } else {
-//                         this.lastAmendDate = new Date(changedAt.getTime());
-//                     }
-//                     this.showAmendForm = false;
-//                     this.showSuccess = true;
-//                     this.form = { category: '', quantity: null, action: '' };
-                    
-//                     if (this.$refreshSummaryData) {
-//                         await this.$refreshSummaryData();
-//                     } else {
-//                     }
-//                 }
-//             } catch (err) {
-//                 console.error('Amendment error:', err);
-//                 this.errorMessage = err.message || 'An error occurred.';
-//             }
-//         }
-//         ,
-//         // Placeholder save handlers for the modal Save buttons
-//         async saveMonthly() {
-//             if (!this.selectedDate || this.selectedDate.year === undefined || this.selectedDate.month === undefined) {
-//                 // nothing selected: do nothing (keep modal open)
-//                 return;
-//             }
-//             this.isLoadingSelected = true;
-//             this.selectedError = null;
-//             this.lastReportType = 'monthly'; // Track report type
-//             try {
-//                 const year = this.selectedDate.year;
-//                 const month = this.selectedDate.month + 1; // 1-based
-//                 const res = await fetch(`/api/reports/summary?year=${year}&month=${String(month).padStart(2,'0')}`);
-//                 if (!res.ok) throw new Error(`API error ${res.status}`);
-//                 const data = await res.json();
-//                 this.selectedReportRows = Array.isArray(data) ? data : this.mapApiResponseToRows(data);
-//                 this.selectedReportTitle = `${this.monthNames[this.selectedDate.month]} ${this.selectedDate.year}`;
-//                 // set the viewed range for the month
-//                 this.lastViewedRangeStart = new Date(this.selectedDate.year, this.selectedDate.month, 1);
-//                 this.lastViewedRangeEnd = new Date(this.selectedDate.year, this.selectedDate.month + 1, 0);
-//                 this.viewingSelectedReport = true;
-//                 this.ChooseMonthlyReport = false;
-//                 this.selectedDate = null;
-//             } catch (err) {
-//                 // eslint-disable-next-line no-console
-//                 console.error('Failed to load monthly report', err);
-//                 this.selectedError = err.message || String(err);
-//             } finally {
-//                 this.isLoadingSelected = false;
-//             }
-//         },
-//         async saveWeekly() {
-//             if (!this.selectedDate || !this.selectedDate.weekStart || !this.selectedDate.weekEnd) return;
-//             this.isLoadingSelected = true;
-//             this.selectedError = null;
-//             this.lastReportType = 'weekly'; // Track report type
-//             try {
-//                 // Format dates as YYYY-MM-DD in local timezone (not UTC)
-//                 const formatLocalDate = (date) => {
-//                     const year = date.getFullYear();
-//                     const month = String(date.getMonth() + 1).padStart(2, '0');
-//                     const day = String(date.getDate()).padStart(2, '0');
-//                     return `${year}-${month}-${day}`;
-//                 };
-//                 // Format dates for display (e.g., "October 19")
-//                 const formatDisplayDate = (date) => {
-//                     const monthName = this.monthNames[date.getMonth()];
-//                     const day = date.getDate();
-//                     return `${monthName} ${day}`;
-//                 };
-//                 const start = formatLocalDate(this.selectedDate.weekStart);
-//                 const end = formatLocalDate(this.selectedDate.weekEnd);
-//                 const res = await fetch(`/api/reports/summary?start=${start}&end=${end}`);
-//                 if (!res.ok) throw new Error(`API error ${res.status}`);
-//                 const data = await res.json();
-//                 this.selectedReportRows = Array.isArray(data) ? data : this.mapApiResponseToRows(data);
-//                 // Create readable title with full date range
-//                 const startDisplay = formatDisplayDate(this.selectedDate.weekStart);
-//                 const endDisplay = formatDisplayDate(this.selectedDate.weekEnd);
-//                 const year = this.selectedDate.weekEnd.getFullYear();
-//                 this.selectedReportTitle = `${startDisplay} - ${endDisplay} ${year}`;
-//                 // set viewed week range for amendment checks
-//                 this.lastViewedRangeStart = new Date(this.selectedDate.weekStart);
-//                 this.lastViewedRangeEnd = new Date(this.selectedDate.weekEnd);
-//                 this.viewingSelectedReport = true;
-//                 this.ChooseWeeklyReport = false;
-//                 this.selectedDate = null;
-//             } catch (err) {
-//                 // eslint-disable-next-line no-console
-//                 console.error('Failed to load weekly report', err);
-//                 this.selectedError = err.message || String(err);
-//             } finally {
-//                 this.isLoadingSelected = false;
-//             }
-//         },
-//         async saveDaily() {
-//             if (!this.selectedDate || !(this.selectedDate instanceof Date)) return;
-//             this.isLoadingSelected = true;
-//             this.selectedError = null;
-//             this.lastReportType = 'daily'; // Track report type
-//             try {
-//                 // Format date as YYYY-MM-DD in local timezone (not UTC)
-//                 const year = this.selectedDate.getFullYear();
-//                 const month = String(this.selectedDate.getMonth() + 1).padStart(2, '0');
-//                 const day = String(this.selectedDate.getDate()).padStart(2, '0');
-//                 const d = `${year}-${month}-${day}`;
-//                 const res = await fetch(`/api/reports/summary?date=${d}`);
-//                 if (!res.ok) throw new Error(`API error ${res.status}`);
-//                 const data = await res.json();
-//                 this.selectedReportRows = Array.isArray(data) ? data : this.mapApiResponseToRows(data);
-//                 // Format display title (e.g., "October 19 2025")
-//                 const monthName = this.monthNames[this.selectedDate.getMonth()];
-//                 const dayNum = this.selectedDate.getDate();
-//                 this.selectedReportTitle = `${monthName} ${dayNum} ${year}`;
-//                 // set viewed day range for amendment checks
-//                 this.lastViewedRangeStart = new Date(this.selectedDate.getFullYear(), this.selectedDate.getMonth(), this.selectedDate.getDate());
-//                 this.lastViewedRangeEnd = new Date(this.selectedDate.getFullYear(), this.selectedDate.getMonth(), this.selectedDate.getDate());
-//                 this.viewingSelectedReport = true;
-//                 this.ChooseDailyReport = false;
-//                 this.selectedDate = null;
-//             } catch (err) {
-//                 // eslint-disable-next-line no-console
-//                 console.error('Failed to load daily report', err);
-//                 this.selectedError = err.message || String(err);
-//             } finally {
-//                 this.isLoadingSelected = false;
-//             }
-//         },
-
-//         // Normalize API shapes like object-by-category into an array of rows
-//         mapApiResponseToRows(apiData) {
-//             if (!apiData) return [];
-//             if (Array.isArray(apiData)) return apiData;
-//             // if keyed object { category: { total, added, removed }, ... }
-//             return Object.keys(apiData).map(k => {
-//                 const v = apiData[k] || {};
-//                 return {
-//                     category: k,
-//                     total: v.total ?? v.count ?? 0,
-//                     added: v.added ?? 0,
-//                     removed: v.removed ?? 0,
-//                 };
-//             });
-//         }
-//     },
-//     computed: {
-//         // true when the currently-viewed selected report contains any amended days
-//         selectedReportHasAmendments() {
-//             if (!this.lastViewedRangeStart || !this.lastViewedRangeEnd) return false;
-//             for (let d = new Date(this.lastViewedRangeStart); d <= this.lastViewedRangeEnd; d.setDate(d.getDate() + 1)) {
-//                 if (this.amendmentsByDate[this.dateKey(d)]) return true;
-//             }
-//             return false;
-//         },
-//         // Return the most recent amended date (formatted) within the currently viewed range, or empty string
-//         selectedReportLatestAmendDateFormatted() {
-//             if (!this.lastViewedRangeStart || !this.lastViewedRangeEnd) return '';
-//             let latestChange = null; // Date
-
-//             for (let d = new Date(this.lastViewedRangeStart); d <= this.lastViewedRangeEnd; d.setDate(d.getDate() + 1)) {
-//                 const k = this.dateKey(d);
-//                 const records = this.amendmentsByDate[k];
-//                 if (!records) continue;
-
-//                 // records may be an array of objects { changedAt }
-//                 if (Array.isArray(records)) {
-//                     records.forEach(rec => {
-//                         if (rec && rec.changedAt instanceof Date) {
-//                             if (!latestChange || rec.changedAt.getTime() > latestChange.getTime()) latestChange = rec.changedAt;
-//                         }
-//                     });
-//                 } else if (records instanceof Date) {
-//                     // older format: a single Date
-//                     if (!latestChange || records.getTime() > latestChange.getTime()) latestChange = records;
-//                 } else if (records === true) {
-//                     // we only know the amended day (no change timestamp) — treat the amended day as fallback
-//                     const cand = new Date(d.getFullYear(), d.getMonth(), d.getDate());
-//                     if (!latestChange || cand.getTime() > latestChange.getTime()) latestChange = cand;
-//                 }
-//             }
-
-//             if (!latestChange) return '';
-//             // Format with date + time in Central Time
-//             try {
-//                 return new Date(latestChange).toLocaleString('en-US', {
-//                     timeZone: 'America/Chicago',
-//                     month: 'short',
-//                     day: 'numeric',
-//                     year: 'numeric',
-//                     hour: '2-digit',
-//                     minute: '2-digit'
-//                 });
-//             } catch (e) {
-//                 return latestChange.toLocaleDateString();
-//             }
-//         },
-//         // (removed duplicate computed) true when there is at least one day with amended data is handled above
-//         // display only the day (no time) in Central Time
-//         lastAmendDateDisplay() {
-//             if (!this.lastAmendDate) return '';
-//             return new Date(this.lastAmendDate).toLocaleDateString('en-US', {
-//                 timeZone: 'America/Chicago',
-//                 month: 'short',
-//                 day: 'numeric',
-//                 year: 'numeric'
-//             });
-//         },
-//         // Display the day that was amended (the amended-for date), not the change timestamp
-//         lastAmendedForDisplay() {
-//             if (!this.lastAmendedFor) return '';
-//             return new Date(this.lastAmendedFor).toLocaleDateString('en-US', {
-//                 timeZone: 'America/Chicago',
-//                 month: 'short',
-//                 day: 'numeric',
-//                 year: 'numeric'
-//             });
-//         },
-//         // Display the summary of the last amend count/action/category (e.g. "Added 5 Shirts" or "Removed 3 Shoes")
-//         lastAmendCountDisplay() {
-//             if (!this.lastAmendedCount || !this.lastAmendAction) return '';
-//             const action = String(this.lastAmendAction).toLowerCase() === 'add' ? 'Added' : (String(this.lastAmendAction).toLowerCase() === 'remove' ? 'Removed' : this.lastAmendAction);
-//             const category = this.lastAmendedCategory ? ` ${this.lastAmendedCategory}` : '';
-//             return `${action} ${this.lastAmendedCount}${category}`;
-//         },
-//         firstAllowedDate() {
-//             // Get the dynamically fetched first inventory date
-//             // Fall back to a safe default if not yet loaded
-//             const dynamicDate = this.$firstInventoryDate?.value;
-//             if (dynamicDate instanceof Date && !isNaN(dynamicDate.getTime())) {
-//                 return dynamicDate;
-//             }
-//             // Default fallback date (very old date that won't restrict much)
-//             return new Date(2020, 0, 1);
-//         },
-//         monthNames() {
-//             return [
-//                 'January','February','March','April','May','June',
-//                 'July','August','September','October','November','December'
-//             ];
-//         },
-//         weekDayNames() {
-//             return ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-//         },
-//         visibleDays() {
-//             // Build calendar grid: 6 rows x 7 days = 42 cells
-//             const year = this.currentYear;
-//             const month = this.currentMonth;
-
-//             const firstOfMonth = new Date(year, month, 1);
-//             const startDay = firstOfMonth.getDay(); // 0-6 (Sun-Sat)
-
-//             // Determine the date that will be placed in the first cell
-//             const gridStart = new Date(year, month, 1 - startDay);
-
-//             const days = [];
-//             for (let i = 0; i < 42; i++) {
-//                 const d = new Date(gridStart);
-//                 d.setDate(gridStart.getDate() + i);
-//                 const inMonth = d.getMonth() === month;
-//                 let isSelected = false;
-//                 if (this.selectedDate) {
-//                     if (this.selectedDate instanceof Date) {
-//                         isSelected = d.toDateString() === this.selectedDate.toDateString();
-//                     } else if (this.selectedDate && this.selectedDate.weekStart) {
-//                         // weekly selection: check if date is within week range
-//                         isSelected = d >= this.selectedDate.weekStart && d <= this.selectedDate.weekEnd;
-//                     }
-//                 }
-//                 const key = this.dateKey(d);
-//                 const hasAmendment = !!this.amendmentsByDate[key];
-//                 days.push({ date: d, inMonth, key: d.toISOString(), isSelected, hasAmendment });
-//             }
-//             return days;
-//         },
-//         selectedDateFormatted() {
-//             if (!this.selectedDate) return '';
-//             return this.selectedDate.toDateString();
-//         }
-//     }
-// }
 </script>
 
 <style scoped>
@@ -1538,7 +812,7 @@ function closeDetails(){
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 60;
+  z-index: 10;
 }
 
 .modal-content {
@@ -1549,6 +823,7 @@ function closeDetails(){
     max-width: 500px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     position: relative;
+    height: 90%;
 }
 
 .modal-content h2 {
