@@ -3,11 +3,12 @@
     class="w-full min-w-0 max-w-full overflow-x-hidden bg-gray-100 box-border px-4 py-6 md:px-6 md:py-8 lg:px-8 pb-10"
   >
     <div
-      class="w-full min-w-0 max-w-7xl mx-auto grid grid-cols-1 gap-4 md:grid-cols-2 lg:gap-6 items-start"
+      class="w-full min-w-0 max-w-7xl mx-auto grid grid-cols-1 gap-4 md:grid-cols-2 lg:gap-6 items-start md:items-stretch"
     >
-      <!-- LEFT SIDE: natural height; page scrolls as a whole -->
+      <!-- LEFT: on md+, height matches right panel; inventory scrolls inside -->
       <div
-        class="min-w-0 bg-white border border-gray-200 rounded-lg shadow-sm p-4 md:p-5"
+        class="min-w-0 bg-white border border-gray-200 rounded-lg shadow-sm p-4 md:p-5 flex flex-col min-h-0 overflow-hidden md:max-h-none"
+        :style="leftPanelHeightPx !== null ? { height: `${leftPanelHeightPx}px` } : undefined"
       >
         <div class="flex items-center justify-between gap-3 mb-3">
           <h3 class="text-lg font-semibold text-gray-900">
@@ -112,7 +113,9 @@
           </div>
         </div>
 
-        <div class="mt-2 overflow-x-auto">
+        <div
+          class="mt-2 overflow-x-auto md:flex-1 md:min-h-0 md:overflow-y-auto"
+        >
           <table
             class="w-full max-w-full min-w-0 table-fixed border border-gray-200 text-sm"
           >
@@ -187,9 +190,10 @@
         </div>
       </div>
 
-      <!-- RIGHT SIDE -->
+      <!-- RIGHT SIDE (defines row height on md+) -->
       <div
-        class="min-w-0 bg-white border border-gray-200 rounded-lg shadow-sm p-4 md:p-5 overflow-x-hidden"
+        ref="rightPanelRef"
+        class="min-w-0 bg-white border border-gray-200 rounded-lg shadow-sm p-4 md:p-5 overflow-x-hidden self-start md:self-stretch"
       >
         <h2 class="text-xl font-bold text-gray-900 mb-4">Item Removal Form</h2>
 
@@ -383,7 +387,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch } from "vue";
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from "vue";
 import { $fetch } from "ofetch";
 import { useRouter } from "vue-router";
 
@@ -430,6 +434,24 @@ const todayDate = ref(new Date().toISOString().split("T")[0]);
 const visibleGenders = ["Male", "Female", "Child"];
 
 const sizeOptions = ["XS", "S", "M", "L", "XL"];
+
+/** Match left inventory card height to right form on desktop; inventory list scrolls inside left card */
+const rightPanelRef = ref<HTMLElement | null>(null);
+const leftPanelHeightPx = ref<number | null>(null);
+const CHECKOUT_TWO_COL_MIN_PX = 768;
+
+function syncCheckoutPanelHeights() {
+  if (typeof window === "undefined") return;
+  if (window.innerWidth < CHECKOUT_TWO_COL_MIN_PX) {
+    leftPanelHeightPx.value = null;
+    return;
+  }
+  const rightEl = rightPanelRef.value;
+  if (!rightEl) return;
+  leftPanelHeightPx.value = rightEl.offsetHeight;
+}
+
+let rightPanelResizeObserver: ResizeObserver | null = null;
 
 const categories = [
   { name: "Shirts", hasSize: true },
@@ -684,10 +706,23 @@ async function loadInventory() {
   inventoryRows.value = normalized;
   availableMap.value = map;
   loadingInventory.value = false;
+  await nextTick();
+  syncCheckoutPanelHeights();
 }
 
-onMounted(() => {
-  loadInventory();
+onMounted(async () => {
+  void loadInventory();
+  if (typeof window === "undefined") return;
+  window.addEventListener("resize", syncCheckoutPanelHeights);
+  await nextTick();
+  syncCheckoutPanelHeights();
+  const rightEl = rightPanelRef.value;
+  if (rightEl && typeof ResizeObserver !== "undefined") {
+    rightPanelResizeObserver = new ResizeObserver(() =>
+      syncCheckoutPanelHeights(),
+    );
+    rightPanelResizeObserver.observe(rightEl);
+  }
 });
 
 let filtersClickOutsideHandler: ((e: MouseEvent) => void) | null = null;
@@ -713,6 +748,11 @@ onUnmounted(() => {
   if (filtersClickOutsideHandler) {
     document.removeEventListener("click", filtersClickOutsideHandler);
   }
+  if (typeof window !== "undefined") {
+    window.removeEventListener("resize", syncCheckoutPanelHeights);
+  }
+  rightPanelResizeObserver?.disconnect();
+  rightPanelResizeObserver = null;
 });
 
 /* ----------------------
