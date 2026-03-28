@@ -1,15 +1,13 @@
 <template>
   <div
-    class="min-h-screen w-full max-w-screen overflow-x-hidden bg-gray-100 p-4 md:p-6 lg:p-8"
+    class="w-full min-w-0 max-w-full overflow-x-hidden bg-gray-100 box-border px-4 py-6 md:px-6 md:py-8 lg:px-8 pb-10"
   >
     <div
-      class="grid w-full grid-cols-1 gap-4 md:grid-cols-2 lg:gap-6 items-stretch"
+      class="w-full min-w-0 max-w-7xl mx-auto grid grid-cols-1 gap-4 md:grid-cols-2 lg:gap-6 items-start"
     >
-      <!-- LEFT SIDE -->
+      <!-- LEFT SIDE: natural height; page scrolls as a whole -->
       <div
-        class="bg-white border border-gray-200 rounded-lg shadow-sm p-4 md:p-5 flex flex-col min-h-0 overflow-hidden"
-        ref="leftPanelRef"
-        :style="leftPanelHeight ? { height: leftPanelHeight + 'px' } : {}"
+        class="min-w-0 bg-white border border-gray-200 rounded-lg shadow-sm p-4 md:p-5"
       >
         <div class="flex items-center justify-between gap-3 mb-3">
           <h3 class="text-lg font-semibold text-gray-900">
@@ -114,8 +112,10 @@
           </div>
         </div>
 
-        <div class="mt-2 flex-1 min-h-0 overflow-y-auto">
-          <table class="min-w-full border border-gray-200 text-sm">
+        <div class="mt-2 overflow-x-auto">
+          <table
+            class="w-full max-w-full min-w-0 table-fixed border border-gray-200 text-sm"
+          >
             <template v-if="loadingInventory">
               <td colspan="2" class="px-3 py-2 text-center">Loading...</td>
             </template>
@@ -189,8 +189,7 @@
 
       <!-- RIGHT SIDE -->
       <div
-        class="bg-white border border-gray-200 rounded-lg shadow-sm p-4 md:p-5 min-h-0 overflow-y-auto"
-        ref="rightPanelRef"
+        class="min-w-0 bg-white border border-gray-200 rounded-lg shadow-sm p-4 md:p-5 overflow-x-hidden"
       >
         <h2 class="text-xl font-bold text-gray-900 mb-4">Item Removal Form</h2>
 
@@ -232,7 +231,9 @@
         </div>
 
         <!-- HRM Table -->
-        <table class="w-full table-auto border border-gray-200 text-sm">
+        <table
+          class="w-full max-w-full min-w-0 table-fixed border border-gray-200 text-sm"
+        >
           <thead class="bg-gray-50">
             <tr>
               <th class="border border-gray-200 px-3 py-2">Category</th>
@@ -429,11 +430,6 @@ const todayDate = ref(new Date().toISOString().split("T")[0]);
 const visibleGenders = ["Male", "Female", "Child"];
 
 const sizeOptions = ["XS", "S", "M", "L", "XL"];
-
-// Panel height sync refs
-const leftPanelRef = ref<HTMLElement | null>(null);
-const rightPanelRef = ref<HTMLElement | null>(null);
-const leftPanelHeight = ref<number | null>(null);
 
 const categories = [
   { name: "Shirts", hasSize: true },
@@ -688,24 +684,10 @@ async function loadInventory() {
   inventoryRows.value = normalized;
   availableMap.value = map;
   loadingInventory.value = false;
-
-  // After inventory loads, resync panel heights (right panel may have changed)
-  syncPanelHeights();
-}
-
-function syncPanelHeights() {
-  if (!leftPanelRef.value || !rightPanelRef.value) return;
-  const rightEl = rightPanelRef.value as HTMLElement;
-  leftPanelHeight.value = rightEl.offsetHeight;
 }
 
 onMounted(() => {
   loadInventory();
-  // Initial sync after first render
-  setTimeout(syncPanelHeights, 0);
-  if (typeof window !== "undefined") {
-    window.addEventListener("resize", syncPanelHeights);
-  }
 });
 
 let filtersClickOutsideHandler: ((e: MouseEvent) => void) | null = null;
@@ -730,9 +712,6 @@ watch(filtersDropdownOpen, (isOpen) => {
 onUnmounted(() => {
   if (filtersClickOutsideHandler) {
     document.removeEventListener("click", filtersClickOutsideHandler);
-  }
-  if (typeof window !== "undefined") {
-    window.removeEventListener("resize", syncPanelHeights);
   }
 });
 

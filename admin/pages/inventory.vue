@@ -8,10 +8,12 @@
     >
       <!-- Top 1/3: Category selection -->
       <section class="flex flex-col gap-4">
-        <h1 class="text-3xl md:text-4xl font-bold text-indigo-600 text-center">
+        <h1
+          class="font-bold text-indigo-600 text-center mt-0 mb-8 text-[clamp(1.5rem,4.5vw+0.5rem,3.15rem)]"
+        >
           Select a Category to Add
         </h1>
-        <!-- Desktop: category grid -->
+        <!-- Desktop: category grid — use exclusive text/bg classes so selected state never mixes text-gray-* with text-white -->
         <div
           class="hidden md:grid grid-cols-3 lg:grid-cols-5 xl:grid-cols-9 gap-2"
           role="list"
@@ -21,17 +23,28 @@
             v-for="cat in categories"
             :key="cat"
             type="button"
-            class="flex flex-col items-center justify-center gap-1.5 h-20 min-h-[5rem] px-2 rounded-lg border-2 border-gray-200 bg-white text-gray-800 font-semibold transition hover:-translate-y-0.5 hover:shadow-md hover:border-indigo-300"
+            class="flex flex-col items-center justify-center gap-1.5 h-20 min-h-[5rem] px-2 rounded-lg border-2 font-semibold transition hover:-translate-y-0.5 hover:shadow-md"
             :aria-pressed="selectedCategory === cat"
             :aria-current="selectedCategory === cat ? 'true' : undefined"
-            :class="{
-              'bg-indigo-600 text-white border-indigo-600 shadow':
-                selectedCategory === cat,
-            }"
+            :class="
+              selectedCategory === cat
+                ? 'bg-indigo-600 text-white border-indigo-600 shadow-md'
+                : 'bg-white text-gray-900 border-gray-200 hover:border-indigo-300'
+            "
             @click="selectCategory(cat)"
           >
-            <i class="fas fa-box" aria-hidden="true"></i>
-            <span class="text-sm text-center leading-tight">{{ cat }}</span>
+            <i
+              class="fas fa-box"
+              aria-hidden="true"
+              :class="selectedCategory === cat ? 'text-white' : 'text-indigo-600'"
+            ></i>
+            <span
+              class="text-center leading-tight break-words max-w-full w-full text-[clamp(0.55rem,1.2vw+0.45rem,1.25rem)]"
+              :class="
+                selectedCategory === cat ? 'text-white' : 'text-gray-900'
+              "
+              >{{ cat }}</span
+            >
           </button>
         </div>
         <!-- Mobile: accordion dropdown -->
@@ -105,15 +118,17 @@
         >
           <h2
             v-if="selectedCategory"
-            class="text-lg font-semibold text-indigo-600 mb-3"
+            class="text-[1.15rem] font-semibold text-indigo-600 mb-4 mt-0"
           >
             {{ selectedCategory }} – Current Inventory
           </h2>
-          <h2 v-else class="text-lg font-normal text-gray-500 mb-3">
+          <h2 v-else class="text-[1.15rem] font-normal text-gray-500 mb-4 mt-0">
             Select a category above to view inventory
           </h2>
           <div v-if="selectedCategory" class="flex flex-col gap-3">
-            <div class="flex gap-2 text-sm">
+            <div
+              class="flex gap-2 text-base pb-3 mb-1 border-b border-gray-200"
+            >
               <span class="font-semibold text-gray-800 min-w-[140px]"
                 >Total quantity:</span
               >
@@ -137,7 +152,7 @@
                 :key="row.name"
                 class="border border-gray-200 rounded-lg p-3"
               >
-                <h3 class="text-base font-semibold text-indigo-600 mb-2">
+                <h3 class="text-[1rem] font-semibold text-indigo-600 mb-2">
                   {{ row.name }}
                 </h3>
                 <p
@@ -148,7 +163,7 @@
                 </p>
                 <table
                   v-else
-                  class="w-full text-sm border border-gray-200 rounded-md overflow-hidden"
+                  class="w-full text-[0.9rem] border border-gray-200 rounded-md overflow-hidden"
                   :aria-label="`${row.name} quantities by size`"
                 >
                   <thead class="bg-gray-50">
@@ -193,11 +208,11 @@
         >
           <h2
             v-if="selectedCategory"
-            class="text-lg font-semibold text-indigo-600 mb-3"
+            class="text-[1.15rem] font-semibold text-indigo-600 mb-4 mt-0"
           >
             Add {{ selectedCategory }} to Inventory
           </h2>
-          <h2 v-else class="text-lg font-normal text-gray-500 mb-3">
+          <h2 v-else class="text-[1.15rem] font-normal text-gray-500 mb-4 mt-0">
             Select a category to add items
           </h2>
           <form
@@ -208,7 +223,7 @@
             <div>
               <label
                 for="add-quantity"
-                class="block mb-1 text-sm font-medium text-gray-700"
+                class="block mb-1 text-[0.95rem] font-medium text-gray-800"
                 >Quantity</label
               >
               <input
@@ -218,14 +233,14 @@
                 min="1"
                 placeholder="Enter quantity"
                 aria-required="true"
-                class="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                class="w-full rounded-md border border-gray-300 px-3 py-2 text-base shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </div>
             <template v-if="isOtherItems">
               <div>
                 <label
                   for="add-item-name"
-                  class="block mb-1 text-sm font-medium text-gray-700"
+                  class="block mb-1 text-[0.95rem] font-medium text-gray-800"
                   >Item name</label
                 >
                 <input
@@ -234,13 +249,13 @@
                   type="text"
                   placeholder="e.g. Toaster, Diapers"
                   aria-required="true"
-                  class="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  class="w-full rounded-md border border-gray-300 px-3 py-2 text-base shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
               <div>
                 <label
                   for="add-subcategory"
-                  class="block mb-1 text-sm font-medium text-gray-700"
+                  class="block mb-1 text-[0.95rem] font-medium text-gray-800"
                   >Category</label
                 >
                 <div class="relative">
@@ -248,7 +263,7 @@
                     id="add-subcategory"
                     v-model="addForm.size"
                     aria-required="true"
-                    class="w-full appearance-none rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    class="w-full appearance-none rounded-md border border-gray-300 px-3 py-2 text-base shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   >
                     <option value="">Select category</option>
                     <option
@@ -268,7 +283,7 @@
             </template>
             <template v-else-if="!isSimpleCategory">
               <div>
-                <span class="block mb-1 text-sm font-medium text-gray-700"
+                <span class="block mb-1 text-[0.95rem] font-medium text-gray-800"
                   >Gender</span
                 >
                 <div
@@ -279,7 +294,7 @@
                   <label
                     v-for="gender in visibleGenders"
                     :key="gender"
-                    class="flex items-center gap-2 text-sm font-medium text-gray-700"
+                    class="flex items-center gap-2 text-[0.95rem] font-medium text-gray-800"
                   >
                     <input
                       v-model="addForm.gender"
@@ -294,7 +309,7 @@
               <div>
                 <label
                   for="add-size"
-                  class="block mb-1 text-sm font-medium text-gray-700"
+                  class="block mb-1 text-[0.95rem] font-medium text-gray-800"
                   >{{ formSizeLabel }}</label
                 >
                 <div class="relative">
@@ -302,7 +317,7 @@
                     id="add-size"
                     v-model="addForm.size"
                     aria-required="true"
-                    class="w-full appearance-none rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    class="w-full appearance-none rounded-md border border-gray-300 px-3 py-2 text-base shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   >
                     <option value="">
                       Select {{ formSizeLabel.toLowerCase() }}
@@ -321,7 +336,7 @@
             <div class="pt-2 flex justify-end">
               <button
                 type="submit"
-                class="inline-flex items-center rounded-md bg-green-600 px-4 py-2 text-white font-semibold shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+                class="inline-flex items-center rounded-md bg-green-600 px-5 py-2.5 text-white text-base font-semibold shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
               >
                 Confirm Addition
               </button>
