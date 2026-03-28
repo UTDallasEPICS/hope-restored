@@ -3,12 +3,12 @@
     class="w-full min-w-0 max-w-full overflow-x-hidden bg-gray-100 box-border px-4 py-6 md:px-6 md:py-8 lg:px-8 pb-10"
   >
     <div
-      class="w-full min-w-0 max-w-7xl mx-auto grid grid-cols-1 gap-4 md:grid-cols-2 lg:gap-6 items-start md:items-stretch"
+      class="w-full min-w-0 max-w-7xl mx-auto grid grid-cols-1 gap-4 md:grid-cols-2 lg:gap-6 items-start"
     >
-      <!-- LEFT: on md+, height matches right panel; inventory scrolls inside -->
+      <!-- LEFT: height synced to form on md+ (see syncCheckoutPanelHeights); table scrolls inside -->
       <div
-        class="min-w-0 bg-white border border-gray-200 rounded-lg shadow-sm p-4 md:p-5 flex flex-col min-h-0 overflow-hidden md:max-h-none"
-        :style="leftPanelHeightPx !== null ? { height: `${leftPanelHeightPx}px` } : undefined"
+        class="order-2 md:order-1 min-w-0 bg-white border border-gray-200 rounded-lg shadow-sm p-4 md:p-5 flex flex-col min-h-0 overflow-hidden"
+        :style="checkoutLeftPanelStyle"
       >
         <div class="flex items-center justify-between gap-3 mb-3">
           <h3 class="text-lg font-semibold text-gray-900">
@@ -113,8 +113,9 @@
           </div>
         </div>
 
+        <!-- md:h-0 + flex-1: classic pattern so long table scrolls inside fixed-height card -->
         <div
-          class="mt-2 overflow-x-auto md:flex-1 md:min-h-0 md:overflow-y-auto"
+          class="mt-2 min-h-0 overflow-x-auto md:h-0 md:flex-1 md:min-h-0 md:overflow-y-auto md:overscroll-contain"
         >
           <table
             class="w-full max-w-full min-w-0 table-fixed border border-gray-200 text-sm"
@@ -190,10 +191,11 @@
         </div>
       </div>
 
-      <!-- RIGHT SIDE (defines row height on md+) -->
+      <!-- RIGHT: content height only (no stretch); database column matches this height on md+ -->
       <div
+        id="checkout-item-removal-form"
         ref="rightPanelRef"
-        class="min-w-0 bg-white border border-gray-200 rounded-lg shadow-sm p-4 md:p-5 overflow-x-hidden self-start md:self-stretch"
+        class="order-1 md:order-2 min-w-0 w-full bg-white border border-gray-200 rounded-lg shadow-sm p-4 md:p-5 overflow-x-hidden self-start h-auto"
       >
         <h2 class="text-xl font-bold text-gray-900 mb-4">Item Removal Form</h2>
 
@@ -387,7 +389,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch, nextTick } from "vue";
+import {
+  ref,
+  computed,
+  onMounted,
+  onUnmounted,
+  watch,
+  nextTick,
+} from "vue";
 import { $fetch } from "ofetch";
 import { useRouter } from "vue-router";
 
@@ -435,23 +444,75 @@ const visibleGenders = ["Male", "Female", "Child"];
 
 const sizeOptions = ["XS", "S", "M", "L", "XL"];
 
-/** Match left inventory card height to right form on desktop; inventory list scrolls inside left card */
+/** Desktop: left inventory card height = right form natural height; form is not grid-stretched */
 const rightPanelRef = ref<HTMLElement | null>(null);
 const leftPanelHeightPx = ref<number | null>(null);
-const CHECKOUT_TWO_COL_MIN_PX = 768;
+/** Must match Tailwind `md:` two-column layout (see admin/assets/css/main.css --breakpoint-md) */
+const CHECKOUT_TWO_COL_MQL = "(min-width: 768px)";
+
+function isCheckoutTwoColumnLayout() {
+  if (typeof window === "undefined") return false;
+  return window.matchMedia(CHECKOUT_TWO_COL_MQL).matches;
+}
+
+function getRightFormPanelEl(): HTMLElement | null {
+  return (
+    rightPanelRef.value ??
+    (typeof document !== "undefined"
+      ? document.getElementById("checkout-item-removal-form")
+      : null)
+  );
+}
+
+/** Grid min-height:auto would ignore a plain height:px and grow with the table; clamp with maxHeight + minHeight 0 */
+const checkoutLeftPanelStyle = computed(() => {
+  const h = leftPanelHeightPx.value;
+  if (h === null) return undefined;
+  return {
+    height: `${h}px`,
+    maxHeight: `${h}px`,
+    minHeight: "0",
+  } as const;
+});
 
 function syncCheckoutPanelHeights() {
   if (typeof window === "undefined") return;
-  if (window.innerWidth < CHECKOUT_TWO_COL_MIN_PX) {
+  if (!isCheckoutTwoColumnLayout()) {
     leftPanelHeightPx.value = null;
     return;
   }
-  const rightEl = rightPanelRef.value;
+  const rightEl = getRightFormPanelEl();
   if (!rightEl) return;
-  leftPanelHeightPx.value = rightEl.offsetHeight;
+  const h = Math.round(rightEl.getBoundingClientRect().height);
+  if (h < 1) return;
+  leftPanelHeightPx.value = h;
+}
+
+/** Run after layout so getBoundingClientRect matches painted form */
+function scheduleSyncCheckoutPanelHeights() {
+  if (typeof window === "undefined") return;
+  requestAnimationFrame(() => {
+    requestAnimationFrame(syncCheckoutPanelHeights);
+  });
 }
 
 let rightPanelResizeObserver: ResizeObserver | null = null;
+
+function attachRightPanelResizeObserver() {
+  rightPanelResizeObserver?.disconnect();
+  rightPanelResizeObserver = null;
+  const rightEl = getRightFormPanelEl();
+  if (!rightEl || typeof ResizeObserver === "undefined") return;
+  rightPanelResizeObserver = new ResizeObserver(() =>
+    scheduleSyncCheckoutPanelHeights(),
+  );
+  rightPanelResizeObserver.observe(rightEl);
+}
+
+let checkoutTwoColMql: MediaQueryList | null = null;
+function onCheckoutTwoColMqlChange() {
+  scheduleSyncCheckoutPanelHeights();
+}
 
 const categories = [
   { name: "Shirts", hasSize: true },
@@ -629,6 +690,14 @@ watch(
   },
 );
 
+watch(
+  [loadingInventory, () => inventoryDisplay.value.length],
+  () => {
+    scheduleSyncCheckoutPanelHeights();
+  },
+  { flush: "post" },
+);
+
 async function loadInventory() {
   loadingInventory.value = true;
   const map: Record<string, number> = {};
@@ -707,21 +776,22 @@ async function loadInventory() {
   availableMap.value = map;
   loadingInventory.value = false;
   await nextTick();
-  syncCheckoutPanelHeights();
+  scheduleSyncCheckoutPanelHeights();
 }
 
 onMounted(async () => {
   void loadInventory();
   if (typeof window === "undefined") return;
-  window.addEventListener("resize", syncCheckoutPanelHeights);
+  window.addEventListener("resize", scheduleSyncCheckoutPanelHeights);
+  checkoutTwoColMql = window.matchMedia(CHECKOUT_TWO_COL_MQL);
+  checkoutTwoColMql.addEventListener("change", onCheckoutTwoColMqlChange);
   await nextTick();
-  syncCheckoutPanelHeights();
-  const rightEl = rightPanelRef.value;
-  if (rightEl && typeof ResizeObserver !== "undefined") {
-    rightPanelResizeObserver = new ResizeObserver(() =>
-      syncCheckoutPanelHeights(),
-    );
-    rightPanelResizeObserver.observe(rightEl);
+  await nextTick();
+  scheduleSyncCheckoutPanelHeights();
+  attachRightPanelResizeObserver();
+  if (!rightPanelResizeObserver) {
+    await nextTick();
+    attachRightPanelResizeObserver();
   }
 });
 
@@ -749,8 +819,10 @@ onUnmounted(() => {
     document.removeEventListener("click", filtersClickOutsideHandler);
   }
   if (typeof window !== "undefined") {
-    window.removeEventListener("resize", syncCheckoutPanelHeights);
+    window.removeEventListener("resize", scheduleSyncCheckoutPanelHeights);
   }
+  checkoutTwoColMql?.removeEventListener("change", onCheckoutTwoColMqlChange);
+  checkoutTwoColMql = null;
   rightPanelResizeObserver?.disconnect();
   rightPanelResizeObserver = null;
 });
