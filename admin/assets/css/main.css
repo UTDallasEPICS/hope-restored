@@ -1,5 +1,5 @@
 /* e.g. src/styles/tailwind.css or main.css */
-/* @import "tailwindcss";  */
+@tailwind utilities;
 
 @theme {
   /* Breakpoints */
