@@ -4,6 +4,12 @@ const prisma = new PrismaClient();
 export default defineEventHandler(async () =>{
     console.log("API called");
     try{
+        const firstRep = await prisma.inventoryRecords.findFirst({
+            orderBy:{
+                date:"desc"
+            }
+        });
+        console.log(firstRep);
         const inv = await prisma.inventory.findMany();
         const curDate = new Date()
         curDate.setHours(0,0,0,0);
@@ -28,10 +34,38 @@ export default defineEventHandler(async () =>{
             gender: item.gender,
             date: curDate
         }) 
+        }
+        const SOD = new Date(); 
+        const EOD = new Date();
+        SOD.setHours(0,0,0,0);
+        EOD.setHours(23,59,59,99);
+        
+        if(firstRep && SOD <= firstRep.date <= EOD){ //report exists for today
+            console.log('report for today exists')
+            for(const row of inv){
+                await prisma.inventoryRecords.updateMany({
+                    where:{
+                        date:{
+                            gte: SOD,
+                            lte: EOD
+                        },
+                        code: row.code
+                    },
+                    data:{
+                        quantity: row.quantity,
+                        additions: row.quantity,
+                        removals: row.removals
+                    }
+                })
+            }
         }  
-        const record = await prisma.inventoryRecords.createMany({
+        else{
+            console.log('no report for today');
+             const record = await prisma.inventoryRecords.createMany({
             data:recordRows
         })
+        }
+       
         await prisma.inventory.updateMany({
             where:{
                 code:{
