@@ -2,7 +2,7 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 export default defineEventHandler(async () =>{
-
+    console.log("API called");
     try{
         const inv = await prisma.inventory.findMany();
         const curDate = new Date()

@@ -250,6 +250,12 @@ const selectedError = ref(null);
 const lastReportType = ref(null);
 const selectedDate = ref(null);
 
+onMounted(()=>{
+    $fetch(`/api/reports`,{
+        method:"POST"
+    })
+})
+
 const monthNames = [
     'January','February','March','April','May','June',
     'July','August','September','October','November','December',
