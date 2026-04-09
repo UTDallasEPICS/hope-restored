@@ -58,6 +58,11 @@
 <script setup lang="ts">
 import {ref} from 'vue'
 import { useRouter } from 'vue-router';
+import { createAuthClient } from 'better-auth/vue';
+
+const authClient = createAuthClient({
+  basePath: '/api/auth',
+});
 const router = useRouter();
 const email = ref('');
 const validEmail = ref(false);

@@ -433,6 +433,19 @@ type CheckoutItem = {
 
 const router = useRouter();
 
+function isAuthError(error: unknown) {
+  const status =
+    (error as { status?: number; statusCode?: number })?.statusCode ??
+    (error as { status?: number; statusCode?: number })?.status;
+  return status === 401 || status === 403;
+}
+
+function redirectToLoginIfUnauthorized(error: unknown) {
+  if (!isAuthError(error)) return false;
+  router.push("/");
+  return true;
+}
+
 /* ----------------------
    Basic Form State
 ---------------------- */
@@ -768,6 +781,10 @@ async function loadInventory() {
         });
       }
     } catch (e) {
+      if (redirectToLoginIfUnauthorized(e)) {
+        loadingInventory.value = false;
+        return;
+      }
       console.error("Error loading category details for", catName, e);
     }
   }
@@ -899,10 +916,17 @@ async function confirmCheckout() {
           },
     );
 
-  await $fetch("/api/checkout", {
-    method: "POST",
-    body: { removals },
-  });
+  try {
+    await $fetch("/api/checkout", {
+      method: "POST",
+      body: { removals },
+    });
+  } catch (error) {
+    if (redirectToLoginIfUnauthorized(error)) return;
+    console.error("Checkout request failed", error);
+    alert("Checkout failed. Please try again.");
+    return;
+  }
 
   // Refresh local inventory display after successful checkout
   await loadInventory();
