@@ -40,7 +40,7 @@ export default defineEventHandler(async () =>{
         SOD.setHours(0,0,0,0);
         EOD.setHours(23,59,59,99);
         
-        if(firstRep && SOD <= firstRep.date <= EOD){ //report exists for today
+        if(firstRep && SOD <= firstRep.date <= EOD){
             console.log('report for today exists')
             for(const row of inv){
                 await prisma.inventoryRecords.updateMany({
