@@ -4,44 +4,68 @@
     <!-- Top bar: site name -->
     <div class="header-top">
       <div class="header-top-inner">
-        <h1 class="site-name">Hope Restored Missions</h1>
+        <NuxtLink to="/Home" class="site-name-link" aria-label="Go to home page">
+          <h1 class="site-name">Hope Restored Missions</h1>
+        </NuxtLink>
       </div>
     </div>
     <!-- Bottom bar: navigation -->
     <nav class="header-nav" aria-label="Main navigation">
       <ul class="nav-list">
-        <li>
+        <li v-if="isAuthenticated">
           <NuxtLink to="/Home" class="nav-link" exact-active-class="nav-link--active">
             <i class="fas fa-home" aria-hidden="true"></i>
             <span>Home</span>
           </NuxtLink>
         </li>
-        <li>
+        <li v-if="isAuthenticated">
           <NuxtLink to="/reports" class="nav-link" exact-active-class="nav-link--active">
             <i class="fas fa-chart-bar" aria-hidden="true"></i>
             <span>Reports</span>
           </NuxtLink>
         </li>
-        <li>
+        <li v-if="isAuthenticated">
           <NuxtLink to="/inventory" class="nav-link" exact-active-class="nav-link--active">
             <i class="fas fa-box" aria-hidden="true"></i>
             <span>Inventory</span>
           </NuxtLink>
         </li>
-        <li>
+        <li v-if="isAuthenticated">
           <NuxtLink to="/checkout" class="nav-link" exact-active-class="nav-link--active">
             <i class="fas fa-shopping-cart" aria-hidden="true"></i>
             <span>Checkout</span>
           </NuxtLink>
+        </li>
+        <li v-if="!isAuthenticated">
+          <NuxtLink to="/login" class="nav-link" exact-active-class="nav-link--active">
+            <i class="fas fa-right-to-bracket" aria-hidden="true"></i>
+            <span>Login</span>
+          </NuxtLink>
+        </li>
+        <li v-if="isAuthenticated">
+          <button type="button" class="nav-link" @click="handleSignOut">
+            <i class="fas fa-right-from-bracket" aria-hidden="true"></i>
+            <span>Logout</span>
+          </button>
         </li>
       </ul>
     </nav>
   </header>
 </template>
 
-<script>
-export default {
-  name: 'HeaderComponent',
+<script setup lang="ts">
+import { computed } from "vue";
+import { authClient } from "~/lib/auth-client";
+
+const sessionState = authClient.useSession(useFetch);
+const isAuthenticated = computed(() => Boolean(sessionState?.data?.value));
+
+const handleSignOut = async () => {
+  try {
+    await authClient.signOut();
+  } finally {
+    await navigateTo("/login");
+  }
 };
 </script>
 
@@ -70,6 +94,13 @@ export default {
   font-weight: 700;
   color: #878787;
   letter-spacing: 0.06em;
+}
+
+.site-name-link {
+  text-decoration: none;
+  color: inherit;
+  display: inline-flex;
+  align-items: center;
 }
 
 /* Bottom bar: nav links */
