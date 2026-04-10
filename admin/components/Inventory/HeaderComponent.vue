@@ -12,41 +12,43 @@
     <!-- Bottom bar: navigation -->
     <nav class="header-nav" aria-label="Main navigation">
       <ul class="nav-list">
-        <li v-if="isAuthenticated">
-          <NuxtLink to="/Home" class="nav-link" exact-active-class="nav-link--active">
-            <i class="fas fa-home" aria-hidden="true"></i>
-            <span>Home</span>
-          </NuxtLink>
-        </li>
-        <li v-if="isAuthenticated">
-          <NuxtLink to="/reports" class="nav-link" exact-active-class="nav-link--active">
-            <i class="fas fa-chart-bar" aria-hidden="true"></i>
-            <span>Reports</span>
-          </NuxtLink>
-        </li>
-        <li v-if="isAuthenticated">
-          <NuxtLink to="/inventory" class="nav-link" exact-active-class="nav-link--active">
-            <i class="fas fa-box" aria-hidden="true"></i>
-            <span>Inventory</span>
-          </NuxtLink>
-        </li>
-        <li v-if="isAuthenticated">
-          <NuxtLink to="/checkout" class="nav-link" exact-active-class="nav-link--active">
-            <i class="fas fa-shopping-cart" aria-hidden="true"></i>
-            <span>Checkout</span>
-          </NuxtLink>
-        </li>
-        <li v-if="!isAuthenticated">
+        <template v-if="isAuthenticated">
+          <li>
+            <NuxtLink to="/Home" class="nav-link" exact-active-class="nav-link--active">
+              <i class="fas fa-home" aria-hidden="true"></i>
+              <span>Home</span>
+            </NuxtLink>
+          </li>
+          <li>
+            <NuxtLink to="/reports" class="nav-link" exact-active-class="nav-link--active">
+              <i class="fas fa-chart-bar" aria-hidden="true"></i>
+              <span>Reports</span>
+            </NuxtLink>
+          </li>
+          <li>
+            <NuxtLink to="/inventory" class="nav-link" exact-active-class="nav-link--active">
+              <i class="fas fa-box" aria-hidden="true"></i>
+              <span>Inventory</span>
+            </NuxtLink>
+          </li>
+          <li>
+            <NuxtLink to="/checkout" class="nav-link" exact-active-class="nav-link--active">
+              <i class="fas fa-shopping-cart" aria-hidden="true"></i>
+              <span>Checkout</span>
+            </NuxtLink>
+          </li>
+          <li>
+            <button type="button" class="nav-link" @click="handleSignOut">
+              <i class="fas fa-right-from-bracket" aria-hidden="true"></i>
+              <span>Logout</span>
+            </button>
+          </li>
+        </template>
+        <li v-else>
           <NuxtLink to="/login" class="nav-link" exact-active-class="nav-link--active">
             <i class="fas fa-right-to-bracket" aria-hidden="true"></i>
             <span>Login</span>
           </NuxtLink>
-        </li>
-        <li v-if="isAuthenticated">
-          <button type="button" class="nav-link" @click="handleSignOut">
-            <i class="fas fa-right-from-bracket" aria-hidden="true"></i>
-            <span>Logout</span>
-          </button>
         </li>
       </ul>
     </nav>

@@ -442,7 +442,7 @@ function isAuthError(error: unknown) {
 
 function redirectToLoginIfUnauthorized(error: unknown) {
   if (!isAuthError(error)) return false;
-  router.push("/");
+  router.push("/login");
   return true;
 }
 

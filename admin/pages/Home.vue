@@ -5,7 +5,7 @@
         <header class="welcome-section">
             <h1>Welcome to Hope Restored Missions!</h1>
             <p>Your hope is our mission.</p>
-            <a href="https://hoperestoredmissions.org/" target="_blank" rel="noopener" class="cta-button">Get Involved</a>
+            <NuxtLink v-if="!isAuthenticated" to="/login" class="cta-button">Get Involved</NuxtLink>
         </header>
 
         <!-- About Us Section -->
@@ -39,7 +39,13 @@
     </div>
 </template>
 
+<script setup lang="ts">
+import { computed } from "vue";
+import { authClient } from "~/lib/auth-client";
 
+const sessionState = authClient.useSession(useFetch);
+const isAuthenticated = computed(() => Boolean(sessionState?.data?.value));
+</script>
 
 <style scoped>
     /* General Page Styling */
