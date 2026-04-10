@@ -4,7 +4,7 @@ import prisma from '~/lib/prisma';
 
 export default defineEventHandler(async (event) =>{
     const params = getQuery(event);
-    console.log("params: ", params);
+    //console.log("params: ", params);
     const {startDate, endDate} = params;
   try{
         let sd = [];
@@ -22,8 +22,8 @@ export default defineEventHandler(async (event) =>{
             ed[1] = todayEnd;
             sd[1] = ed[1]; ed[0] = sd[0];
         }
-        console.log(sd);
-        console.log(ed);
+        //console.log(sd);
+        //console.log(ed);
         const catList = await prisma.inventory.groupBy({
             by:['category'],
         })
@@ -51,7 +51,6 @@ export default defineEventHandler(async (event) =>{
                 removals:true
             },
         });
-        console.log(aggregations);
         let groupedData:{
             category:string,
             quantity:number,
@@ -65,7 +64,7 @@ export default defineEventHandler(async (event) =>{
                     additions:number,
                     removals:number}[]
                 }[]
-            }[] = []
+            }[] = [];
         for(const cat of catList){
             groupedData.push({
             category:cat.category,
@@ -121,6 +120,7 @@ export default defineEventHandler(async (event) =>{
                 }
             }
         }
+              
         for(const item of lastDates){
             for(const row of groupedData){
                 if(item.category === row.category){
