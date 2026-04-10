@@ -181,6 +181,9 @@
                                             <button v-if="!simpleCategores.includes(r.category)" @click="getDetails(r.category,r.genders)" class="bg-blue-700 rounded-md p-1 text-white">
                                                 View Sizes
                                             </button>
+                                            <button v-if="r.category === 'Other Items'" @click="getDetails(r.category,r.genders)" class="bg-blue-700 rounded-md p-2 text-white">
+                                                View Items
+                                            </button>
                                         </td>
                                     </tr>
                                 </tbody>
@@ -216,6 +219,9 @@
                         <td>
                             <button v-if="!simpleCategores.includes(row.category)" @click="getDetails(row.category,row.genders)" class="bg-blue-700 rounded-md p-2 text-white">
                                 View Sizes
+                            </button>
+                            <button v-if="row.category === 'Other Items'" @click="getDetails(row.category,row.genders)" class="bg-blue-700 rounded-md p-2 text-white">
+                                View Items
                             </button>
                         </td>
                     </tr>
@@ -270,7 +276,7 @@ const displayYear = ref(today.getFullYear());
 const showDetails = ref(false);
 const detailRow = ref();
 const detailCategory = ref();
-const simpleCategores = ['Blankets', 'Snack Packs', 'Hygiene Packs'];
+const simpleCategores = ['Blankets', 'Snack Packs', 'Hygiene Packs', 'Other Items'];
 
 const currentInventory = await $fetch('/api/inventory');
 fullReport.value = currentInventory;
