@@ -8,8 +8,8 @@ export default defineNuxtRouteMiddleware(async (to) => {
   }
 
   try {
-    const { data: session } = await authClient.useSession(useFetch);
-    if (!session.value) {
+    const { data: session } = await authClient.getSession();
+    if (!session) {
       return navigateTo("/");
     }
   } catch {
