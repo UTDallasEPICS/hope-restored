@@ -1,6 +1,18 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
+import { emailOTP } from "better-auth/plugins";
+import nodemailer from "nodemailer";
 import prisma from "./prisma";
+
+const transporter = nodemailer.createTransport({
+	host: process.env.SMTP_HOST || "smtp.gmail.com",
+	port: Number(process.env.SMTP_PORT) || 587,
+	secure: false,
+	auth: {
+		user: process.env.SMTP_USER,
+		pass: process.env.SMTP_PASS,
+	},
+});
 
 function parseCsv(value: string | undefined): string[] {
 	return (value || "")
@@ -34,6 +46,23 @@ export const auth = betterAuth({
 	emailAndPassword: {
 		enabled: true,
 	},
+	plugins: [
+		emailOTP({
+			async sendVerificationOTP({ email, otp, type }) {
+				const from = process.env.SMTP_FROM || process.env.SMTP_USER;
+				const subject = type === "sign-in" ? "Your login code" : "Verify your email";
+				await transporter.sendMail({
+					from,
+					to: email,
+					subject,
+					text: `Your verification code is: ${otp}`,
+					html: `<p>Your verification code is: <strong>${otp}</strong></p><p>This code expires in 10 minutes.</p>`,
+				});
+			},
+			otpLength: 6,
+			expiresIn: 600,
+		}),
+	],
 	session: {
 		expiresIn: 60 * 60 * 12,
 		updateAge: 60 * 15,

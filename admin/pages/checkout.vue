@@ -455,7 +455,7 @@ const personName = ref("");
 const todayDate = ref(new Date().toISOString().split("T")[0]);
 const visibleGenders = ["Male", "Female", "Child"];
 
-const sizeOptions = ["XS", "S", "M", "L", "XL"];
+const sizeOptions = ["XS", "S", "M", "L", "XL", "2XL", "3XL", "4XL+"];
 
 /** Desktop: left inventory card height = right form natural height; form is not grid-stretched */
 const rightPanelRef = ref<HTMLElement | null>(null);
@@ -571,7 +571,7 @@ const apparelCategories = ["Shirts", "Pants", "Jackets", "Underwear"];
 const simpleCategories = ["Snack Packs", "Hygiene Packs", "Blankets"];
 const otherItemsCategory = "Other Items";
 const shoeCategory = "Shoes";
-const apparelSizes = ["XS", "S", "M", "L", "XL"];
+const apparelSizes = ["XS", "S", "M", "L", "XL","2XL", "3XL", "4XL+"];
 const shoeSizes = (() => {
   const arr = [];
   for (let n = 5; n <= 14.5; n += 0.5) arr.push(String(n));

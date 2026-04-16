@@ -121,21 +121,25 @@ const handleSubmit = async () => {
 const handleOTPSubmit = async () =>{
   if(otp.value.length != 6){
     ErrorMsg.value = 'Invalid Code Length';
+    Error.value = true;
+    return;
   }
   else if(!/^\d+$/.test(otp.value)){
     ErrorMsg.value = 'Code should only contain numbers';
-  }
-  else{
-    validOTP.value = true //$fetch(`api/for/otp/and/login/stuff`);
-    if(validOTP.value){
-      router.push('/Home');
-    }
-    else{
-      ErrorMsg.value = 'Code is invalid';
-    }
-  }
-  if(ErrorMsg.value !== ''){
     Error.value = true;
+    return;
+  }
+  const result = await authClient.emailOtp.signIn({
+    email: email.value,
+    otp: otp.value,
+  });
+  if(result.error){
+    ErrorMsg.value = result.error.message || 'Code is invalid';
+    Error.value = true;
+  } else {
+    Error.value = false;
+    ErrorMsg.value = '';
+    router.push('/Home');
   }
 }
 </script>
