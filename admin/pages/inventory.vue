@@ -493,7 +493,7 @@ const categories = [
   "Blankets",
   "Other Items",
 ];
-const sizeOptions = ["XS", "S", "M", "L", "XL"];
+const sizeOptions = ["XS", "S", "M", "L", "XL","2XL","3XL","4XL+"];
 const otherItemsSubcategories = [
   "Appliances",
   "Infant care",
