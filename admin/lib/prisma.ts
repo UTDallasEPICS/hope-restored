@@ -14,28 +14,8 @@ if (resolvedEnvPath) {
 
 const adminRoot = resolvedEnvPath ? dirname(resolvedEnvPath) : process.cwd()
 
-function getDatasourceUrl() {
-  const rawUrl = process.env.DATABASE_URL?.trim()
-  if (!rawUrl) return undefined
-
-  if (rawUrl.startsWith('file:./') || rawUrl.startsWith('file:../')) {
-    const relativePath = rawUrl.replace(/^file:/, '')
-    const absolutePath = resolve(adminRoot, relativePath)
-    return `file:${absolutePath}`
-  }
-
-  return rawUrl
-}
 
 const prismaClientSingleton = () => {
-  const datasourceUrl = getDatasourceUrl()
-  if (datasourceUrl) {
-    process.env.DATABASE_URL = datasourceUrl
-    if (process.env.NODE_ENV !== 'production') {
-      console.info('[prisma] DATABASE_URL:', datasourceUrl)
-    }
-  }
-
   return new PrismaClient()
 }
 
