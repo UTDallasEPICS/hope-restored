@@ -189,3 +189,15 @@ model InventoryRecords {
   size        String?
   gender      String?
 }
+
+model ActivityLog {
+  id       Int      @id @default(autoincrement())
+  email    String
+  name     String
+  category String
+  size     String?
+  gender   String?
+  action   String
+  amount   Int
+  time     DateTime @default(now())
+}
