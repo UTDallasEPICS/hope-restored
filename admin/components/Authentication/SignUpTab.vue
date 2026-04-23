@@ -52,7 +52,7 @@
 <script setup lang="ts">
 import {ref} from 'vue'
 import { useRouter } from 'vue-router';
-import { authClient } from '~/lib/auth-client';
+import { authClient } from '../../lib/auth-client';
 const router = useRouter();
 const email = ref('');
 const validEmail = ref(false);
@@ -138,6 +138,7 @@ const handleOTPSubmit = async () =>{
     otp: otp.value,
     ...(name ? { name } : {}),
   });
+  console.log("EmailOTP result:",result)
   if(result.error){
     ErrorMsg.value = result.error.message || 'Code is invalid';
     Error.value = true;
