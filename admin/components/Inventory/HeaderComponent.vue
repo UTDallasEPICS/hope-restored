@@ -57,10 +57,12 @@
 
 <script setup lang="ts">
 import { computed } from "vue";
-import { authClient } from "~/lib/auth-client";
+import { authClient } from "../../lib/auth-client";
 
-const sessionState = authClient.useSession(useFetch);
-const isAuthenticated = computed(() => Boolean(sessionState?.data?.value));
+
+
+const sessionState = authClient.useSession();
+const isAuthenticated = computed(() => Boolean(sessionState.value?.data));
 
 const handleSignOut = async () => {
   try {

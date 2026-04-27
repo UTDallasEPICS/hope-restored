@@ -21,6 +21,7 @@
 </template>
 
 <script lang="ts" setup>
+import { ref } from "vue";
 import SignUpTab from "../components/Authentication/SignUpTab.vue";
 const signUp = ref(false);
 </script>

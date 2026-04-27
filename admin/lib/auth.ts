@@ -1,16 +1,34 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { emailOTP } from "better-auth/plugins";
+import { config as loadEnv } from "dotenv";
+import { existsSync } from "node:fs";
 import nodemailer from "nodemailer";
+import { resolve } from "node:path";
 import prisma from "./prisma";
+
+const envCandidates = [resolve(process.cwd(), ".env"), resolve(process.cwd(), "admin/.env")];
+const resolvedEnvPath = envCandidates.find((path) => existsSync(path));
+
+if (resolvedEnvPath) {
+	loadEnv({ path: resolvedEnvPath });
+} else {
+	loadEnv();
+}
+
+const smtpPort = Number.parseInt((process.env.SMTP_PORT || "587").split("#")[0].trim(), 10) || 587;
 
 const transporter = nodemailer.createTransport({
 	host: process.env.SMTP_HOST || "smtp.gmail.com",
-	port: Number(process.env.SMTP_PORT) || 587,
-	secure: false,
+	port: smtpPort,
+	secure: smtpPort === 465,
+	requireTLS: smtpPort === 587,
 	auth: {
 		user: process.env.SMTP_USER,
 		pass: process.env.SMTP_PASS,
+	},
+	tls: {
+		rejectUnauthorized: true,
 	},
 });
 
@@ -51,13 +69,23 @@ export const auth = betterAuth({
 			async sendVerificationOTP({ email, otp, type }) {
 				const from = process.env.SMTP_FROM || process.env.SMTP_USER;
 				const subject = type === "sign-in" ? "Your login code" : "Verify your email";
-				await transporter.sendMail({
-					from,
-					to: email,
-					subject,
-					text: `Your verification code is: ${otp}`,
-					html: `<p>Your verification code is: <strong>${otp}</strong></p><p>This code expires in 10 minutes.</p>`,
-				});
+				if (!process.env.SMTP_USER || !process.env.SMTP_PASS || !from) {
+					throw new Error("SMTP is not configured. Set SMTP_USER, SMTP_PASS, and SMTP_FROM in admin/.env");
+				}
+
+				try {
+					await transporter.sendMail({
+						from,
+						to: email,
+						subject,
+						text: `Your verification code is: ${otp}`,
+						html: `<p>Your verification code is: <strong>${otp}</strong></p><p>This code expires in 10 minutes.</p>`,
+					});
+				} catch (error) {
+					const msg = error instanceof Error ? error.message : String(error);
+					console.error("Failed to send OTP email:", msg);
+					throw new Error(`Failed to send OTP email: ${msg}`);
+				}
 			},
 			otpLength: 6,
 			expiresIn: 600,

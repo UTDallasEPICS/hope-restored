@@ -176,7 +176,6 @@ model Inventory {
   size        String?
   gender      String?
 }
-//removing this blows up the project rn
 model InventoryRecords {
   id       String      @id  @unique @default(cuid())
   date     DateTime
@@ -188,4 +187,16 @@ model InventoryRecords {
   category    String
   size        String?
   gender      String?
+}
+
+model ActivityLog {
+  id       String      @id @default(cuid())
+  email    String
+  name     String
+  category String
+  size     String?
+  gender   String?
+  action   String
+  amount   Int
+  time     DateTime @default(now())
 }

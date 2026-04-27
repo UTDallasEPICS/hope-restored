@@ -16,12 +16,6 @@
             placeholder="Last Name"
             class="border p-2 w-full mb-4"
           />
-          <input
-            type="text"
-            v-model="designation"
-            placeholder="Designation"
-            class="border p-2 w-full mb-4"
-          />
         </div>
         <input
           type="text"
@@ -31,7 +25,7 @@
         />
         <button
           type="submit"
-          class="bg-blue-500 text-white px-4 py-2 rounded"
+          class="px-4 py-2 rounded bg-[#2563eb] text-white hover:bg-[#1d4ed8]"
         >
         <span>Submit</span>
           
@@ -47,7 +41,7 @@
         />
         <button
           type="submit"
-          class="bg-blue-500 text-white px-4 py-2 rounded"
+          class="px-4 py-2 rounded bg-[#2563eb] text-white hover:bg-[#1d4ed8]"
         >
           Submit
         </button>
@@ -58,27 +52,24 @@
 <script setup lang="ts">
 import {ref} from 'vue'
 import { useRouter } from 'vue-router';
-import { createAuthClient } from 'better-auth/vue';
-
-const authClient = createAuthClient({
-  basePath: '/api/auth',
-});
+import { authClient } from '../../lib/auth-client';
 const router = useRouter();
 const email = ref('');
 const validEmail = ref(false);
 const otp = ref('');
-const validOTP = ref(false);
 const ErrorMsg = ref('');
 const Error = ref(false);
 const firstName = ref('');
 const lastName = ref('');
-const designation = ref('');
 
 const props = defineProps<{
         signupForm:boolean
     }>();
 
 const handleSubmit = async () => {
+  Error.value = false;
+  ErrorMsg.value = '';
+
   const regex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
   if(email.value.length == 0){
     ErrorMsg.value = 'Email field is required';
@@ -87,30 +78,36 @@ const handleSubmit = async () => {
     ErrorMsg.value = 'Invalid formatting for email\tExample:\texample@email.com';
   }
   else{
-    const res = true //await $fetch(`api/to/login`)
-    if(!props.signupForm && !res){
-      ErrorMsg.value = 'Account not found.\nTry a different Email or sign up';
-    }
-    else if(props.signupForm && res){ 
-      ErrorMsg.value = "Email already in use";
-    }
-    else if(props.signupForm && !res){
-      ErrorMsg.value = '';
+    if(props.signupForm){
       if(firstName.value.length == 0){
         ErrorMsg.value += 'First Name is required';
       }
       if(lastName.value.length == 0){
         ErrorMsg.value += '\nLast Name is required';
       }
-      if(ErrorMsg.value == ''){
-        validEmail.value = res;
-        Error.value = false;
+      if(ErrorMsg.value !== ''){
+        Error.value = true;
+        return;
       }
     }
-    else{
-      validEmail.value = res;
-      Error.value = false;
-      ErrorMsg.value = '';
+
+    try {
+      const result = await authClient.emailOtp.sendVerificationOtp({
+        email: email.value,
+        type: 'sign-in',
+      });
+
+      if(result.error){
+        ErrorMsg.value = result.error.message || result.error.statusText || `Error ${result.error.status}: Failed to send code. Check SMTP settings in admin/.env.`;
+        Error.value = true;
+      } else {
+        validEmail.value = true;
+        Error.value = false;
+        ErrorMsg.value = '';
+      }
+    } catch (err) {
+      ErrorMsg.value = (err as Error)?.message || 'Network error: could not reach auth server.';
+      Error.value = true;
     }
   }
   if(ErrorMsg.value !== ''){
@@ -119,6 +116,9 @@ const handleSubmit = async () => {
 }
 
 const handleOTPSubmit = async () =>{
+  Error.value = false;
+  ErrorMsg.value = '';
+
   if(otp.value.length != 6){
     ErrorMsg.value = 'Invalid Code Length';
     Error.value = true;
@@ -129,10 +129,16 @@ const handleOTPSubmit = async () =>{
     Error.value = true;
     return;
   }
-  const result = await authClient.emailOtp.signIn({
+  const name = props.signupForm
+    ? [firstName.value, lastName.value].filter(Boolean).join(' ')
+    : undefined;
+
+  const result = await authClient.signIn.emailOtp({
     email: email.value,
     otp: otp.value,
+    ...(name ? { name } : {}),
   });
+  console.log("EmailOTP result:",result)
   if(result.error){
     ErrorMsg.value = result.error.message || 'Code is invalid';
     Error.value = true;
