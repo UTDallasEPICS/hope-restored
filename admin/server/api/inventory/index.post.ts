@@ -3,7 +3,11 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 export default defineEventHandler(async (event) => {
+  const session = await requireSession(event, 'staff');
+  const userEmail = session.user.email ?? '';
+  const userName = session.user.name ?? session.user.email ?? 'Unknown User';
   const entry = await readBody(event);
+  
   try {
     const invCode = entry.category + entry.size + entry.gender
     console.log(invCode);
@@ -29,6 +33,18 @@ export default defineEventHandler(async (event) => {
           }
         }
       })
+
+      await (prisma as any).activityLog.create({
+        data: {
+          email: userEmail,
+          name: userName,
+          category: entry.category,
+          gender: entry.gender,
+          size: entry.size,
+          action: 'Addition',
+          amount: entry.quantity,
+        },
+      });
     } catch (recErr) {
       console.error('Error recording inventory record:', recErr);
     } 
