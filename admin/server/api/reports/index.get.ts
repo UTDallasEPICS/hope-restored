@@ -65,27 +65,39 @@ export default defineEventHandler(async (event) =>{
                     removals:number}[]
                 }[]
             }[] = [];
-        for(const cat of catList){
-            groupedData.push({
-            category:cat.category,
-            quantity:0,
-            additions:0,
-            removals:0,
-            genders:[{
-                name:"Child",
-                info:[]
-                },
-                {
-                name:"Male",
-                info:[]
-                },
-                {
-                name:"Female",
-                info:[]
-                },
-            ]
-            })
-        }
+        for (const cat of catList) {
+    groupedData.push({
+      category:cat.category,
+      quantity:0,
+      additions:0,
+      removals:0,
+      genders:cat.category !== "Other Items"? [{
+          name:"Child",
+          info:[]
+        },
+        {
+          name:"Male",
+          info:[]
+        },
+        {
+          name:"Female",
+          info:[]
+        },
+      ] :[
+        {name:'Appliances',info:[]},
+        {name: 'Infant care',info:[] },
+        {name:'Hardware',info:[] },
+        {name:'Electronics',info:[] },
+        {name:'Furniture',info:[]}, 
+        {name:'Bedding',info:[] },
+        {name:'Kitchen',info:[] },
+        {name:'Toys', info:[]},
+        {name:'School supplies',info:[] },
+        {name:'Personal care',info:[] },
+        {name:'Cleaning supplies',info:[] },
+       { name:'Other',info:[]}]
+      })
+  }
         for(const item of lastDates){
             for(const row of groupedData){
                 if(item.category === row.category){

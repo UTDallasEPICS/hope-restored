@@ -42,21 +42,36 @@ export default defineEventHandler(async () =>{
         
         if(firstRep && SOD <= firstRep.date <= EOD){
             console.log('report for today exists')
-            for(const row of inv){
-                await prisma.inventoryRecords.updateMany({
-                    where:{
-                        date:{
-                            gte: SOD,
-                            lte: EOD
-                        },
-                        code: row.code
-                    },
-                    data:{
-                        quantity: row.quantity,
-                        additions: row.quantity,
-                        removals: row.removals
-                    }
+            for (const row of inv) {
+            const existing = await prisma.inventoryRecords.findFirst({
+                where: {
+                date: { gte: SOD, lte: EOD },
+                code: row.code
+                }
+            })
+
+            if (existing) {
+                await prisma.inventoryRecords.update({
+                where: { id: existing.id },  // use the found record's id
+                data: {
+                    quantity: row.quantity,
+                    additions: row.quantity,
+                    removals: row.removals
+                }
                 })
+            } else {
+                await prisma.inventoryRecords.create({
+                data: {
+                    code: row.code,
+                    category: row.category,
+                    gender: row.gender,
+                    size: row.size,
+                    quantity: row.quantity,
+                    additions: row.quantity,
+                    date: curDate
+                }
+                })
+            }
             }
         }  
         else{

@@ -12,7 +12,7 @@ async function seed() {
   console.log("Starting to seed InventoryRecords...");
 
   const clothes_categories = ["Shirts", "Pants", "Jackets","Underwear"];
-  const sizes = ["XS", "S", "M", "L", "XL"];
+  const sizes = ["XS", "S", "M", "L", "XL","2XL","3XL","4XL"];
   const genders = ["Child", "Male", "Female"];
   const simple_categories = ["Snack Packs", "Hygiene Packs", "Blankets"];
   const shoeSizeOptions = (() => {

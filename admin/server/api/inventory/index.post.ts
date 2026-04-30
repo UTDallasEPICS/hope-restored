@@ -10,7 +10,6 @@ export default defineEventHandler(async (event) => {
   
   try {
     const invCode = entry.category + entry.size + entry.gender
-    console.log(invCode);
     let additionRecord = null;
       // Create or update an Inventory entry to represent available stock of each category
       try {

@@ -6,6 +6,9 @@
             <button @click="showPreviousReportsModal = true" class="monthly-reports-button">
                 <i class="fas fa-folder-open"></i> View Report
             </button>
+            <button @click="showFullInv= !showFullInv" class="monthly-reports-button">
+                <i class="fas fa-folder-open"></i> {{ !showFullInv? "Master Report": "Detail View" }}
+            </button>
         </div>
 
         <!-- Previous Reports Modal -->
@@ -150,12 +153,16 @@
         </div>
 
         <!-- Selected report results modal -->
-        <div v-if="viewingSelectedReport" class="modal-overlay" >
+        <div v-if="viewingSelectedReport" class="modal-overlay w-1/2" >
             <div class="modal-content overflow-y-auto">
-                <button class="back-button" @click="goBackToCalendar"> Back
+                <button class="absolute top-[1em] left-[1em] px-2 py-2 bg-[#757575] text-white rounded-sm cursor-pointer text-[0.9em]"  
+                    @click="goBackToCalendar"> Back
+                </button>
+                <button @click="showFullReport= !showFullReport" class="absolute top-[1em] right-[1em] px-2 py-2 bg-[#4c5baf] text-white rounded-sm cursor-pointer text-[0.9em]">
+                    {{ !showFullReport? "Master Report": "Detail View" }}
                 </button>
                 <h2>Report for: {{ selectedReportTitle }}</h2>
-
+                
                 <div v-if="isLoadingSelected">Loading...</div>
                 <div v-else>
                     <div v-if="selectedError" style="color: #b00020; margin-bottom: 1em;">{{ selectedError }}</div>
@@ -168,19 +175,51 @@
                                         <th>Total</th>
                                         <th>Added</th>
                                         <th>Removed</th>
-                                        <th>Details</th>
+                                        <th v-if="!showFullReport">Details</th>
                                     </tr>
                                 </thead>
-                                <tbody>
-                                    <tr v-for="r in selectedReportRows" :key="r.category">
-                                        <td>{{ r.category }}</td>
-                                        <td>{{ r.quantity }}</td>
-                                        <td>{{ r.additions }}</td>
-                                        <td>{{ r.removals }}</td>
-                                        <td>
-                                            <button v-if="!simpleCategores.includes(r.category)" @click="getDetails(r.category,r.genders)" class="bg-blue-700 rounded-md p-1 text-white">
+                                <tbody v-for="row in selectedReportRows" :key="row.category">
+                                    <tr class="hover:bg-[#e0e0e0]">
+                                        <td class="font-bold text-lg">{{ row.category }}</td>
+                                        <td>{{ row.quantity }}</td>
+                                        <td>{{ row.additions }}</td>
+                                        <td>{{ row.removals }}</td>
+                                        <td v-if="!showFullReport">
+                                            <button v-if="!simpleCategores.includes(row.category)" @click="getDetails(row.category,row.genders)" class="bg-blue-700 rounded-md p-2 text-white">
                                                 View Sizes
                                             </button>
+                                        </td>
+                                    </tr>
+                                    <tr v-if="showFullReport && !simpleCategores.includes(row.category)" class="bg-white">
+                                        <td colspan="4">
+                                            <template v-for="gender in row.genders" :key="gender.name">
+                                                <div>
+                                                    <h1 class="font-semibold text-left text-lg border-b">{{ gender.name }}</h1>
+                                                    <table class="w-full " v-if="gender.info.some(i => i.quantity !== 0)">
+                                                        <thead class="text-black font-bold">
+                                                            <tr>
+                                                            <th class="p-4 border-b-[#ddd] border-b-2 text-center">{{row.category!=="Other Items"? "Size" : "Item"}}</th>
+                                                            <th class="p-4 border-b-[#ddd] border-b-2 text-center">Quantity</th>
+                                                            <th class="p-4 border-b-[#ddd] border-b-2 text-center">Added</th>
+                                                            <th class="p-4 border-b-[#ddd] border-b-2 text-center">Removed</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody class="bg-gray-100 text-center">
+                                                            <template v-for="infoRow in gender.info" :key="infoRow.size">
+                                                                <tr class="border-b-2 odd:bg-white even:bg-gray-50" v-if="infoRow.quantity !== 0">
+                                                                    <td>{{ infoRow.size }}</td>
+                                                                    <td>{{ infoRow.quantity }}</td>
+                                                                    <td>{{ infoRow.additions }}</td>
+                                                                    <td>{{ infoRow.removals }}</td>
+                                                                </tr>
+                                                            </template>
+                                                        </tbody>
+                                                    </table>
+                                                    <div v-else>
+                                                        <h1 class="bg-white text-left pb-3">None</h1>
+                                                    </div>
+                                                </div>
+                                            </template>
                                         </td>
                                     </tr>
                                 </tbody>
@@ -200,23 +239,55 @@
             <table>
                 <thead>
                     <tr>
-                        <th>Category</th>
-                        <th>Quantity</th>
-                        <th>Added</th>
-                        <th>Removed</th>
-                        <th>Details</th>
+                        <th class="bg-[#3f51b5] text-white font-bold">Category</th>
+                        <th class="bg-[#3f51b5] text-white font-bold">Quantity</th>
+                        <th class="bg-[#3f51b5] text-white font-bold">Added</th>
+                        <th class="bg-[#3f51b5] text-white font-bold">Removed</th>
+                        <th class="bg-[#3f51b5] text-white font-bold" v-if="!showFullInv">Details</th>
                     </tr>
                 </thead>
-                <tbody>
-                    <tr v-for="row in fullReport" :key="row.category">
-                        <td>{{ row.category }}</td>
+                <tbody v-for="row in fullReport" :key="row.category">
+                    <tr class="hover:bg-[#e0e0e0]">
+                        <td class="font-bold text-lg">{{ row.category }}</td>
                         <td>{{ row.quantity }}</td>
                         <td>{{ row.additions }}</td>
                         <td>{{ row.removals }}</td>
-                        <td>
+                        <td v-if="!showFullInv">
                             <button v-if="!simpleCategores.includes(row.category)" @click="getDetails(row.category,row.genders)" class="bg-blue-700 rounded-md p-2 text-white">
                                 View Sizes
                             </button>
+                        </td>
+                    </tr>
+                    <tr v-if="showFullInv && !simpleCategores.includes(row.category)" class="bg-white">
+                        <td colspan="4">
+                            <template v-for="gender in row.genders" :key="gender.name">
+                                <div class="px-36 ">
+                                    <h1 class="font-semibold text-left text-lg border-b">{{ gender.name }}</h1>
+                                    <table class="w-full " v-if="gender.info.some(i => i.quantity !== 0)">
+                                        <thead class="text-black font-bold">
+                                            <tr>
+                                            <th class="p-4 border-b-[#ddd] border-b-2 text-center">{{row.category!=="Other Items"? "Size" : "Item"}}</th>
+                                            <th class="p-4 border-b-[#ddd] border-b-2 text-center">Quantity</th>
+                                            <th class="p-4 border-b-[#ddd] border-b-2 text-center">Added</th>
+                                            <th class="p-4 border-b-[#ddd] border-b-2 text-center">Removed</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="bg-gray-100 text-center">
+                                            <template v-for="infoRow in gender.info" :key="infoRow.size">
+                                                <tr class="border-b-2 odd:bg-white even:bg-gray-50" v-if="infoRow.quantity !== 0">
+                                                    <td>{{ infoRow.size }}</td>
+                                                    <td>{{ infoRow.quantity }}</td>
+                                                    <td>{{ infoRow.additions }}</td>
+                                                    <td>{{ infoRow.removals }}</td>
+                                                </tr>
+                                            </template>
+                                        </tbody>
+                                    </table>
+                                    <div v-else>
+                                        <h1 class="bg-white text-left pb-3">None</h1>
+                                    </div>
+                                </div>
+                            </template>
                         </td>
                     </tr>
                 </tbody>
@@ -249,7 +320,8 @@ const isLoadingSelected = ref(false);
 const selectedError = ref(null);
 const lastReportType = ref(null);
 const selectedDate = ref(null);
-
+const showFullInv = ref(false);
+const showFullReport = ref(false);
 onMounted(()=>{
     $fetch(`/api/reports`,{
         method:"POST"
@@ -603,6 +675,7 @@ async function saveDaily() {
         viewingSelectedReport.value = true;
         ChooseDailyReport.value = false;
         selectedDate.value = null;
+        console.log(selectedReportRows.value);
     } catch (err) {
         selectedError.value = err?.message || String(err);
     } finally {
@@ -658,7 +731,7 @@ function closeDetails(){
     table-layout: fixed;
     background-color: #fff;
     border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    /* box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); */
 }
 
 #reports-summary th,
@@ -668,18 +741,12 @@ function closeDetails(){
     text-align: center;
 }
 
-#reports-summary th {
-    background-color: #3f51b5; /* Indigo */
-    color: #fff;
-    font-weight: bold;
-}
-
 #reports-summary tr:nth-child(even) {
-    background-color: #f9f9f9;
+    /* background-color: #f9f9f9; */
 }
 
 #reports-summary tr:hover {
-    background-color: #e0e0e0;
+    /*  */
 }
 
 #reports-summary td {
@@ -768,7 +835,7 @@ function closeDetails(){
   border-radius: 8px;
   padding: 20px;
   min-width: 320px;
-  max-width: 480px;
+  max-width: 50%;
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
   position: relative;
 }
@@ -826,7 +893,7 @@ function closeDetails(){
     padding: 2em;
     border-radius: 8px;
     width: 90%;
-    max-width: 500px;
+    max-width: 50%;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     position: relative;
     height: 90%;
