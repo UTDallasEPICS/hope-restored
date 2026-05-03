@@ -22,8 +22,6 @@ export default defineEventHandler(async (event) =>{
             ed[1] = todayEnd;
             sd[1] = ed[1]; ed[0] = sd[0];
         }
-        //console.log(sd);
-        //console.log(ed);
         const catList = await prisma.inventory.groupBy({
             by:['category'],
         })
@@ -149,7 +147,33 @@ export default defineEventHandler(async (event) =>{
                 }
             }
         }
-        return groupedData
+        let orderedData:{category:string,quantity:number,additions:number,removals:number,genders:{name:string,info:{size:string,quantity:number,additions:number,removals:number}[]}[]}[] = []
+        const simpleCategories =['Blankets','Hygiene Packs','Snack Packs'];
+        const letterSizedCategories=['Shirts','Pants','Jackets','Underwear'];
+        const numberSizedCategories=['Shoes'] //add pants
+        let simpleData:{category:string,quantity:number,additions:number,removals:number,genders:{name:string,info:{size:string,quantity:number,additions:number,removals:number}[]}[]}[] = []
+        let letterData:{category:string,quantity:number,additions:number,removals:number,genders:{name:string,info:{size:string,quantity:number,additions:number,removals:number}[]}[]}[] = []
+        let numberData:{category:string,quantity:number,additions:number,removals:number,genders:{name:string,info:{size:string,quantity:number,additions:number,removals:number}[]}[]}[] = []
+        let otherData:{category:string,quantity:number,additions:number,removals:number,genders:{name:string,info:{size:string,quantity:number,additions:number,removals:number}[]}[]}[] = []
+        for(const cat of groupedData){
+        if(simpleCategories.includes(cat.category)){
+            simpleData.push(cat);
+        }
+        else if(letterSizedCategories.includes(cat.category)){
+            letterData.push(cat);
+        }
+        else if(numberSizedCategories.includes(cat.category)){
+            numberData.push(cat);
+        }
+        else{
+            otherData.push(cat);
+        }
+        }
+        orderedData.push(...simpleData);
+        orderedData.push(...letterData);
+        orderedData.push(...numberData);
+        orderedData.push(...otherData);
+        return orderedData
     }catch(error){
         console.log("error finding report", error);
     }

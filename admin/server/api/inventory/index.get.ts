@@ -1,5 +1,6 @@
 import { defineEventHandler, getQuery } from 'h3';
 import { PrismaClient } from '@prisma/client';
+import { group } from 'node:console';
 
 const prisma = new PrismaClient();
 
@@ -26,7 +27,7 @@ export default defineEventHandler(async (event) => {
     ],
   })
   let groupedData:{category:string,quantity:number,additions:number,removals:number,genders:{name:string,info:{size:string,quantity:number,additions:number,removals:number}[]}[]}[] = []
-
+  let orderedData:{category:string,quantity:number,additions:number,removals:number,genders:{name:string,info:{size:string,quantity:number,additions:number,removals:number}[]}[]}[] = []
   for (const cat of catList) {
     groupedData.push({
       category:cat.category,
@@ -81,5 +82,30 @@ for(const item of inv){
     }
   }
 }
-  return groupedData
+const simpleCategories =['Blankets','Hygiene Packs','Snack Packs'];
+const letterSizedCategories=['Shirts','Pants','Jackets','Underwear'];
+const numberSizedCategories=['Shoes'] //add pants
+let simpleData:{category:string,quantity:number,additions:number,removals:number,genders:{name:string,info:{size:string,quantity:number,additions:number,removals:number}[]}[]}[] = []
+let letterData:{category:string,quantity:number,additions:number,removals:number,genders:{name:string,info:{size:string,quantity:number,additions:number,removals:number}[]}[]}[] = []
+let numberData:{category:string,quantity:number,additions:number,removals:number,genders:{name:string,info:{size:string,quantity:number,additions:number,removals:number}[]}[]}[] = []
+let otherData:{category:string,quantity:number,additions:number,removals:number,genders:{name:string,info:{size:string,quantity:number,additions:number,removals:number}[]}[]}[] = []
+for(const cat of groupedData){
+  if(simpleCategories.includes(cat.category)){
+    simpleData.push(cat);
+  }
+  else if(letterSizedCategories.includes(cat.category)){
+    letterData.push(cat);
+  }
+  else if(numberSizedCategories.includes(cat.category)){
+    numberData.push(cat);
+  }
+  else{
+    otherData.push(cat);
+  }
+}
+orderedData.push(...simpleData);
+orderedData.push(...letterData);
+orderedData.push(...numberData);
+orderedData.push(...otherData);
+  return orderedData
 });
