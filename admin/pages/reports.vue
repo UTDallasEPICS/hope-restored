@@ -188,7 +188,7 @@
                                         <td class="p-3 border-b text-center text-[#333]">{{ row.removals }}</td>
                                         <td v-if="!showFullReport" class="p-3 border-b text-center">
                                             <button v-if="!simpleCategores.includes(row.category)" @click="getDetails(row.category,row.genders)" class="bg-[#4c5baf] rounded-md p-2 text-white">
-                                                View Sizes
+                                                {{row.category !== 'Other Items'? "View Sizes" : "View Items"}}
                                             </button>
                                         </td>
                                     </tr>
@@ -252,7 +252,7 @@
                         <td class="p-3 border-b text-center text-[#333]">{{ row.removals }}</td>
                         <td v-if="!showFullInv" class="p-3 border-b text-center">
                             <button v-if="!simpleCategores.includes(row.category)" @click="getDetails(row.category,row.genders)" class="bg-[#4c5baf] rounded-md p-2 text-white">
-                                View Sizes
+                                {{row.category !== 'Other Items'? "View Sizes" : "View Items"}}
                             </button>
                         </td>
                     </tr>
