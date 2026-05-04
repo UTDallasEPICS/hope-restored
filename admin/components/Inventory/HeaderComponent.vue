@@ -5,7 +5,7 @@
     <div class="bg-white p-[clamp(0.5rem,1.2vw,0.75rem)_clamp(1rem,3vw,2rem)] border-b">
       <div class=" max-w-350 m-0">
         <NuxtLink to="/Home" class="no-underline text-inherit inline-flex items-center" aria-label="Go to home page">
-          <h1 class="m-0 font-sans text-[clamp(1.25rem,2.5vw+0.5rem,1.65rem)] font-bold text-[#878787] tracking-[0.06em]">Hope Restored Missions</h1>
+          <h1 class="m-0 font-sans text-[clamp(1.25rem,2.5vw+0.5rem,1.65rem)] font-bold text-[#878787] tracking-[0.06em] print:text-black">Hope Restored Missions</h1>
         </NuxtLink>
       </div>
     </div>
