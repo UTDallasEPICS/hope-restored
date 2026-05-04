@@ -2,7 +2,7 @@
 <template>
     <div class="p-[2em] bg-[#f0f2f5] min-h-screen overflow-x-auto overflow-y-auto">
         <!-- Actions Row: View Previous Reports -->
-        <div class="flex content-end justify-end gap-3 mb-4">
+        <div class="flex content-end justify-end gap-3 mb-4 print:hidden">
             <button @click="showPreviousReportsModal = true" class="py-2 px-6 bg-[#4c5baf] text-white border-none rounded-sm cursor-pointer text-[1em] uppercase transition-colors duration-300 ease-in flex items-center gap-[0.5em]">
                 <i class="fas fa-folder-open"></i> View Report
             </button>
@@ -153,8 +153,8 @@
 
         <!-- Selected report results modal -->
         <div v-if="viewingSelectedReport" class="fixed top-0 left-0 w-full h-full bg-[rgba(20,20,20,0.45)] flex items-center justify-center z-10">
-            <div class="bg-white p-8 rounded-lg w-full md:w-2/3 shadow-md relative h-3/4 overflow-y-auto">
-                <div class="flex justify-between">
+            <div class="bg-white p-8 rounded-lg w-full md:w-2/3 shadow-md relative h-3/4 overflow-y-auto print:overflow-visible print:max-h-none print:h-auto">
+                <div class="flex justify-between print:hidden">
                     <button class="px-2 py-2 bg-[#757575] text-white rounded-sm cursor-pointer text-[0.9em]"  
                     @click="goBackToCalendar"> Back
                     </button>
@@ -228,12 +228,12 @@
                 </div>
 
                 <div class="flex content-end gap-4" style="margin-top:1em;">
-                    <button class="bg-[#f44336] hover:bg-[#e53935] py-2 px-6 text-white border-none rounded-sm cursor-pointer flex items-center gap-2"  @click="viewingSelectedReport = false">Close</button>
+                    <button class="bg-[#f44336] hover:bg-[#e53935] py-2 px-6 text-white border-none rounded-sm cursor-pointer flex items-center gap-2 print:hidden"  @click="viewingSelectedReport = false">Close</button>
                 </div>
             </div>
         </div>
         <h2 class="text-[1.8em] text-[#3f51b5] mt-4 mx-0 mb-2">Today's Data:</h2>
-        <div class="inventory_table_container shadow-xl">
+        <div class="shadow-xl print:overflow-visible print:max-h-none print:h-auto">
             <table class="w-full border-collapse table-fixed bg-white rounded-lg shadow-sm">
                 <thead>
                     <tr>
@@ -708,71 +708,3 @@ function closeDetails(){
 }
 </script>
 
-<style scoped>
-/* Month grid (3 columns x 4 rows) */
-.month-cell {
-    padding: 0.75em 0.5em;
-    background: #fafafa;
-    border: 1px solid transparent;
-    border-radius: 6px;
-    cursor: pointer;
-    text-align: center;
-}
-.month-cell.selected {
-    background: #3f51b5;
-    color: #fff;
-    font-weight: 700;
-}
-.month-cell.disabled {
-    background: #e0e0e0;
-    color: #9e9e9e;
-    cursor: not-allowed;
-    opacity: 0.6;
-}
-.month-cell.disabled:hover {
-    background: #e0e0e0;
-}
-.amendData-btn {
-    padding: 0.5em 1.5em;
-    background-color: #4c5baf;
-    color: #fff;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 1em;
-    text-transform: uppercase;
-    transition: background-color 0.3s ease;
-    display: flex;
-    align-items: center;
-    gap: 0.5em;
-}
-
-.back-button {
-    position: absolute;
-    top: 1em;
-    left: 1em;
-    padding: 0.5em 1em;
-    background-color: #757575;
-    color: #fff;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 0.9em;
-    display: flex;
-    align-items: center;
-    gap: 0em;
-    transition: background-color 0.3s ease;
-}
-
-.back-button:hover {
-    background-color: #616161;
-}
-
-.updated-note {
-    text-align: center;
-    font-size: 0.95em;
-    color: #666;
-    margin-top: 0.25em;
-    font-style: italic;
-}
-</style>
