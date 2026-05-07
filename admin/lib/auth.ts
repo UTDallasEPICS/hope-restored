@@ -64,14 +64,20 @@ export const auth = betterAuth({
 	emailAndPassword: {
 		enabled: true,
 	},
-	plugins: [
-		emailOTP({
-			async sendVerificationOTP({ email, otp, type }) {
-				const from = process.env.SMTP_FROM || process.env.SMTP_USER;
-				const subject = type === "sign-in" ? "Your login code" : "Verify your email";
-				if (!process.env.SMTP_USER || !process.env.SMTP_PASS || !from) {
-					throw new Error("SMTP is not configured. Set SMTP_USER, SMTP_PASS, and SMTP_FROM in admin/.env");
-				}
+		plugins: [
+			emailOTP({
+				async sendVerificationOTP({ email, otp, type }) {
+					const from = process.env.SMTP_FROM || process.env.SMTP_USER;
+					const subject = type === "sign-in" ? "Your login code" : "Verify your email";
+					if (!process.env.SMTP_USER || !process.env.SMTP_PASS || !from) {
+						if (process.env.NODE_ENV !== "production") {
+							console.info(
+								`[DEV OTP] ${type} for ${email}: ${otp} (expires in 10 minutes)`,
+							);
+							return;
+						}
+						throw new Error("SMTP is not configured. Set SMTP_USER, SMTP_PASS, and SMTP_FROM in admin/.env");
+					}
 
 				try {
 					await transporter.sendMail({
@@ -108,4 +114,3 @@ export const auth = betterAuth({
 		enabled: false,
 	},
 });
-

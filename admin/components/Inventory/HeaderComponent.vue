@@ -129,12 +129,12 @@ useHead({
 
 const handleSignOut = async () => {
   try {
+    await $fetch("/api/logout");
     await authClient.signOut();
   } finally {
-    await navigateTo("/login");
+    await navigateTo("/login", { external: true });
   }
 };
 
 
 </script>
-
