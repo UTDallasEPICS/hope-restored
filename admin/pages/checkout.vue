@@ -2,6 +2,25 @@
   <div
     class="w-full min-w-0 max-w-full overflow-x-hidden bg-gray-100 box-border px-4 py-6 md:px-6 md:py-8 lg:px-8 pb-10"
   >
+    <!-- CATEGORY SELECTOR -->
+  <div class="mb-6">
+    <div class="flex flex-wrap gap-3">
+      <button
+        v-for="cat in categories"
+        :key="cat.name"
+        @click="selectedCategory = cat.name"
+        :class="[
+          'px-10 py-5 rounded-xl border text-base font-semibold transition-all shadow-sm',
+          selectedCategory === cat.name
+            ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+            : 'bg-white text-gray-700 border-gray-300 hover:border-indigo-500 hover:text-indigo-700'
+        ]"
+      >
+        {{ cat.name }}
+      </button>
+    </div>
+  </div>
+
     <div
       class="w-full min-w-0 max-w-7xl mx-auto grid grid-cols-1 gap-4 md:grid-cols-2 lg:gap-6 items-start"
     >
@@ -199,22 +218,7 @@
       >
         <h2 class="text-xl font-bold text-gray-900 mb-4">Item Removal Form</h2>
 
-        <!-- Gender Toggle -->
-        <div class="flex flex-wrap gap-2 mb-4">
-          <button
-            v-for="gender in visibleGenders"
-            :key="gender"
-            :class="[
-              'px-4 py-2 rounded-md border text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-indigo-500',
-              selectedGender === gender
-                ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
-                : 'bg-white text-gray-700 border-gray-300 hover:border-indigo-500 hover:text-indigo-700',
-            ]"
-            @click="selectedGender = gender"
-          >
-            {{ gender }}
-          </button>
-        </div>
+        
 
         <!-- Name + Date -->
         <div class="flex flex-wrap gap-3 mb-4">
@@ -235,78 +239,115 @@
             />
           </div>
         </div>
+        
 
-        <!-- HRM Table -->
-        <table
-          class="w-full max-w-full min-w-0 table-fixed border border-gray-200 text-sm"
+        
+
+<!-- DYNAMIC CATEGORY CONTENT -->
+<div class="border border-gray-200 rounded-2xl p-6 bg-gray-50 shadow-sm">
+  <!-- SIMPLE ITEMS -->
+  <template
+    v-if="[
+      'Snack Packs',
+      'Hygiene Packs',
+      'Blankets'
+    ].includes(selectedCategory)"
+  >
+
+    <div class="flex items-center justify-between max-w-sm">
+      <h3 class="text-lg font-bold text-gray-800">
+        Quantity
+      </h3>
+
+      <input
+        type="number"
+        min="0"
+        placeholder="0"
+        class="w-32 px-3 py-2 border border-gray-300 rounded-md text-center"
+      />
+    </div>
+
+  </template>
+
+  <!-- OTHER ITEMS -->
+  <template v-else-if="selectedCategory === 'Other Items'">
+
+    <div class="space-y-4 max-w-md">
+
+      <div>
+        <label class="block text-sm font-semibold mb-1">
+          Item Name
+        </label>
+
+        <input
+          type="text"
+          placeholder="e.g. Toaster, Diapers"
+          class="w-full px-3 py-2 border border-gray-300 rounded-md"
+        />
+      </div>
+
+      <div>
+        <label class="block text-sm font-semibold mb-1">
+          Quantity
+        </label>
+
+        <input
+          type="number"
+          min="0"
+          placeholder="0"
+          class="w-full px-3 py-2 border border-gray-300 rounded-md"
+        />
+      </div>
+
+    </div>
+
+  </template>
+
+  <!-- APPAREL + SHOES -->
+  <template v-else>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">    
+
+      <div
+        v-for="gender in visibleGenders"
+        :key="gender"
+        class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm"      >
+
+        <h3 class="text-lg font-bold text-gray-900 mb-4">
+          {{ gender }}
+        </h3>
+
+        <div
+          v-for="size in (
+            selectedCategory === 'Shoes'
+              ? shoeSizes
+              : apparelSizes
+          )"
+          :key="size"
+          class="flex items-center gap-3 mb-4"
         >
-          <thead class="bg-gray-50">
-            <tr>
-              <th class="border border-gray-200 px-3 py-2">Category</th>
-              <th class="border border-gray-200 px-3 py-2">Size</th>
-              <th class="border border-gray-200 px-3 py-2">Quantity</th>
-            </tr>
-          </thead>
 
-          <tbody>
-            <tr v-for="item in items" :key="item.name">
-              <td
-                class="border border-gray-200 px-3 py-2 text-center font-semibold text-gray-800"
-              >
-                {{ item.name }}
-              </td>
+          <span class="font-semibold text-gray-700 w-12 shrink-0 text-base text-left">
+            {{ size }}
+          </span>
 
-              <!-- Size / Other item input -->
-              <td class="border border-gray-200 px-3 py-2">
-                <template v-if="item.name === 'Other Items'">
-                  <input
-                    type="text"
-                    v-model="item.otherItemName"
-                    placeholder="e.g. Toaster, Diapers"
-                    class="w-full px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  />
-                </template>
-                <template v-else>
-                  <select
-                    v-model="item.size"
-                    :disabled="!item.hasSize"
-                    class="w-full px-2 py-1 border border-gray-300 rounded-md text-center focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-100 disabled:text-gray-500"
-                  >
-                    <option v-if="!item.hasSize" value="N/A">N/A</option>
+          <input
+            type="number"
+            min="0"
+            placeholder="qty"
+            class="flex-1 min-w-0 max-w-[180px] px-1 py-2 border border-gray-300 rounded-xl text-center text-base shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          />
 
-                    <option
-                      v-for="size in sizeOptions"
-                      v-if="item.hasSize && item.name !== 'Shoes'"
-                      :key="size"
-                      :value="size"
-                    >
-                      {{ size }}
-                    </option>
-                    <option
-                      v-for="size in shoeSizeOptions"
-                      v-if="item.hasSize && item.name === 'Shoes'"
-                      :key="size"
-                      :value="size"
-                    >
-                      {{ size }}
-                    </option>
-                  </select>
-                </template>
-              </td>
+        </div>
 
-              <!-- Quantity -->
-              <td class="border border-gray-200 px-3 py-2">
-                <input
-                  type="number"
-                  min="0"
-                  v-model.number="item.quantity"
-                  placeholder="0"
-                  class="w-full px-2 py-1 border border-gray-300 rounded-md text-center focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                />
-              </td>
-            </tr>
-          </tbody>
-        </table>
+      </div>
+
+    </div>
+
+  </template>
+
+</div>
+
 
         <div class="mt-4 flex justify-end">
           <button
@@ -451,6 +492,8 @@ function redirectToLoginIfUnauthorized(error: unknown) {
 ---------------------- */
 
 const selectedGender = ref("Male");
+const selectedCategory = ref("Shirts");
+
 const personName = ref("");
 const todayDate = ref(new Date().toISOString().split("T")[0]);
 const visibleGenders = ["Male", "Female", "Child"];
