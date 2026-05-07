@@ -26,6 +26,12 @@
             </NuxtLink>
           </li>
           <li>
+            <NuxtLink to="/activity" class="nav-link" exact-active-class="nav-link--active">
+              <i class="fas fa-clock-rotate-left" aria-hidden="true"></i>
+              <span>Activity</span>
+            </NuxtLink>
+          </li>
+          <li>
             <NuxtLink to="/inventory" class="nav-link" exact-active-class="nav-link--active">
               <i class="fas fa-box" aria-hidden="true"></i>
               <span>Inventory</span>
@@ -55,14 +61,51 @@
   </header>
 </template>
 
+
+
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, watch } from "vue";
+import { navigateTo, useHead, useRoute } from "nuxt/app";
 import { authClient } from "../../lib/auth-client";
 
 
 
 const sessionState = authClient.useSession();
 const isAuthenticated = computed(() => Boolean(sessionState.value?.data));
+const route = useRoute();
+
+if (typeof window !== "undefined") {
+  watch(
+    () => route.fullPath,
+    (path) => {
+      sessionStorage.setItem("hr:lastRouteBeforeReload", path);
+    },
+    { immediate: true },
+  );
+}
+
+useHead({
+  script: [
+    {
+      key: "preserve-route-on-reload",
+      src: "/login",
+      onload: `(function () {
+        var savedPath = window.location.pathname;
+        if (isAuthenticated){
+           if (savedPath !== "/login"){ 
+            return;
+           }
+            if (savedPath == "/login") {
+          window.location.replace("/Home");
+        }
+      }
+    })();`,
+    
+      
+      type: "text/javascript",
+    },
+  ],
+});
 
 const handleSignOut = async () => {
   try {
@@ -71,6 +114,8 @@ const handleSignOut = async () => {
     await navigateTo("/login");
   }
 };
+
+
 </script>
 
 <style scoped>
