@@ -220,7 +220,7 @@
             class="flex flex-col gap-4"
             @submit.prevent="confirmAddition"
           >
-            <div>
+            <div v-if="!isSizedCategory">
               <label
                 for="add-quantity"
                 class="block mb-1 text-[0.95rem] font-medium text-gray-800"
@@ -281,57 +281,38 @@
                 </div>
               </div>
             </template>
-            <template v-else-if="!isSimpleCategory">
-              <div>
-                <span class="block mb-1 text-[0.95rem] font-medium text-gray-800"
-                  >Gender</span
-                >
+            <template v-else-if="isSizedCategory">
+              <section
+                v-for="gender in visibleGenders"
+                :key="gender"
+                class="border border-gray-200 rounded-lg p-3"
+              >
+                <h3 class="text-[1rem] font-semibold text-indigo-600 mb-2">
+                  {{ genderSectionLabels[gender] }}
+                </h3>
                 <div
-                  class="grid grid-cols-2 gap-2"
-                  role="group"
-                  aria-label="Select gender"
+                  class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2"
+                  :aria-label="`${genderSectionLabels[gender]} ${formSizeLabel.toLowerCase()} quantities`"
                 >
                   <label
-                    v-for="gender in visibleGenders"
-                    :key="gender"
-                    class="flex items-center gap-2 text-[0.95rem] font-medium text-gray-800"
+                    v-for="size in formSizeOptions"
+                    :key="`${gender}-${size}`"
+                    class="flex items-center gap-2 rounded-md border border-gray-200 px-2 py-1.5"
                   >
+                    <span class="min-w-[2.5rem] text-sm font-medium text-gray-800">
+                      {{ size }}
+                    </span>
                     <input
-                      v-model="addForm.gender"
-                      type="radio"
-                      :value="gender"
-                      class="text-indigo-600 focus:ring-indigo-500"
+                      v-model="sizedAddForm[gender][size]"
+                      type="number"
+                      min="1"
+                      inputmode="numeric"
+                      placeholder="Qty"
+                      class="w-20 rounded-md border border-gray-300 px-2 py-1.5 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     />
-                    {{ gender }}
                   </label>
                 </div>
-              </div>
-              <div>
-                <label
-                  for="add-size"
-                  class="block mb-1 text-[0.95rem] font-medium text-gray-800"
-                  >{{ formSizeLabel }}</label
-                >
-                <div class="relative">
-                  <select
-                    id="add-size"
-                    v-model="addForm.size"
-                    aria-required="true"
-                    class="w-full appearance-none rounded-md border border-gray-300 px-3 py-2 text-base shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  >
-                    <option value="">
-                      Select {{ formSizeLabel.toLowerCase() }}
-                    </option>
-                    <option v-for="s in formSizeOptions" :key="s" :value="s">
-                      {{ s }}
-                    </option>
-                  </select>
-                  <i
-                    class="fas fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
-                    aria-hidden="true"
-                  ></i>
-                </div>
-              </div>
+              </section>
             </template>
             <div class="pt-2 flex justify-end">
               <button
@@ -386,7 +367,9 @@
           </h2>
           <p id="error-message" class="text-sm text-gray-700">
             {{
-              isSimpleCategory && !isOtherItems
+              isSizedCategory
+                ? "Please enter at least one valid quantity (1 or greater). Leave boxes empty to skip sizes."
+                : isSimpleCategory && !isOtherItems
                 ? "Please enter a quantity."
                 : isOtherItems
                   ? "Please fill in item name, category, and quantity."
@@ -429,46 +412,47 @@
         </div>
       </div>
 
-      <!-- Other Items confirmation popup -->
+      <!-- Addition confirmation popup -->
       <div
-        v-if="showOtherItemsConfirm"
+        v-if="showAdditionConfirmPopup"
         class="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
         role="alertdialog"
-        aria-labelledby="confirm-other-title"
-        aria-describedby="confirm-other-message"
+        aria-labelledby="confirm-addition-title"
+        aria-describedby="confirm-addition-message"
       >
         <div class="bg-white rounded-lg p-5 w-full max-w-md shadow-xl">
           <h2
-            id="confirm-other-title"
+            id="confirm-addition-title"
             class="text-lg font-semibold text-gray-900"
           >
-            Confirm Other Item Details
+            Confirm Addition
           </h2>
-          <p id="confirm-other-message" class="text-sm text-gray-700">
-            Please double check that the information below is correct,
-            especially the
-            <strong>item name spelling</strong>, before adding it to the
-            inventory.
+          <p id="confirm-addition-message" class="text-sm text-gray-700">
+            Please confirm the following addition details are correct.
           </p>
           <ul class="mt-2 pl-5 list-disc text-sm text-gray-700">
-            <li><strong>Quantity:</strong> {{ addForm.quantity }}</li>
-            <li><strong>Item name:</strong> {{ addForm.itemName }}</li>
-            <li>
-              <strong>Category:</strong> {{ addForm.size || "Not selected" }}
+            <li
+              v-for="(item, idx) in additionPreviewItems"
+              :key="`${item.category}-${item.gender}-${item.size}-${idx}`"
+            >
+              <strong>{{ item.category }}</strong>
+              <span v-if="item.gender"> - {{ item.gender }}</span>
+              <span v-if="item.size"> - {{ item.size }}</span>
+              : {{ item.quantity }}
             </li>
           </ul>
           <div class="mt-4 flex justify-end gap-2">
             <button
               type="button"
               class="px-4 py-2 rounded-md bg-gray-300 text-gray-800 font-semibold hover:bg-gray-400"
-              @click="showOtherItemsConfirm = false"
+              @click="showAdditionConfirmPopup = false"
             >
               Go Back
             </button>
             <button
               type="button"
               class="px-4 py-2 rounded-md bg-green-600 text-white font-semibold hover:bg-green-700"
-              @click="confirmOtherItemsAddition"
+              @click="confirmPendingAdditions"
             >
               Confirm Addition
             </button>
@@ -514,14 +498,21 @@ const shoeSizeOptions = (() => {
   return sizes;
 })();
 const visibleGenders = ["Male", "Female", "Child"];
+const genderSectionLabels: Record<string, string> = {
+  Male: "Mens",
+  Female: "Womens",
+  Child: "Children",
+};
+
+type CategoryDetail = {
+  category: string;
+  quantity: number;
+  genders: { name: string; info: { size: string; quantity: number }[] }[];
+};
 
 const selectedCategory = ref("");
 const categoryDetails = ref<{
-  catDetails: {
-    category: string;
-    quantity: number;
-    genders: { name: string; info: { size: string; quantity: number }[] }[];
-  }[];
+  catDetails: CategoryDetail[];
 }>({
   catDetails: [],
 });
@@ -535,8 +526,19 @@ const addForm = ref({
 const showEmptyInputError = ref(false);
 const showAdditionSuccessPopup = ref(false);
 const addErrorMessage = ref("");
-const showOtherItemsConfirm = ref(false);
+const showAdditionConfirmPopup = ref(false);
 const inventory = ref<any[]>([]);
+const sizedAddForm = ref<Record<string, Record<string, string>>>({});
+type AdditionPayload = {
+  category: string;
+  gender: string;
+  size: string;
+  quantity: number;
+};
+const pendingAdditionPayloads = ref<AdditionPayload[]>([]);
+const additionPreviewItems = ref<
+  { category: string; gender: string; size: string; quantity: number }[]
+>([]);
 
 const accordionOpen = ref(false);
 const isMobileView = ref(false);
@@ -553,6 +555,9 @@ const simpleCategories = ["Snack Packs", "Hygiene Packs", "Blankets"];
 const isOtherItems = computed(() => selectedCategory.value === "Other Items");
 const isSimpleCategory = computed(() =>
   simpleCategories.includes(selectedCategory.value),
+);
+const isSizedCategory = computed(
+  () => !isSimpleCategory.value && !isOtherItems.value,
 );
 const formSizeOptions = computed(() =>
   isShoes.value ? shoeSizeOptions : sizeOptions,
@@ -589,6 +594,7 @@ function genderHasAnyInventory(gender: {
 function selectCategory(cat: string) {
   selectedCategory.value = cat;
   addForm.value = { quantity: null, gender: "", size: "", itemName: "" };
+  initializeSizedAddForm();
   fetchCategoryDetails(cat);
 }
 
@@ -596,9 +602,33 @@ watch(isShoes, () => {
   addForm.value.size = "";
 });
 
+watch(
+  [selectedCategory, formSizeOptions],
+  () => {
+    initializeSizedAddForm();
+  },
+  { immediate: true },
+);
+
+function initializeSizedAddForm() {
+  if (!isSizedCategory.value) {
+    sizedAddForm.value = {};
+    return;
+  }
+
+  const fresh: Record<string, Record<string, string>> = {};
+  for (const gender of visibleGenders) {
+    fresh[gender] = {};
+    for (const size of formSizeOptions.value) {
+      fresh[gender][size] = "";
+    }
+  }
+  sizedAddForm.value = fresh;
+}
+
 async function fetchCategoryDetails(category: string) {
   try {
-    const data = await $fetch("/api/inventory", {
+    const data = await $fetch<CategoryDetail[]>("/api/inventory", {
       params: { category, _t: Date.now() },
     });
     const fallbackGenders =
@@ -624,6 +654,42 @@ async function confirmAddition() {
   const qty = addForm.value.quantity;
   const isSimple = isSimpleCategory.value;
 
+  if (isSizedCategory.value) {
+    const additions: AdditionPayload[] = [];
+    for (const gender of visibleGenders) {
+      for (const size of formSizeOptions.value) {
+        const rawQty = sizedAddForm.value?.[gender]?.[size];
+        if (rawQty === "") continue;
+        const parsedQty = Number(rawQty);
+        if (!Number.isFinite(parsedQty) || parsedQty < 1) {
+          showEmptyInputError.value = true;
+          return;
+        }
+        additions.push({
+          category: selectedCategory.value,
+          gender,
+          size,
+          quantity: parsedQty,
+        });
+      }
+    }
+
+    if (!additions.length) {
+      showEmptyInputError.value = true;
+      return;
+    }
+
+    pendingAdditionPayloads.value = additions;
+    additionPreviewItems.value = additions.map((item) => ({
+      category: item.category,
+      gender: item.gender,
+      size: item.size,
+      quantity: item.quantity,
+    }));
+    showAdditionConfirmPopup.value = true;
+    return;
+  }
+
   if (qty == null || qty < 1) {
     showEmptyInputError.value = true;
     return;
@@ -644,44 +710,51 @@ async function confirmAddition() {
     }
   }
 
-  if (isOtherItems.value) {
-    // Show confirmation modal for Other Items before actually saving
-    showOtherItemsConfirm.value = true;
-    return;
-  }
-
-  await performAddition(qty, isSimple);
+  const payload: AdditionPayload = isOtherItems.value
+    ? {
+        category: "Other Items",
+        gender: addForm.value.size,
+        size: addForm.value.itemName.trim(),
+        quantity: qty as number,
+      }
+    : {
+        category: selectedCategory.value,
+        gender: isSimple ? "Unisex" : addForm.value.gender,
+        size: isSimple ? "N/A" : addForm.value.size,
+        quantity: qty as number,
+      };
+  pendingAdditionPayloads.value = [payload];
+  additionPreviewItems.value = [
+    {
+      category: payload.category,
+      gender: payload.gender,
+      size: payload.size,
+      quantity: payload.quantity,
+    },
+  ];
+  showAdditionConfirmPopup.value = true;
 }
 
-async function confirmOtherItemsAddition() {
-  const qty = addForm.value.quantity;
-  const isSimple = isSimpleCategory.value;
-  showOtherItemsConfirm.value = false;
-  await performAddition(qty, isSimple);
-}
+async function confirmPendingAdditions() {
+  showAdditionConfirmPopup.value = false;
+  if (!pendingAdditionPayloads.value.length) return;
 
-async function performAddition(qty: number | null, isSimple: boolean) {
   try {
-    const body = isOtherItems.value
-      ? {
-          category: "Other Items",
-          gender: addForm.value.size,
-          size: addForm.value.itemName.trim(),
-          quantity: qty,
-        }
-      : {
-          category: selectedCategory.value,
-          gender: isSimple ? "Unisex" : addForm.value.gender,
-          size: isSimple ? "N/A" : addForm.value.size,
-          quantity: qty,
-        };
-    await $fetch("/api/inventory/", {
-      method: "POST",
-      body,
-    });
+    for (const body of pendingAdditionPayloads.value) {
+      await $fetch("/api/inventory/", {
+        method: "POST",
+        body,
+      });
+    }
     await getInventory();
     await fetchCategoryDetails(selectedCategory.value);
-    addForm.value = { quantity: null, gender: "", size: "", itemName: "" };
+    if (isSizedCategory.value) {
+      initializeSizedAddForm();
+    } else {
+      addForm.value = { quantity: null, gender: "", size: "", itemName: "" };
+    }
+    pendingAdditionPayloads.value = [];
+    additionPreviewItems.value = [];
     showAdditionSuccessPopup.value = true;
   } catch (err: any) {
     console.error("Error adding item:", err);

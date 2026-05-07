@@ -31,12 +31,15 @@
               <span>Reports</span>
             </NuxtLink>
           </li>
-          <li class="inline-flex">
-            <NuxtLink to="/inventory" class="inline-flex items-center gap-[0.35em] px-[clamp(0.5rem,1.2vw,0.75rem)] py-[clamp(0.4rem,1vw,0.5rem)] font-sans 
-              text-[clamp(0.95rem,1.2vw+0.5rem,1.1rem)] font-bold tracking-[0.05em] text-[#878787] no-underline border-t-0 border-l-0 border-r-0 bg-transparent cursor-pointer border-b-2 
-              border-b-transparent -mb-px transition-[color,border-color] duration-150 ease-in-out hover:text-[#555]" 
-              exact-active-class="!text-black !border-b-black/20">
-              <i class="fas fa-box text-[0.95em] opacity-90" aria-hidden="true"></i>
+          <li>
+            <NuxtLink to="/activity" class="nav-link" exact-active-class="nav-link--active">
+              <i class="fas fa-clock-rotate-left" aria-hidden="true"></i>
+              <span>Activity</span>
+            </NuxtLink>
+          </li>
+          <li>
+            <NuxtLink to="/inventory" class="nav-link" exact-active-class="nav-link--active">
+              <i class="fas fa-box" aria-hidden="true"></i>
               <span>Inventory</span>
             </NuxtLink>
           </li>
@@ -72,14 +75,51 @@
   </header>
 </template>
 
+
+
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, watch } from "vue";
+import { navigateTo, useHead, useRoute } from "nuxt/app";
 import { authClient } from "../../lib/auth-client";
 
 
 
 const sessionState = authClient.useSession();
 const isAuthenticated = computed(() => Boolean(sessionState.value?.data));
+const route = useRoute();
+
+if (typeof window !== "undefined") {
+  watch(
+    () => route.fullPath,
+    (path) => {
+      sessionStorage.setItem("hr:lastRouteBeforeReload", path);
+    },
+    { immediate: true },
+  );
+}
+
+useHead({
+  script: [
+    {
+      key: "preserve-route-on-reload",
+      src: "/login",
+      onload: `(function () {
+        var savedPath = window.location.pathname;
+        if (isAuthenticated){
+           if (savedPath !== "/login"){ 
+            return;
+           }
+            if (savedPath == "/login") {
+          window.location.replace("/Home");
+        }
+      }
+    })();`,
+    
+      
+      type: "text/javascript",
+    },
+  ],
+});
 
 const handleSignOut = async () => {
   try {
@@ -88,5 +128,7 @@ const handleSignOut = async () => {
     await navigateTo("/login");
   }
 };
+
+
 </script>
 
