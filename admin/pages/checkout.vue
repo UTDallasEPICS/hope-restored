@@ -482,17 +482,16 @@ function isAuthError(error: unknown) {
 }
 
 function redirectToLoginIfUnauthorized(error: unknown) {
-  console.log("Auth bypass enabled");
-  return false;
+  if (!isAuthError(error)) return false;
+  router.push("/login");
+  return true;
 }
-
 
 /* ----------------------
    Basic Form State
 ---------------------- */
 
 const selectedGender = ref("Male");
-// new code right here
 const selectedCategory = ref("Shirts");
 
 const personName = ref("");

@@ -15,21 +15,21 @@ function parseCsv(value: string | undefined): string[] {
     .filter(Boolean);
 }
 
-// function hasRequiredRole(
-//   user: SessionUserLike,
-//   requiredRole: AppRole,
-//   adminEmails: string[],
-//   staffEmails: string[],
-// ) {
-//   const userRole = (user.role || "").toLowerCase();
-//   const userEmail = (user.email || "").toLowerCase();
-//   const isAdmin = userRole === "admin" || adminEmails.includes(userEmail);
-//   const isStaff =
-//     isAdmin || userRole === "staff" || staffEmails.includes(userEmail);
+function hasRequiredRole(
+  user: SessionUserLike,
+  requiredRole: AppRole,
+  adminEmails: string[],
+  staffEmails: string[],
+) {
+  const userRole = (user.role || "").toLowerCase();
+  const userEmail = (user.email || "").toLowerCase();
+  const isAdmin = userRole === "admin" || adminEmails.includes(userEmail);
+  const isStaff =
+    isAdmin || userRole === "staff" || staffEmails.includes(userEmail);
 
-//   if (requiredRole === "admin") return isAdmin;
-//   return isStaff;
-// }
+  if (requiredRole === "admin") return isAdmin;
+  return isStaff;
+}
 
 export async function getRequestSession(event: Parameters<typeof getHeaders>[0]) {
   const headers = new Headers();
@@ -62,21 +62,27 @@ export async function requireSession(
   const config = useRuntimeConfig(event);
   const adminEmails = parseCsv(config.betterAuthAdminEmails);
   const staffEmails = parseCsv(config.betterAuthStaffEmails);
+  const hasRoleAllowlist = adminEmails.length > 0 || staffEmails.length > 0;
+  const isProd = process.env.NODE_ENV === "production";
 
-  // if (
-  //   !hasRequiredRole(
-  //     session.user as SessionUserLike,
-  //     requiredRole,
-  //     adminEmails,
-  //     staffEmails,
-  //   )
-  // ) {
-  //   throw createError({
-  //     statusCode: 403,
-  //     statusMessage: "Forbidden",
-  //     message: "You do not have permission for this action.",
-  //   });
-  // }
+  if (!hasRoleAllowlist && requiredRole === "staff" && !isProd) {
+    return session;
+  }
+
+  if (
+    !hasRequiredRole(
+      session.user as SessionUserLike,
+      requiredRole,
+      adminEmails,
+      staffEmails,
+    )
+  ) {
+    throw createError({
+      statusCode: 403,
+      statusMessage: "Forbidden",
+      message: "You do not have permission for this action.",
+    });
+  }
 
   return session;
 }

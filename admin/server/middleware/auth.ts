@@ -5,6 +5,9 @@ const STAFF_PROTECTED_PREFIXES = [
   "/api/checkout",
   "/api/inventory",
   "/api/reports",
+  "/api/resource/create",
+  "/api/resource/update",
+  "/api/resource/delete",
 ];
 
 const ADMIN_PROTECTED_PREFIXES = ["/api/amend"];

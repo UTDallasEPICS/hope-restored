@@ -31,10 +31,19 @@
               <span>Reports</span>
             </NuxtLink>
           </li>
-          <li>
-            <NuxtLink to="/activity" class="inline-flex items-center gap-[0.35em] px-[clamp(0.5rem,1.2vw,0.75rem)] py-[clamp(0.4rem,1vw,0.5rem)] font-sans 
-              text-[clamp(0.95rem,1.2vw+0.5rem,1.1rem)] font-bold tracking-[0.05em] text-[#878787] no-underline border-t-0 border-l-0 border-r-0 bg-transparent cursor-pointer border-b-2 
-              border-b-transparent -mb-px transition-[color,border-color] duration-150 ease-in-out hover:text-[#555]" 
+          <li class="inline-flex">
+            <NuxtLink to="/activity" class="inline-flex items-center gap-[0.35em] px-[clamp(0.5rem,1.2vw,0.75rem)] py-[clamp(0.4rem,1vw,0.5rem)] font-sans
+              text-[clamp(0.95rem,1.2vw+0.5rem,1.1rem)] font-bold tracking-[0.05em] text-[#878787] no-underline border-t-0 border-l-0 border-r-0 bg-transparent cursor-pointer border-b-2
+              border-b-transparent -mb-px transition-[color,border-color] duration-150 ease-in-out hover:text-[#555]"
+              exact-active-class="!text-black !border-b-black/20">
+              <i class="fas fa-clock-rotate-left text-[0.95em] opacity-90" aria-hidden="true"></i>
+              <span>Activity</span>
+            </NuxtLink>
+          </li>
+          <li class="inline-flex">
+            <NuxtLink to="/inventory" class="inline-flex items-center gap-[0.35em] px-[clamp(0.5rem,1.2vw,0.75rem)] py-[clamp(0.4rem,1vw,0.5rem)] font-sans
+              text-[clamp(0.95rem,1.2vw+0.5rem,1.1rem)] font-bold tracking-[0.05em] text-[#878787] no-underline border-t-0 border-l-0 border-r-0 bg-transparent cursor-pointer border-b-2
+              border-b-transparent -mb-px transition-[color,border-color] duration-150 ease-in-out hover:text-[#555]"
               exact-active-class="!text-black !border-b-black/20">
               <i class="fas fa-clock-rotate-left" aria-hidden="true"></i>
               <span>Activity</span>
@@ -129,12 +138,12 @@ useHead({
 
 const handleSignOut = async () => {
   try {
+    await $fetch("/api/logout");
     await authClient.signOut();
   } finally {
-    await navigateTo("/login");
+    await navigateTo("/login", { external: true });
   }
 };
 
 
 </script>
-
