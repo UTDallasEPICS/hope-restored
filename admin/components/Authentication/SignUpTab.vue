@@ -36,7 +36,7 @@
         <input
           type="text"
           v-model="otp"
-          placeholder="Enter code here"
+          :placeholder="props.signupForm ? 'Enter sign up code here' : 'Enter login code here'"
           class="border p-2 w-full mb-4"
         />
         <button
@@ -50,7 +50,7 @@
   </template>
   
 <script setup lang="ts">
-import {ref} from 'vue'
+import { ref, watch } from "vue";
 import { useRouter } from 'vue-router';
 import { authClient } from '../../lib/auth-client';
 const router = useRouter();
@@ -65,6 +65,16 @@ const lastName = ref('');
 const props = defineProps<{
         signupForm:boolean
     }>();
+
+watch(
+  () => props.signupForm,
+  () => {
+    validEmail.value = false;
+    otp.value = "";
+    Error.value = false;
+    ErrorMsg.value = "";
+  },
+);
 
 const handleSubmit = async () => {
   Error.value = false;
