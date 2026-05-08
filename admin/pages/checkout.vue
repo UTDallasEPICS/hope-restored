@@ -8,7 +8,7 @@
       <button
         v-for="cat in categories"
         :key="cat.name"
-        @click="selectedCategory = cat.name"
+        @click="selectCategory(cat.name)"
         :class="[
           'px-10 py-5 rounded-xl border text-base font-semibold transition-all shadow-sm',
           selectedCategory === cat.name
@@ -244,7 +244,7 @@
         
 
 <!-- DYNAMIC CATEGORY CONTENT -->
-<div class="border border-gray-200 rounded-2xl p-6 bg-gray-50 shadow-sm">
+<div class="border border-gray-200 rounded-2xl p-6 bg-gray-50 shadow-sm" v-if="items.length">
   <!-- SIMPLE ITEMS -->
   <template
     v-if="[
@@ -263,15 +263,14 @@
         type="number"
         min="0"
         placeholder="0"
+        v-model="items[0][0].quantity"
         class="w-32 px-3 py-2 border border-gray-300 rounded-md text-center"
       />
     </div>
 
   </template>
-
-  <!-- OTHER ITEMS -->
   <template v-else-if="selectedCategory === 'Other Items'">
-
+    {{ selectedCategory }}
     <div class="space-y-4 max-w-md">
 
       <div>
@@ -282,6 +281,7 @@
         <input
           type="text"
           placeholder="e.g. Toaster, Diapers"
+          v-model="items[0][0].otherItemName"
           class="w-full px-3 py-2 border border-gray-300 rounded-md"
         />
       </div>
@@ -295,6 +295,7 @@
           type="number"
           min="0"
           placeholder="0"
+          v-model="items[0][0].quantity"
           class="w-full px-3 py-2 border border-gray-300 rounded-md"
         />
       </div>
@@ -302,14 +303,12 @@
     </div>
 
   </template>
-
-  <!-- APPAREL + SHOES -->
   <template v-else>
 
     <div class="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">    
 
       <div
-        v-for="gender in visibleGenders"
+        v-for="(gender,genIdx) in visibleGenders"
         :key="gender"
         class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm"      >
 
@@ -318,7 +317,7 @@
         </h3>
 
         <div
-          v-for="size in (
+          v-for="(size,idx) in (
             selectedCategory === 'Shoes'
               ? shoeSizes
               : apparelSizes
@@ -332,6 +331,7 @@
           </span>
 
           <input
+            v-model="items[genIdx][idx].quantity"
             type="number"
             min="0"
             placeholder="qty"
@@ -466,6 +466,7 @@ type InventoryRow = {
 
 type CheckoutItem = {
   name: string;
+  gender:string;
   hasSize: boolean;
   size: string;
   quantity: number;
@@ -582,15 +583,62 @@ const categories = [
   { name: "Other Items", hasSize: false },
 ];
 
-const items = ref<CheckoutItem[]>(
-  categories.map((cat) => ({
-    name: cat.name,
-    hasSize: cat.hasSize,
-    size: cat.hasSize ? "M" : "N/A",
-    quantity: 0,
-    otherItemName: "",
-  })),
-);
+const items = ref<CheckoutItem[][]>([]);
+
+function selectCategory(catName:string){
+  selectedCategory.value = catName;
+  items.value= [];
+  if(simpleCategories.includes(selectedCategory.value)){
+    items.value.push(
+      [{name:selectedCategory.value,
+        gender:"",
+        hasSize:false,
+        size:"N/A",
+        quantity:0,
+        otherItemName:""
+      }]
+    )
+  }
+  else if (selectedCategory.value == "Shoes"){
+    for(const gender of visibleGenders){
+      items.value.push(
+        shoeSizes.map((size) => ({
+          gender: gender,
+          name: selectedCategory.value,
+          hasSize: true,
+          size:size,
+          quantity: 0,
+          otherItemName: ""
+        }))
+      )
+    }
+  }
+  else if(selectedCategory.value == "Other Items"){
+    items.value.push(
+      [{name:selectedCategory.value,
+        gender:"",
+        hasSize:false,
+        size:"N/A",
+        quantity:0,
+        otherItemName:""
+      }]
+    )
+  }
+  else{
+    for(const gender of visibleGenders){
+      items.value.push(
+        sizeOptions.map((size) => ({
+          gender: gender,
+          name: selectedCategory.value,
+          hasSize: true,
+          size:size,
+          quantity: 0,
+          otherItemName: ""
+        }))
+      )
+    }
+  }
+}
 
 /* ----------------------
    Inventory
@@ -853,6 +901,8 @@ onMounted(async () => {
     await nextTick();
     attachRightPanelResizeObserver();
   }
+
+  selectCategory("Shirts");
 });
 
 let filtersClickOutsideHandler: ((e: MouseEvent) => void) | null = null;
@@ -896,23 +946,21 @@ const showRemovedModal = ref(false);
 const removedListServer = ref<string[]>([]);
 
 const removedList = computed(() =>
-  items.value
-    .filter((i) => i.quantity > 0)
-    .map((i) =>
+  items.value.flatMap((gender) => gender.filter((i) => i.quantity > 0).map((i) =>
       i.name === "Other Items"
         ? `${i.quantity} ${i.otherItemName || "Other Items"}`
-        : `${i.quantity} ${i.name} (${i.size})`,
-    ),
+        : ` ${i.quantity} ${i.gender} ${i.name} (${i.size})`,
+    ),)
+    
 );
 
 function openCheckoutConfirm() {
-  const removals = items.value.filter((i) => i.quantity > 0);
+  const removals = items.value.flatMap((gender) => gender.filter((i) => i.quantity > 0));
+  
   if (!removals.length) {
     alert("No items selected.");
     return;
   }
-  console.log("removals", removals);
-  console.log("available map", availableMap.value);
   for (const r of removals) {
     if (r.name === "Other Items") {
       // Skip strict availability check for Other Items (uses free-text name)
@@ -921,14 +969,14 @@ function openCheckoutConfirm() {
     const usesSharedInventory = simpleCategories.includes(r.name);
     const requestedGender = usesSharedInventory
       ? "Unisex"
-      : selectedGender.value;
+      : r.gender;
     const available =
       (availableMap.value[r.name + requestedGender + r.size] ?? 0) +
       (usesSharedInventory
         ? 0
         : (availableMap.value[r.name + "Unisex" + r.size] ?? 0));
     if (r.quantity > available) {
-      alert(`${r.name}: Requested ${r.quantity}, Available ${available}`);
+      alert(`${r.gender} ${r.name} ${r.size}: Requested ${r.quantity}, Available ${available}`);
       return;
     }
   }
@@ -939,8 +987,7 @@ function openCheckoutConfirm() {
 async function confirmCheckout() {
   showCheckoutConfirm.value = false;
 
-  const removals = items.value
-    .filter((i) => i.quantity > 0)
+  const removals = items.value.flatMap((gender) => gender.filter((i) => i.quantity > 0))
     .map((i) =>
       i.name === "Other Items"
         ? {
@@ -955,7 +1002,7 @@ async function confirmCheckout() {
             quantity: i.quantity,
             gender: simpleCategories.includes(i.name)
               ? "Unisex"
-              : selectedGender.value,
+              : i.gender,
           },
     );
 
@@ -984,11 +1031,7 @@ async function confirmCheckout() {
 }
 
 function newCheckout() {
-  items.value.forEach((i) => {
-    i.quantity = 0;
-    console.log(i);
-    i.size = i.hasSize ? (i.name !== "Shoes" ? "M" : "5") : "N/A";
-  });
+  selectCategory(selectedCategory.value)
   showRemovedModal.value = false;
 }
 

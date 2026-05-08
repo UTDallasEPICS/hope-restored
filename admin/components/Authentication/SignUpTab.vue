@@ -62,6 +62,7 @@ const Error = ref(false);
 const firstName = ref('');
 const lastName = ref('');
 
+
 const props = defineProps<{
         signupForm:boolean
     }>();
@@ -102,19 +103,41 @@ const handleSubmit = async () => {
     }
 
     try {
-      const result = await authClient.emailOtp.sendVerificationOtp({
-        email: email.value,
-        type: 'sign-in',
+      const {data, refresh} = await useFetch('/api/user',{
+        params:{email:email.value} 
       });
-
-      if(result.error){
-        ErrorMsg.value = result.error.message || result.error.statusText || `Error ${result.error.status}: Failed to send code. Check SMTP settings in admin/.env.`;
-        Error.value = true;
-      } else {
-        validEmail.value = true;
-        Error.value = false;
-        ErrorMsg.value = '';
+      console.log(data.value);
+      if(!props.signupForm && data.value){
+        const result = await authClient.emailOtp.sendVerificationOtp({
+          email: email.value,
+          type: 'sign-in',
+        });
+        if(result.error){
+          ErrorMsg.value = result.error.message || result.error.statusText || `Error ${result.error.status}: Failed to send code. Check SMTP settings in admin/.env.`;
+          Error.value = true;
+        } else {
+          validEmail.value = true;
+          Error.value = false;
+          ErrorMsg.value = '';
+        }
+      }else if(props.signupForm){
+        const result = await authClient.emailOtp.sendVerificationOtp({
+          email: email.value,
+          type: 'sign-in',
+        });
+        if(result.error){
+          ErrorMsg.value = result.error.message || result.error.statusText || `Error ${result.error.status}: Failed to send code. Check SMTP settings in admin/.env.`;
+          Error.value = true;
+        } else {
+          validEmail.value = true;
+          Error.value = false;
+          ErrorMsg.value = '';
+        }
       }
+      else{
+        ErrorMsg.value = "User not Found";
+        Error.value = true;
+      }   
     } catch (err) {
       ErrorMsg.value = (err as Error)?.message || 'Network error: could not reach auth server.';
       Error.value = true;
