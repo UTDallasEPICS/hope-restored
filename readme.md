@@ -45,7 +45,7 @@ The activity page (activity.vue) provides:
 - Search functionality
 - Filtering options for recorded system actions
 
-Public Web Components
+# Public Web Components
 Public-facing components provide:
 - A resource browsing interface (HomeView.vue)
 - Search and filtering functionality for browsing available resources
