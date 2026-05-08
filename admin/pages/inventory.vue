@@ -719,8 +719,8 @@ async function confirmAddition() {
       }
     : {
         category: selectedCategory.value,
-        gender: isSimple ? "Unisex" : addForm.value.gender,
-        size: isSimple ? "N/A" : addForm.value.size,
+        gender: isSimple ? "" : addForm.value.gender,
+        size: isSimple ? "" : addForm.value.size,
         quantity: qty as number,
       };
   pendingAdditionPayloads.value = [payload];
