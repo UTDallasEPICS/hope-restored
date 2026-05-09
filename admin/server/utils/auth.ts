@@ -62,6 +62,12 @@ export async function requireSession(
   const config = useRuntimeConfig(event);
   const adminEmails = parseCsv(config.betterAuthAdminEmails);
   const staffEmails = parseCsv(config.betterAuthStaffEmails);
+  const hasRoleAllowlist = adminEmails.length > 0 || staffEmails.length > 0;
+  const isProd = process.env.NODE_ENV === "production";
+
+  if (!hasRoleAllowlist && requiredRole === "staff" && !isProd) {
+    return session;
+  }
 
   if (
     !hasRequiredRole(

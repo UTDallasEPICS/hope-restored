@@ -36,7 +36,7 @@
         <input
           type="text"
           v-model="otp"
-          placeholder="Enter code here"
+          :placeholder="props.signupForm ? 'Enter sign up code here' : 'Enter login code here'"
           class="border p-2 w-full mb-4"
         />
         <button
@@ -50,7 +50,7 @@
   </template>
   
 <script setup lang="ts">
-import {ref} from 'vue'
+import { ref, watch } from "vue";
 import { useRouter } from 'vue-router';
 import { authClient } from '../../lib/auth-client';
 const router = useRouter();
@@ -62,9 +62,20 @@ const Error = ref(false);
 const firstName = ref('');
 const lastName = ref('');
 
+
 const props = defineProps<{
         signupForm:boolean
     }>();
+
+watch(
+  () => props.signupForm,
+  () => {
+    validEmail.value = false;
+    otp.value = "";
+    Error.value = false;
+    ErrorMsg.value = "";
+  },
+);
 
 const handleSubmit = async () => {
   Error.value = false;
@@ -92,19 +103,41 @@ const handleSubmit = async () => {
     }
 
     try {
-      const result = await authClient.emailOtp.sendVerificationOtp({
-        email: email.value,
-        type: 'sign-in',
+      const {data, refresh} = await useFetch('/api/user',{
+        params:{email:email.value} 
       });
-
-      if(result.error){
-        ErrorMsg.value = result.error.message || result.error.statusText || `Error ${result.error.status}: Failed to send code. Check SMTP settings in admin/.env.`;
-        Error.value = true;
-      } else {
-        validEmail.value = true;
-        Error.value = false;
-        ErrorMsg.value = '';
+      console.log(data.value);
+      if(!props.signupForm && data.value){
+        const result = await authClient.emailOtp.sendVerificationOtp({
+          email: email.value,
+          type: 'sign-in',
+        });
+        if(result.error){
+          ErrorMsg.value = result.error.message || result.error.statusText || `Error ${result.error.status}: Failed to send code. Check SMTP settings in admin/.env.`;
+          Error.value = true;
+        } else {
+          validEmail.value = true;
+          Error.value = false;
+          ErrorMsg.value = '';
+        }
+      }else if(props.signupForm){
+        const result = await authClient.emailOtp.sendVerificationOtp({
+          email: email.value,
+          type: 'sign-in',
+        });
+        if(result.error){
+          ErrorMsg.value = result.error.message || result.error.statusText || `Error ${result.error.status}: Failed to send code. Check SMTP settings in admin/.env.`;
+          Error.value = true;
+        } else {
+          validEmail.value = true;
+          Error.value = false;
+          ErrorMsg.value = '';
+        }
       }
+      else{
+        ErrorMsg.value = "User not Found";
+        Error.value = true;
+      }   
     } catch (err) {
       ErrorMsg.value = (err as Error)?.message || 'Network error: could not reach auth server.';
       Error.value = true;

@@ -22,8 +22,6 @@ export default defineEventHandler(async (event) =>{
             ed[1] = todayEnd;
             sd[1] = ed[1]; ed[0] = sd[0];
         }
-        //console.log(sd);
-        //console.log(ed);
         const catList = await prisma.inventory.groupBy({
             by:['category'],
         })
@@ -65,27 +63,39 @@ export default defineEventHandler(async (event) =>{
                     removals:number}[]
                 }[]
             }[] = [];
-        for(const cat of catList){
-            groupedData.push({
-            category:cat.category,
-            quantity:0,
-            additions:0,
-            removals:0,
-            genders:[{
-                name:"Child",
-                info:[]
-                },
-                {
-                name:"Male",
-                info:[]
-                },
-                {
-                name:"Female",
-                info:[]
-                },
-            ]
-            })
-        }
+        for (const cat of catList) {
+    groupedData.push({
+      category:cat.category,
+      quantity:0,
+      additions:0,
+      removals:0,
+      genders:cat.category !== "Other Items"? [{
+          name:"Child",
+          info:[]
+        },
+        {
+          name:"Male",
+          info:[]
+        },
+        {
+          name:"Female",
+          info:[]
+        },
+      ] :[
+        {name:'Appliances',info:[]},
+        {name: 'Infant care',info:[] },
+        {name:'Hardware',info:[] },
+        {name:'Electronics',info:[] },
+        {name:'Furniture',info:[]}, 
+        {name:'Bedding',info:[] },
+        {name:'Kitchen',info:[] },
+        {name:'Toys', info:[]},
+        {name:'School supplies',info:[] },
+        {name:'Personal care',info:[] },
+        {name:'Cleaning supplies',info:[] },
+       { name:'Other',info:[]}]
+      })
+  }
         for(const item of lastDates){
             for(const row of groupedData){
                 if(item.category === row.category){
@@ -137,7 +147,33 @@ export default defineEventHandler(async (event) =>{
                 }
             }
         }
-        return groupedData
+        let orderedData:{category:string,quantity:number,additions:number,removals:number,genders:{name:string,info:{size:string,quantity:number,additions:number,removals:number}[]}[]}[] = []
+        const simpleCategories =['Blankets','Hygiene Packs','Snack Packs'];
+        const letterSizedCategories=['Shirts','Pants','Jackets','Underwear'];
+        const numberSizedCategories=['Shoes'] //add pants
+        let simpleData:{category:string,quantity:number,additions:number,removals:number,genders:{name:string,info:{size:string,quantity:number,additions:number,removals:number}[]}[]}[] = []
+        let letterData:{category:string,quantity:number,additions:number,removals:number,genders:{name:string,info:{size:string,quantity:number,additions:number,removals:number}[]}[]}[] = []
+        let numberData:{category:string,quantity:number,additions:number,removals:number,genders:{name:string,info:{size:string,quantity:number,additions:number,removals:number}[]}[]}[] = []
+        let otherData:{category:string,quantity:number,additions:number,removals:number,genders:{name:string,info:{size:string,quantity:number,additions:number,removals:number}[]}[]}[] = []
+        for(const cat of groupedData){
+        if(simpleCategories.includes(cat.category)){
+            simpleData.push(cat);
+        }
+        else if(letterSizedCategories.includes(cat.category)){
+            letterData.push(cat);
+        }
+        else if(numberSizedCategories.includes(cat.category)){
+            numberData.push(cat);
+        }
+        else{
+            otherData.push(cat);
+        }
+        }
+        orderedData.push(...simpleData);
+        orderedData.push(...letterData);
+        orderedData.push(...numberData);
+        orderedData.push(...otherData);
+        return orderedData
     }catch(error){
         console.log("error finding report", error);
     }

@@ -18,7 +18,6 @@ export default defineEventHandler(async (event) => {
     throw createError({
       statusCode: 500,
       message: "Error deleting resource",
-      data: error,
     });
   }
 });

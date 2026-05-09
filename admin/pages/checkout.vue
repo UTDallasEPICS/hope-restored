@@ -2,6 +2,25 @@
   <div
     class="w-full min-w-0 max-w-full overflow-x-hidden bg-gray-100 box-border px-4 py-6 md:px-6 md:py-8 lg:px-8 pb-10"
   >
+    <!-- CATEGORY SELECTOR -->
+  <div class="mb-6">
+    <div class="flex flex-wrap gap-3">
+      <button
+        v-for="cat in categories"
+        :key="cat.name"
+        @click="selectCategory(cat.name)"
+        :class="[
+          'px-10 py-5 rounded-xl border text-base font-semibold transition-all shadow-sm',
+          selectedCategory === cat.name
+            ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+            : 'bg-white text-gray-700 border-gray-300 hover:border-indigo-500 hover:text-indigo-700'
+        ]"
+      >
+        {{ cat.name }}
+      </button>
+    </div>
+  </div>
+
     <div
       class="w-full min-w-0 max-w-7xl mx-auto grid grid-cols-1 gap-4 md:grid-cols-2 lg:gap-6 items-start"
     >
@@ -199,22 +218,7 @@
       >
         <h2 class="text-xl font-bold text-gray-900 mb-4">Item Removal Form</h2>
 
-        <!-- Gender Toggle -->
-        <div class="flex flex-wrap gap-2 mb-4">
-          <button
-            v-for="gender in visibleGenders"
-            :key="gender"
-            :class="[
-              'px-4 py-2 rounded-md border text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-indigo-500',
-              selectedGender === gender
-                ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
-                : 'bg-white text-gray-700 border-gray-300 hover:border-indigo-500 hover:text-indigo-700',
-            ]"
-            @click="selectedGender = gender"
-          >
-            {{ gender }}
-          </button>
-        </div>
+        
 
         <!-- Name + Date -->
         <div class="flex flex-wrap gap-3 mb-4">
@@ -235,78 +239,115 @@
             />
           </div>
         </div>
+        
 
-        <!-- HRM Table -->
-        <table
-          class="w-full max-w-full min-w-0 table-fixed border border-gray-200 text-sm"
+        
+
+<!-- DYNAMIC CATEGORY CONTENT -->
+<div class="border border-gray-200 rounded-2xl p-6 bg-gray-50 shadow-sm" v-if="items.length">
+  <!-- SIMPLE ITEMS -->
+  <template
+    v-if="[
+      'Snack Packs',
+      'Hygiene Packs',
+      'Blankets'
+    ].includes(selectedCategory)"
+  >
+
+    <div class="flex items-center justify-between max-w-sm">
+      <h3 class="text-lg font-bold text-gray-800">
+        Quantity
+      </h3>
+
+      <input
+        type="number"
+        min="0"
+        placeholder="0"
+        v-model="items[0][0].quantity"
+        class="w-32 px-3 py-2 border border-gray-300 rounded-md text-center"
+      />
+    </div>
+
+  </template>
+  <template v-else-if="selectedCategory === 'Other Items'">
+    {{ selectedCategory }}
+    <div class="space-y-4 max-w-md">
+
+      <div>
+        <label class="block text-sm font-semibold mb-1">
+          Item Name
+        </label>
+
+        <input
+          type="text"
+          placeholder="e.g. Toaster, Diapers"
+          v-model="items[0][0].otherItemName"
+          class="w-full px-3 py-2 border border-gray-300 rounded-md"
+        />
+      </div>
+
+      <div>
+        <label class="block text-sm font-semibold mb-1">
+          Quantity
+        </label>
+
+        <input
+          type="number"
+          min="0"
+          placeholder="0"
+          v-model="items[0][0].quantity"
+          class="w-full px-3 py-2 border border-gray-300 rounded-md"
+        />
+      </div>
+
+    </div>
+
+  </template>
+  <template v-else>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">    
+
+      <div
+        v-for="(gender,genIdx) in visibleGenders"
+        :key="gender"
+        class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm"      >
+
+        <h3 class="text-lg font-bold text-gray-900 mb-4">
+          {{ gender }}
+        </h3>
+
+        <div
+          v-for="(size,idx) in (
+            selectedCategory === 'Shoes'
+              ? shoeSizes
+              : apparelSizes
+          )"
+          :key="size"
+          class="flex items-center gap-3 mb-4"
         >
-          <thead class="bg-gray-50">
-            <tr>
-              <th class="border border-gray-200 px-3 py-2">Category</th>
-              <th class="border border-gray-200 px-3 py-2">Size</th>
-              <th class="border border-gray-200 px-3 py-2">Quantity</th>
-            </tr>
-          </thead>
 
-          <tbody>
-            <tr v-for="item in items" :key="item.name">
-              <td
-                class="border border-gray-200 px-3 py-2 text-center font-semibold text-gray-800"
-              >
-                {{ item.name }}
-              </td>
+          <span class="font-semibold text-gray-700 w-12 shrink-0 text-base text-left">
+            {{ size }}
+          </span>
 
-              <!-- Size / Other item input -->
-              <td class="border border-gray-200 px-3 py-2">
-                <template v-if="item.name === 'Other Items'">
-                  <input
-                    type="text"
-                    v-model="item.otherItemName"
-                    placeholder="e.g. Toaster, Diapers"
-                    class="w-full px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  />
-                </template>
-                <template v-else>
-                  <select
-                    v-model="item.size"
-                    :disabled="!item.hasSize"
-                    class="w-full px-2 py-1 border border-gray-300 rounded-md text-center focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-100 disabled:text-gray-500"
-                  >
-                    <option v-if="!item.hasSize" value="N/A">N/A</option>
+          <input
+            v-model="items[genIdx][idx].quantity"
+            type="number"
+            min="0"
+            placeholder="qty"
+            class="flex-1 min-w-0 max-w-[180px] px-1 py-2 border border-gray-300 rounded-xl text-center text-base shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          />
 
-                    <option
-                      v-for="size in sizeOptions"
-                      v-if="item.hasSize && item.name !== 'Shoes'"
-                      :key="size"
-                      :value="size"
-                    >
-                      {{ size }}
-                    </option>
-                    <option
-                      v-for="size in shoeSizeOptions"
-                      v-if="item.hasSize && item.name === 'Shoes'"
-                      :key="size"
-                      :value="size"
-                    >
-                      {{ size }}
-                    </option>
-                  </select>
-                </template>
-              </td>
+        </div>
 
-              <!-- Quantity -->
-              <td class="border border-gray-200 px-3 py-2">
-                <input
-                  type="number"
-                  min="0"
-                  v-model.number="item.quantity"
-                  placeholder="0"
-                  class="w-full px-2 py-1 border border-gray-300 rounded-md text-center focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                />
-              </td>
-            </tr>
-          </tbody>
-        </table>
+      </div>
+
+    </div>
+
+  </template>
+
+</div>
+
 
         <div class="mt-4 flex justify-end">
           <button
@@ -425,6 +466,7 @@ type InventoryRow = {
 
 type CheckoutItem = {
   name: string;
+  gender:string;
   hasSize: boolean;
   size: string;
   quantity: number;
@@ -451,6 +493,8 @@ function redirectToLoginIfUnauthorized(error: unknown) {
 ---------------------- */
 
 const selectedGender = ref("Male");
+const selectedCategory = ref("Shirts");
+
 const personName = ref("");
 const todayDate = ref(new Date().toISOString().split("T")[0]);
 const visibleGenders = ["Male", "Female", "Child"];
@@ -539,15 +583,62 @@ const categories = [
   { name: "Other Items", hasSize: false },
 ];
 
-const items = ref<CheckoutItem[]>(
-  categories.map((cat) => ({
-    name: cat.name,
-    hasSize: cat.hasSize,
-    size: cat.hasSize ? "M" : "N/A",
-    quantity: 0,
-    otherItemName: "",
-  })),
-);
+const items = ref<CheckoutItem[][]>([]);
+
+function selectCategory(catName:string){
+  selectedCategory.value = catName;
+  items.value= [];
+  if(simpleCategories.includes(selectedCategory.value)){
+    items.value.push(
+      [{name:selectedCategory.value,
+        gender:"",
+        hasSize:false,
+        size:"",
+        quantity:0,
+        otherItemName:""
+      }]
+    )
+  }
+  else if (selectedCategory.value == "Shoes"){
+    for(const gender of visibleGenders){
+      items.value.push(
+        shoeSizes.map((size) => ({
+          gender: gender,
+          name: selectedCategory.value,
+          hasSize: true,
+          size:size,
+          quantity: 0,
+          otherItemName: ""
+        }))
+      )
+    }
+  }
+  else if(selectedCategory.value == "Other Items"){
+    items.value.push(
+      [{name:selectedCategory.value,
+        gender:"",
+        hasSize:false,
+        size:"N/A",
+        quantity:0,
+        otherItemName:""
+      }]
+    )
+  }
+  else{
+    for(const gender of visibleGenders){
+      items.value.push(
+        sizeOptions.map((size) => ({
+          gender: gender,
+          name: selectedCategory.value,
+          hasSize: true,
+          size:size,
+          quantity: 0,
+          otherItemName: ""
+        }))
+      )
+    }
+  }
+}
 
 /* ----------------------
    Inventory
@@ -740,6 +831,7 @@ async function loadInventory() {
           map[catName + gender.name + row.size] = row.quantity;
         }
       }
+      console.log("Map",map)
       // Build rows according to category type
       if (catName === otherItemsCategory) {
         // Keep full structure for Other Items so it can be displayed with subcategories + item names
@@ -773,12 +865,15 @@ async function loadInventory() {
           }
         }
       } else if (simpleCategories.includes(catName)) {
+        console.log("simple category found", catName);
+        console.log("Amount",totalQty)
         normalized.push({
           category: catName,
-          gender: "Unisex",
+          gender: "",
           size: "N/A",
           quantity: totalQty,
         });
+        map[catName] = totalQty;
       }
     } catch (e) {
       if (redirectToLoginIfUnauthorized(e)) {
@@ -810,6 +905,8 @@ onMounted(async () => {
     await nextTick();
     attachRightPanelResizeObserver();
   }
+
+  selectCategory("Shirts");
 });
 
 let filtersClickOutsideHandler: ((e: MouseEvent) => void) | null = null;
@@ -853,23 +950,21 @@ const showRemovedModal = ref(false);
 const removedListServer = ref<string[]>([]);
 
 const removedList = computed(() =>
-  items.value
-    .filter((i) => i.quantity > 0)
-    .map((i) =>
+  items.value.flatMap((gender) => gender.filter((i) => i.quantity > 0).map((i) =>
       i.name === "Other Items"
         ? `${i.quantity} ${i.otherItemName || "Other Items"}`
-        : `${i.quantity} ${i.name} (${i.size})`,
-    ),
+        : !simpleCategories.includes(i.name) ? ` ${i.quantity} ${i.gender} ${i.name} (${i.size})` : `${i.quantity} ${i.gender} ${i.name}`,
+    ),)
+    
 );
 
 function openCheckoutConfirm() {
-  const removals = items.value.filter((i) => i.quantity > 0);
+  const removals = items.value.flatMap((gender) => gender.filter((i) => i.quantity > 0));
+  
   if (!removals.length) {
     alert("No items selected.");
     return;
   }
-  console.log("removals", removals);
-  console.log("available map", availableMap.value);
   for (const r of removals) {
     if (r.name === "Other Items") {
       // Skip strict availability check for Other Items (uses free-text name)
@@ -877,15 +972,16 @@ function openCheckoutConfirm() {
     }
     const usesSharedInventory = simpleCategories.includes(r.name);
     const requestedGender = usesSharedInventory
-      ? "Unisex"
-      : selectedGender.value;
+      ? ""
+      : r.gender;
     const available =
       (availableMap.value[r.name + requestedGender + r.size] ?? 0) +
       (usesSharedInventory
         ? 0
-        : (availableMap.value[r.name + "Unisex" + r.size] ?? 0));
+        : (availableMap.value[r.name + "" + r.size] ?? 0));
+        console.log("Available:", availableMap.value);
     if (r.quantity > available) {
-      alert(`${r.name}: Requested ${r.quantity}, Available ${available}`);
+      alert(`${r.gender} ${r.name} ${r.size}: Requested ${r.quantity}, Available ${available}`);
       return;
     }
   }
@@ -896,8 +992,7 @@ function openCheckoutConfirm() {
 async function confirmCheckout() {
   showCheckoutConfirm.value = false;
 
-  const removals = items.value
-    .filter((i) => i.quantity > 0)
+  const removals = items.value.flatMap((gender) => gender.filter((i) => i.quantity > 0))
     .map((i) =>
       i.name === "Other Items"
         ? {
@@ -911,8 +1006,8 @@ async function confirmCheckout() {
             size: i.size,
             quantity: i.quantity,
             gender: simpleCategories.includes(i.name)
-              ? "Unisex"
-              : selectedGender.value,
+              ? ""
+              : i.gender,
           },
     );
 
@@ -934,18 +1029,14 @@ async function confirmCheckout() {
   removedListServer.value = removals.map((r) =>
     r.category === "Other Items"
       ? `${r.quantity} ${r.gender || "Other Items"}`
-      : `${r.quantity} ${r.category} (${r.size})`,
+      : !simpleCategories.includes(r.category) ? ` ${r.quantity} ${r.gender} ${r.category} (${r.size})` : `${r.quantity} ${r.gender} ${r.category}`,
   );
 
   showRemovedModal.value = true;
 }
 
 function newCheckout() {
-  items.value.forEach((i) => {
-    i.quantity = 0;
-    console.log(i);
-    i.size = i.hasSize ? (i.name !== "Shoes" ? "M" : "5") : "N/A";
-  });
+  selectCategory(selectedCategory.value)
   showRemovedModal.value = false;
 }
 

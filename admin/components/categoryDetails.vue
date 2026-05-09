@@ -38,7 +38,7 @@
                 <!-- <button>Print Report</button> -->
             </div>
         </div>
-        <table class="w-full">
+        <table class="w-full h-full">
             <thead class=" bg-[#3f51b5] text-white font-bold">
                 <tr>
                     <th class="p-4 border-b-[#ddd] border-b-2 text-center">Size</th>
