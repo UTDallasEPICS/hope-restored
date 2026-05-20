@@ -2,10 +2,10 @@
     <div class="rounded-md p-2 shadow-2xl relative w-3/4 h-4/5 overflow-y-auto bg-white z-50">
         <!-- send in selected date range and category -->
         <h1 class="text-center text-3xl"> Viewing Details for {{ category }}</h1> 
-        <div class="flex justify-around my-4">          
+        <div class="flex justify-around my-2 sm:my-4">          
             <div class="w-1/4 relative">
-                <button class="w-full flex items-center content-between p-3 text-lg font-bold text-[#333] bg-white border-2 border-[rgba(0,0,0,0.08)]
-                    rounded-lg cursor-pointer text-left hover:border-[rgba(63,81,181,0.4)]" 
+                <button class="w-full flex items-center content-between p-0.5 sm:p-3 font-bold text-[#333] bg-white border-2 border-[rgba(0,0,0,0.08)]
+                    rounded-lg cursor-pointer text-left text-xs sm:text-lg hover:border-[rgba(63,81,181,0.4)]" 
                     @click="accordionOpen = !accordionOpen">
                     <span>{{ gender }}</span>
                     <i class="fas" :class="accordionOpen ? 'fa-chevron-up' : 'fa-chevron-down'" aria-hidden="true"></i>
@@ -18,7 +18,7 @@
                 >
                     <button v-for="g in genderList"  @click="changeData(g)" 
                         class="block w-full p-2.5 text-left border-none cursor-pointer border-b-2 border-b-[#eee]
-                        last:border-none"
+                        last:border-none text-xs sm:text-lg"
                         :class="{
                             'bg-[#3f51b5] text-white' : gender==g,
                             'bg-none text-[#333] hover:bg-[#f0f2f5]': gender != g
@@ -33,18 +33,18 @@
             
             <div class="flex gap-2">
                 <button class="flex-col items-center justify-center gap-1 min-h-5 max-h-10 p-1.5 rounded-md  border-2 cursor-pointer bg-[#b53f3f] border-[#b53f3f]
-                    font-bold transition-[transform,box-shadow,background-color,border-color] duration-100 ease-in mx-3 text-white text-center
-                    hover:shadow-lg hover:border-[rgba(181,79,63,0.4)] **transition hover:-translate-y-0.5**" @click="props.closeFunction">Close</button>
+                    font-bold text-sm sm:text-lg mx-3 text-white text-center
+                    hover:shadow-lg hover:border-[rgba(181,79,63,0.4)]" @click="props.closeFunction">Close</button>
                 <!-- <button>Print Report</button> -->
             </div>
         </div>
         <table class="w-full h-full">
-            <thead class=" bg-[#3f51b5] text-white font-bold">
-                <tr>
-                    <th class="p-4 border-b-[#ddd] border-b-2 text-center">Size</th>
-                    <th class="p-4 border-b-[#ddd] border-b-2 text-center">Quantity</th>
-                    <th class="p-4 border-b-[#ddd] border-b-2 text-center">Added</th>
-                    <th class="p-4 border-b-[#ddd] border-b-2 text-center">Removed</th>
+            <thead class=" bg-[#3f51b5] text-white font-normal sm:font-bold">
+                <tr class="p-4 border-b-[#ddd] border-b-2 text-center text-sm sm:text-lg">
+                    <th class="p-1 sm:p-4">Size</th>
+                    <th>Quantity</th>
+                    <th>Added</th>
+                    <th>Removed</th>
                 </tr>
             </thead>
             <tbody class="bg-gray-100 text-center">

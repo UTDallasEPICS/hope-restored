@@ -203,126 +203,18 @@
         </div>
 
         <!-- Right half: Add form -->
-        <div
-          class="bg-white border border-gray-200 rounded-lg shadow-sm p-4 md:p-5 min-h-0 overflow-y-auto"
-        >
-          <h2
-            v-if="selectedCategory"
-            class="text-[1.15rem] font-semibold text-indigo-600 mb-4 mt-0"
-          >
-            Add {{ selectedCategory }} to Inventory
-          </h2>
-          <h2 v-else class="text-[1.15rem] font-normal text-gray-500 mb-4 mt-0">
-            Select a category to add items
-          </h2>
-          <form
-            v-if="selectedCategory"
-            class="flex flex-col gap-4"
-            @submit.prevent="confirmAddition"
-          >
-            <div v-if="!isSizedCategory">
-              <label
-                for="add-quantity"
-                class="block mb-1 text-[0.95rem] font-medium text-gray-800"
-                >Quantity</label
-              >
-              <input
-                id="add-quantity"
-                v-model.number="addForm.quantity"
-                type="number"
-                min="1"
-                placeholder="Enter quantity"
-                aria-required="true"
-                class="w-full rounded-md border border-gray-300 px-3 py-2 text-base shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              />
-            </div>
-            <template v-if="isOtherItems">
-              <div>
-                <label
-                  for="add-item-name"
-                  class="block mb-1 text-[0.95rem] font-medium text-gray-800"
-                  >Item name</label
-                >
-                <input
-                  id="add-item-name"
-                  v-model.trim="addForm.itemName"
-                  type="text"
-                  placeholder="e.g. Toaster, Diapers"
-                  aria-required="true"
-                  class="w-full rounded-md border border-gray-300 px-3 py-2 text-base shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                />
-              </div>
-              <div>
-                <label
-                  for="add-subcategory"
-                  class="block mb-1 text-[0.95rem] font-medium text-gray-800"
-                  >Category</label
-                >
-                <div class="relative">
-                  <select
-                    id="add-subcategory"
-                    v-model="addForm.size"
-                    aria-required="true"
-                    class="w-full appearance-none rounded-md border border-gray-300 px-3 py-2 text-base shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  >
-                    <option value="">Select category</option>
-                    <option
-                      v-for="sub in otherItemsSubcategories"
-                      :key="sub"
-                      :value="sub"
-                    >
-                      {{ sub }}
-                    </option>
-                  </select>
-                  <i
-                    class="fas fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
-                    aria-hidden="true"
-                  ></i>
-                </div>
-              </div>
-            </template>
-            <template v-else-if="isSizedCategory">
-              <section
-                v-for="gender in visibleGenders"
-                :key="gender"
-                class="border border-gray-200 rounded-lg p-3"
-              >
-                <h3 class="text-[1rem] font-semibold text-indigo-600 mb-2">
-                  {{ genderSectionLabels[gender] }}
-                </h3>
-                <div
-                  class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2"
-                  :aria-label="`${genderSectionLabels[gender]} ${formSizeLabel.toLowerCase()} quantities`"
-                >
-                  <label
-                    v-for="size in formSizeOptions"
-                    :key="`${gender}-${size}`"
-                    class="flex items-center gap-2 rounded-md border border-gray-200 px-2 py-1.5"
-                  >
-                    <span class="min-w-[2.5rem] text-sm font-medium text-gray-800">
-                      {{ size }}
-                    </span>
-                    <input
-                      v-model="sizedAddForm[gender][size]"
-                      type="number"
-                      min="1"
-                      inputmode="numeric"
-                      placeholder="Qty"
-                      class="w-20 rounded-md border border-gray-300 px-2 py-1.5 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    />
-                  </label>
-                </div>
-              </section>
-            </template>
-            <div class="pt-2 flex justify-end">
-              <button
-                type="submit"
-                class="inline-flex items-center rounded-md bg-green-600 px-5 py-2.5 text-white text-base font-semibold shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
-              >
-                Confirm Addition
-              </button>
-            </div>
-          </form>
+         <div>
+          <InOutForm
+            :inForm="true"
+            :selectedCategory="selectedCategory"
+            :isSimpleCategory="isSimpleCategory"
+            :isOtherCategory="isOtherItems"
+            :shoeSizes="shoeSizeOptions"
+            :apparelSizes="sizeOptions"
+            :visibleGenders="visibleGenders"
+            :items="items"
+            :submitForm="confirmAddition"
+          />
         </div>
       </section>
 
@@ -436,7 +328,7 @@
               :key="`${item.category}-${item.gender}-${item.size}-${idx}`"
             >
               <strong>{{ item.category }}</strong>
-              <span v-if="item.gender"> - {{ item.gender }}</span>
+              <span v-if="item.gender"> - {{item.gender }}</span>
               <span v-if="item.size"> - {{ item.size }}</span>
               : {{ item.quantity }}
             </li>
@@ -465,6 +357,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from "vue";
+import InOutForm from "../components/Inventory/InOutForm.vue";
 
 const categories = [
   "Shirts",
@@ -478,31 +371,15 @@ const categories = [
   "Other Items",
 ];
 const sizeOptions = ["XS", "S", "M", "L", "XL","2XL","3XL","4XL+"];
-const otherItemsSubcategories = [
-  "Appliances",
-  "Infant care",
-  "Hardware",
-  "Electronics",
-  "Furniture",
-  "Bedding",
-  "Kitchen",
-  "Toys",
-  "School supplies",
-  "Personal care",
-  "Cleaning supplies",
-  "Other",
-];
 const shoeSizeOptions = (() => {
   const sizes: string[] = [];
   for (let n = 5; n <= 14.5; n += 0.5) sizes.push(String(n));
   return sizes;
 })();
 const visibleGenders = ["Male", "Female", "Child"];
-const genderSectionLabels: Record<string, string> = {
-  Male: "Mens",
-  Female: "Womens",
-  Child: "Children",
-};
+const items= ref<{name: string, gender:string, hasSize: boolean, size:string, quantity:number, otherItemName: string}[][]>([]);
+
+
 
 type CategoryDetail = {
   category: string;
@@ -516,24 +393,18 @@ const categoryDetails = ref<{
 }>({
   catDetails: [],
 });
-const addForm = ref({
-  quantity: null as number | null,
-  gender: "",
-  size: "",
-  itemName: "" as string,
-});
-
 const showEmptyInputError = ref(false);
 const showAdditionSuccessPopup = ref(false);
 const addErrorMessage = ref("");
 const showAdditionConfirmPopup = ref(false);
 const inventory = ref<any[]>([]);
-const sizedAddForm = ref<Record<string, Record<string, string>>>({});
 type AdditionPayload = {
-  category: string;
-  gender: string;
-  size: string;
-  quantity: number;
+    name: string;
+    gender: string;
+    hasSize: boolean;
+    size: string;
+    quantity: number;
+    otherItemName: string;
 };
 const pendingAdditionPayloads = ref<AdditionPayload[]>([]);
 const additionPreviewItems = ref<
@@ -562,7 +433,6 @@ const isSizedCategory = computed(
 const formSizeOptions = computed(() =>
   isShoes.value ? shoeSizeOptions : sizeOptions,
 );
-const formSizeLabel = computed(() => (isShoes.value ? "Shoe size" : "Size"));
 const visibleCategoryGenders = computed(() =>
   (categoryDetails.value.catDetails[0]?.genders || []).filter(
     (gender) => gender.name !== "Unisex",
@@ -591,45 +461,76 @@ function genderHasAnyInventory(gender: {
   return sizesToShowForGender(gender).length > 0;
 }
 
-function selectCategory(cat: string) {
-  selectedCategory.value = cat;
-  addForm.value = { quantity: null, gender: "", size: "", itemName: "" };
-  initializeSizedAddForm();
-  fetchCategoryDetails(cat);
+function selectCategory(catName:string){
+  selectedCategory.value = catName;
+  items.value= [];
+   fetchCategoryDetails(catName);
+  if(simpleCategories.includes(selectedCategory.value)){
+    items.value.push(
+      [{name:selectedCategory.value,
+        gender:"",
+        hasSize:false,
+        size:"",
+        quantity:0,
+        otherItemName:""
+      }]
+    )
+  }
+  else if (selectedCategory.value == "Shoes"){
+    for(const gender of visibleGenders){
+      items.value.push(
+        shoeSizeOptions.map((size) => ({
+          gender: gender,
+          name: selectedCategory.value,
+          hasSize: true,
+          size:size,
+          quantity: 0,
+          otherItemName: ""
+        }))
+      )
+    }
+  }
+  else if(selectedCategory.value == "Other Items"){
+    items.value.push(
+      [{name:selectedCategory.value,
+        gender:"",
+        hasSize:false,
+        size:"N/A",
+        quantity:0,
+        otherItemName:""
+      }]
+    )
+  }
+  else{
+    for(const gender of visibleGenders){
+      items.value.push(
+        sizeOptions.map((size) => ({
+          gender: gender,
+          name: selectedCategory.value,
+          hasSize: true,
+          size:size,
+          quantity: 0,
+          otherItemName: ""
+        }))
+      )
+    }
+  }
 }
 
 watch(isShoes, () => {
-  addForm.value.size = "";
 });
 
 watch(
   [selectedCategory, formSizeOptions],
   () => {
-    initializeSizedAddForm();
   },
   { immediate: true },
 );
 
-function initializeSizedAddForm() {
-  if (!isSizedCategory.value) {
-    sizedAddForm.value = {};
-    return;
-  }
-
-  const fresh: Record<string, Record<string, string>> = {};
-  for (const gender of visibleGenders) {
-    fresh[gender] = {};
-    for (const size of formSizeOptions.value) {
-      fresh[gender][size] = "";
-    }
-  }
-  sizedAddForm.value = fresh;
-}
-
 async function fetchCategoryDetails(category: string) {
   try {
     const data = await $fetch<CategoryDetail[]>("/api/inventory", {
-      params: { category, _t: Date.now() },
+      params: { category },
     });
     const fallbackGenders =
       category === "Other Items"
@@ -651,87 +552,28 @@ async function fetchCategoryDetails(category: string) {
 }
 
 async function confirmAddition() {
-  const qty = addForm.value.quantity;
-  const isSimple = isSimpleCategory.value;
-
-  if (isSizedCategory.value) {
-    const additions: AdditionPayload[] = [];
-    for (const gender of visibleGenders) {
-      for (const size of formSizeOptions.value) {
-        const rawQty = sizedAddForm.value?.[gender]?.[size];
-        if (rawQty === "") continue;
-        const parsedQty = Number(rawQty);
-        if (!Number.isFinite(parsedQty) || parsedQty < 1) {
-          showEmptyInputError.value = true;
-          return;
-        }
-        additions.push({
-          category: selectedCategory.value,
-          gender,
-          size,
-          quantity: parsedQty,
-        });
-      }
-    }
-
-    if (!additions.length) {
-      showEmptyInputError.value = true;
-      return;
-    }
-
-    pendingAdditionPayloads.value = additions;
-    additionPreviewItems.value = additions.map((item) => ({
-      category: item.category,
-      gender: item.gender,
-      size: item.size,
-      quantity: item.quantity,
-    }));
-    showAdditionConfirmPopup.value = true;
-    return;
-  }
-
-  if (qty == null || qty < 1) {
+  additionPreviewItems.value = [];
+  const additions = items.value.flatMap((gender) => gender.filter((i) => i.quantity > 0));
+  if (!additions.length) {
     showEmptyInputError.value = true;
     return;
   }
-  if (isOtherItems.value) {
-    const itemName = addForm.value.itemName.trim();
-    const subcategory = addForm.value.size;
-    if (!itemName || !subcategory) {
-      showEmptyInputError.value = true;
-      return;
-    }
-  } else if (!isSimple) {
-    const gender = addForm.value.gender.trim();
-    const size = addForm.value.size;
-    if (!gender || !size) {
-      showEmptyInputError.value = true;
-      return;
+  pendingAdditionPayloads.value = additions;
+  for(const addition of additions){
+    if(selectedCategory.value !== "Other Items")
+    additionPreviewItems.value.push({
+      ...addition,
+      category:selectedCategory.value
+    })
+    else{
+      additionPreviewItems.value.push({
+      ...addition,
+      category:selectedCategory.value,
+      size:addition.otherItemName
+    })
     }
   }
-
-  const payload: AdditionPayload = isOtherItems.value
-    ? {
-        category: "Other Items",
-        gender: addForm.value.size,
-        size: addForm.value.itemName.trim(),
-        quantity: qty as number,
-      }
-    : {
-        category: selectedCategory.value,
-        gender: isSimple ? "" : addForm.value.gender,
-        size: isSimple ? "" : addForm.value.size,
-        quantity: qty as number,
-      };
-  pendingAdditionPayloads.value = [payload];
-  additionPreviewItems.value = [
-    {
-      category: payload.category,
-      gender: payload.gender,
-      size: payload.size,
-      quantity: payload.quantity,
-    },
-  ];
+  
   showAdditionConfirmPopup.value = true;
 }
 
@@ -741,18 +583,18 @@ async function confirmPendingAdditions() {
 
   try {
     for (const body of pendingAdditionPayloads.value) {
+      console.log(body);
       await $fetch("/api/inventory/", {
         method: "POST",
-        body,
+        body:{
+          ...body,
+          category:selectedCategory.value,
+          size:selectedCategory.value !== "Other Items"? body.size : body.otherItemName
+        },
       });
     }
     await getInventory();
     await fetchCategoryDetails(selectedCategory.value);
-    if (isSizedCategory.value) {
-      initializeSizedAddForm();
-    } else {
-      addForm.value = { quantity: null, gender: "", size: "", itemName: "" };
-    }
     pendingAdditionPayloads.value = [];
     additionPreviewItems.value = [];
     showAdditionSuccessPopup.value = true;
@@ -764,35 +606,11 @@ async function confirmPendingAdditions() {
       "The item could not be saved. Please try again.";
   }
 }
-
-function getTodayRange() {
-  const now = new Date();
-  const start = new Date(
-    now.getFullYear(),
-    now.getMonth(),
-    now.getDate(),
-    0,
-    0,
-    0,
-    0,
-  );
-  const end = new Date(
-    now.getFullYear(),
-    now.getMonth(),
-    now.getDate() + 1,
-    0,
-    0,
-    0,
-    0,
-  );
-  return { start, end };
-}
 async function getInventory() {
   try {
-    const { start, end } = getTodayRange();
+
     inventory.value = await ($fetch as any)("/api/inventory/", {
       method: "GET",
-      params: { start: start.toISOString(), end: end.toISOString() },
     });
   } catch (error) {
     console.error("Fetch error:", error);

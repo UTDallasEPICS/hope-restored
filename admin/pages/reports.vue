@@ -172,22 +172,22 @@
                         <div>
                             <table class="w-full border-collapse table-fixed bg-white rounded-lg shadow-lg">
                                 <thead>
-                                    <tr>
-                                        <th class="bg-[#3f51b5] border-b text-white font-bold py-3">Category</th>
-                                        <th class="bg-[#3f51b5] border-b text-white font-bold py-3">Total</th>
-                                        <th class="bg-[#3f51b5] border-b text-white font-bold py-3">Added</th>
-                                        <th class="bg-[#3f51b5] border-b text-white font-bold">Removed</th>
-                                        <th class="bg-[#3f51b5] border-b text-white font-bold" v-if="!showFullReport">Details</th>
+                                    <tr class="bg-[#3f51b5] text-[10px] sm:text-sm md:text-lg text-white font-bold  ml-1">
+                                        <th class="p-0.5 sm:p-3">Category</th>
+                                        <th>Total</th>
+                                        <th>Added</th>
+                                        <th>Removed</th>
+                                        <th v-if="!showFullReport">Details</th>
                                     </tr>
                                 </thead>
                                 <tbody v-for="row in selectedReportRows" :key="row.category">
                                     <tr class="hover:bg-[#e0e0e0]">
-                                        <td class="font-bold text-lg p-3 border-b text-center">{{ row.category }}</td>
+                                        <td class="font-bold text-xs sm:text-lg p-3 border-b text-center">{{ row.category }}</td>
                                         <td class="p-3 border-b text-center text-[#333]">{{ row.quantity }}</td>
                                         <td class="p-3 border-b text-center text-[#333]">{{ row.additions }}</td>
                                         <td class="p-3 border-b text-center text-[#333]">{{ row.removals }}</td>
                                         <td v-if="!showFullReport" class="p-3 border-b text-center">
-                                            <button v-if="!simpleCategores.includes(row.category)" @click="getDetails(row.category,row.genders)" class="bg-[#4c5baf] rounded-md p-2 text-white">
+                                            <button v-if="!simpleCategores.includes(row.category)" @click="getDetails(row.category,row.genders)" class="bg-[#4c5baf] rounded-md p-0.5 sm:p-2 text-white">
                                                 {{row.category !== 'Other Items'? "View Sizes" : "View Items"}}
                                             </button>
                                         </td>
@@ -236,22 +236,22 @@
         <div class="shadow-xl print:overflow-visible print:max-h-none print:h-auto">
             <table class="w-full border-collapse table-fixed bg-white rounded-lg shadow-sm">
                 <thead>
-                    <tr>
-                        <th class="bg-[#3f51b5] text-white font-bold py-3 ml-1">Category</th>
-                        <th class="bg-[#3f51b5] text-white font-bold py-3 ml-1">Quantity</th>
-                        <th class="bg-[#3f51b5] text-white font-bold py-3 ml-1">Added</th>
-                        <th class="bg-[#3f51b5] text-white font-bold py-3 ml-1">Removed</th>
-                        <th class="bg-[#3f51b5] text-white font-bold" v-if="!showFullInv">Details</th>
+                    <tr class="bg-[#3f51b5] text-[10px] sm:text-sm md:text-lg text-white font-bold  ml-1">
+                        <th class="py-3">Category</th>
+                        <th>Quantity</th>
+                        <th>Added</th>
+                        <th>Removed</th>
+                        <th v-if="!showFullInv">Details</th>
                     </tr>
                 </thead>
                 <tbody v-for="row in fullReport" :key="row.category">
-                    <tr class="hover:bg-[#e0e0e0] font-bold text-lg">
-                        <td class="font-bold  border-b text-lg text-[#333] text-center">{{ row.category }}</td>
-                        <td class="p-3 border-b text-center text-[#333]">{{ row.quantity }}</td>
-                        <td class="p-3 border-b text-center text-[#333]">{{ row.additions }}</td>
-                        <td class="p-3 border-b text-center text-[#333]">{{ row.removals }}</td>
+                    <tr class="hover:bg-[#e0e0e0] font-bold text-lg border-b text-center text-xs sm:text-sm md:text-lg">
+                        <td>{{ row.category }}</td>
+                        <td>{{ row.quantity }}</td>
+                        <td>{{ row.additions }}</td>
+                        <td>{{ row.removals }}</td>
                         <td v-if="!showFullInv" class="p-3 border-b text-center">
-                            <button v-if="!simpleCategores.includes(row.category)" @click="getDetails(row.category,row.genders)" class="bg-[#4c5baf] rounded-md p-2 text-white">
+                            <button v-if="!simpleCategores.includes(row.category)" @click="getDetails(row.category,row.genders)" class="bg-[#4c5baf] rounded-md p-0.5 sm:p-2 text-white">
                                 {{row.category !== 'Other Items'? "View Sizes" : "View Items"}}
                             </button>
                         </td>
@@ -263,7 +263,7 @@
                                     <h1 class="font-semibold text-left text-lg">{{ gender.name }}</h1>
                                     <table class="w-full border">
                                         <thead class=" border-b-[#ddd] border-b-2 text-center">
-                                            <tr class="text-black bg-[#c5cae9] font-bold p-4">
+                                            <tr class="text-black text-sm sm:text-lg bg-[#c5cae9] font-bold p-4">
                                                 <th>{{row.category!=="Other Items"? "Size" : "Item"}}</th>
                                                 <th>Quantity</th>
                                                 <th>Added</th>
