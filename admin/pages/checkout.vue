@@ -836,15 +836,14 @@ const removedList = computed(() =>
 
 function openCheckoutConfirm() {
   const removals = items.value.flatMap((gender) => gender.filter((i) => i.quantity > 0));
-  
   if (!removals.length) {
     alert("No items selected.");
     return;
   }
   for (const r of removals) {
     if (r.name === "Other Items") {
-      if(r.quantity > availableMap.value[r.name+r.gender+r.otherItemName]){
-        alert(`${r.name} ${r.gender} ${r.otherItemName}: Requested ${r.quantity}, Available ${availableMap.value[r.name+r.gender+r.otherItemName]}`);
+      if(!availableMap.value[r.name+r.gender+r.otherItemName] || r.quantity > availableMap.value[r.name+r.gender+r.otherItemName]){
+        alert(`${r.name} ${r.gender} ${r.otherItemName}: Requested ${r.quantity}, Available ${availableMap.value[r.name+r.gender+r.otherItemName]?availableMap.value[r.name+r.gender+r.otherItemName]: '0'}`);
         return;
       }
       
