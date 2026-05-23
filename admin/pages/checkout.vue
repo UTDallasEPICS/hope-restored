@@ -215,7 +215,7 @@
       <div
         id="checkout-item-removal-form"
         ref="rightPanelRef"
-        class="order-1 md:order-2 bg-white border border-gray-200 rounded-lg shadow-sm p-4 md:p-5 min-h-0 overflow-y-auto overflow-x-hidden"
+        class="order-1 md:order-2 bg-white border border-gray-200 rounded-lg shadow-sm p-4 md:p-5 min-h-0 overflow-y-auto overflow-x-hidden md:max-h-[700px]"
       >
       <InOutForm
           :inForm="false"

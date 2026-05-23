@@ -203,7 +203,7 @@
         </div>
 
         <!-- Right half: Add form -->
-         <div>
+         <div class="overflow-y-auto">
           <InOutForm
             :inForm="true"
             :selectedCategory="selectedCategory"
