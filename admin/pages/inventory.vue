@@ -573,11 +573,6 @@ function sizesToShowForGender(gender: {
   name: string;
   info: { size: string; quantity: number }[];
 }): string[] {
-  console.log(
-    shoeSizeOptions.filter((s) =>
-      gender.info.some((row) => row.size === s && row.quantity > 0),
-    ),
-  );
   return shoeSizeOptions.filter((s) =>
     gender.info.some((row) => row.size === s && row.quantity > 0),
   );

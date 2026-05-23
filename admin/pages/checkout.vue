@@ -831,7 +831,6 @@ async function loadInventory() {
           map[catName + gender.name + row.size] = row.quantity;
         }
       }
-      console.log("Map",map)
       // Build rows according to category type
       if (catName === otherItemsCategory) {
         // Keep full structure for Other Items so it can be displayed with subcategories + item names
@@ -865,8 +864,6 @@ async function loadInventory() {
           }
         }
       } else if (simpleCategories.includes(catName)) {
-        console.log("simple category found", catName);
-        console.log("Amount",totalQty)
         normalized.push({
           category: catName,
           gender: "",
@@ -979,7 +976,6 @@ function openCheckoutConfirm() {
       (usesSharedInventory
         ? 0
         : (availableMap.value[r.name + "" + r.size] ?? 0));
-        console.log("Available:", availableMap.value);
     if (r.quantity > available) {
       alert(`${r.gender} ${r.name} ${r.size}: Requested ${r.quantity}, Available ${available}`);
       return;

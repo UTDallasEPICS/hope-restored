@@ -2,6 +2,7 @@
 
 import { defineEventHandler, readBody } from "h3";
 import prisma from "@/lib/prisma"; // Uses existing prisma.ts file in admin/lib
+import { logActivityEvent } from "~/server/utils/activity-log";
 
 export default defineEventHandler(async (event) => {
   try {
@@ -92,6 +93,15 @@ export default defineEventHandler(async (event) => {
     }
 
     // --- STEP 4: Return success ---
+    logActivityEvent(event, {
+      summary: `${action === "Add" ? "Added" : "Removed"} ${quantity} item(s) from ${category} for ${selectedDate}`,
+      details: [
+        `Category: ${category}`,
+        `Quantity: ${quantity}`,
+        `Action: ${action}`,
+        `Date: ${selectedDate}`,
+      ],
+    }).catch(() => {});
     return {
       success: true,
       message: "Amendment of data successful!",

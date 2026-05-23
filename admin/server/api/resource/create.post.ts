@@ -1,5 +1,6 @@
 import { CreateResourceUseCase } from "~/server/usage/Resource/create";
 import { defineEventHandler, readBody, createError } from "h3";
+import { logActivityEvent } from "~/server/utils/activity-log";
 
 export default defineEventHandler(async (event) => {
   const data = await readBody(event);
@@ -13,6 +14,13 @@ export default defineEventHandler(async (event) => {
 
   try {
     const resource = await usage.execute(data);
+    logActivityEvent(event, {
+      summary: `Added resource "${data.name}" in group "${data.groupName}"`,
+      details: [
+        `Name: ${data.name}`,
+        `Group: ${data.groupName}`,
+      ],
+    }).catch(() => {});
     return resource;
   } catch (error) {
     throw createError({

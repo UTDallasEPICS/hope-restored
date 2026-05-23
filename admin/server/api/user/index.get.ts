@@ -7,18 +7,10 @@ const prisma = new PrismaClient();
 export default defineEventHandler(async (event) => {
   // Read the request body (entry data)
   const query = getQuery(event);
-    console.log("Query:",query.email);
   const User = await prisma.user.findUnique({
     where:{
         email:query.email
     }
   });
-  if(User){
-    console.log(User);
-    return true;
-  }
-  else{
-    console.log("Not found");
-    return false;
-  }
+  return Boolean(User);
 });

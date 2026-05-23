@@ -10,7 +10,6 @@ export default defineEventHandler(async (event) => {
   
   try {
     const invCode = entry.category + entry.size + entry.gender
-    let additionRecord = null;
       // Create or update an Inventory entry to represent available stock of each category
       try {
         const inv = await prisma.inventory.upsert({
@@ -47,8 +46,7 @@ export default defineEventHandler(async (event) => {
     } catch (recErr) {
       console.error('Error recording inventory record:', recErr);
     } 
-    console.log('Data inserted successfully!');
-    return { success: true, addition: additionRecord };
+    return { success: true };
   }
   catch (error) {
     console.error('Error inserting data:', error);

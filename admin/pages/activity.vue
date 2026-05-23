@@ -65,18 +65,17 @@
           </div>
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1"
-              >Action Type</label
+              >Action</label
             >
             <div class="relative">
               <select
                 v-model="method"
                 class="appearance-none w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 pr-9 text-sm font-semibold text-gray-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white"
               >
-                <option value="">All Action Types</option>
-                <option value="POST">POST</option>
-                <option value="PUT">PUT</option>
-                <option value="PATCH">PATCH</option>
-                <option value="DELETE">DELETE</option>
+                <option value="">All Actions</option>
+                <option value="POST">Added</option>
+                <option value="updated">Updated / Edited</option>
+                <option value="DELETE">Removed</option>
               </select>
               <span
                 class="pointer-events-none absolute inset-y-0 right-3 flex items-center text-gray-500"
@@ -87,17 +86,17 @@
           </div>
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1"
-              >How Many Lines</label
+              >Show</label
             >
             <div class="relative">
               <select
                 v-model.number="limit"
                 class="appearance-none w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 pr-9 text-sm font-semibold text-gray-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white"
               >
-                <option :value="100">100 Rows</option>
-                <option :value="200">200 Rows</option>
-                <option :value="500">500 Rows</option>
-                <option :value="1000">1000 Rows</option>
+                <option :value="100">Last 100 entries</option>
+                <option :value="200">Last 200 entries</option>
+                <option :value="500">Last 500 entries</option>
+                <option :value="1000">Last 1000 entries</option>
               </select>
               <span
                 class="pointer-events-none absolute inset-y-0 right-3 flex items-center text-gray-500"
@@ -113,7 +112,7 @@
             class="px-4 py-2 rounded-md bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700"
             @click="loadEntries"
           >
-            Update
+            Apply Filters
           </button>
           <button
             type="button"
@@ -251,15 +250,6 @@ function formatRelativeTime(iso: string) {
 const lastRefreshLabel = computed(() =>
   lastRefreshAt.value ? lastRefreshAt.value.toLocaleTimeString() : "Never",
 );
-
-function methodBadgeClass(requestMethod: string) {
-  const upper = requestMethod.toUpperCase();
-  if (upper === "POST") return "bg-emerald-100 text-emerald-800";
-  if (upper === "PUT") return "bg-blue-100 text-blue-800";
-  if (upper === "PATCH") return "bg-amber-100 text-amber-800";
-  if (upper === "DELETE") return "bg-rose-100 text-rose-800";
-  return "bg-gray-100 text-gray-700";
-}
 
 function describeAction(entry: ActivityEntry) {
   const path = entry.path;

@@ -7,6 +7,9 @@ const EXCLUDED_PREFIXES = [
   "/api/activity",
   "/api/checkout",
   "/api/inventory",
+  "/api/resource",
+  "/api/amend",
+  "/api/reports",
 ];
 
 export default defineEventHandler(async (event) => {

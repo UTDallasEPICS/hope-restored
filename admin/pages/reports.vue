@@ -670,7 +670,6 @@ async function saveDaily() {
         viewingSelectedReport.value = true;
         ChooseDailyReport.value = false;
         selectedDate.value = null;
-        console.log(selectedReportRows.value);
     } catch (err) {
         selectedError.value = err?.message || String(err);
     } finally {
@@ -692,7 +691,6 @@ async function getReport(){
         }
     })
     fullReport.value=Report
-    console.log(fullReport.value)
 }
 
 async function makeReport(){

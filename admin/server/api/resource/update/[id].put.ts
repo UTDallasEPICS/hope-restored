@@ -1,5 +1,6 @@
 import { UpdateResourceUseCase } from "~/server/usage/Resource/update";
 import { defineEventHandler, readBody, createError } from "h3";
+import { logActivityEvent } from "~/server/utils/activity-log";
 
 export default defineEventHandler(async (event) => {
   const id = Number(event.context.params?.id);
@@ -28,6 +29,11 @@ export default defineEventHandler(async (event) => {
         statusMessage: "Resource not found",
       });
     }
+    const changedFields = Object.keys(data).filter((k) => k !== "id");
+    logActivityEvent(event, {
+      summary: `Updated resource #${id}`,
+      details: changedFields.map((k) => `${k}: ${String(data[k]).slice(0, 80)}`),
+    }).catch(() => {});
     return updatedResource;
   } catch (error) {
     throw createError({

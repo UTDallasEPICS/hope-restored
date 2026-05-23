@@ -114,8 +114,6 @@ export class CreateResourceUseCase {
       };
     }
 
-    console.log("resourceData: %s", resourceData.name);
-
     const resource = await prisma.resource.create({
       data: resourceData,
       include: RESOURCE_INCLUDE_ALL,
