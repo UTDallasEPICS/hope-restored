@@ -1,6 +1,6 @@
 <template>
   <div
-    class="w-full min-w-0 max-w-full overflow-x-hidden bg-gray-100 box-border px-4 py-6 md:px-6 md:py-8 lg:px-8 pb-10"
+    class="flex flex-col min-h-screen lg:min-h-0 lg:h-[calc(100vh-130px)] lg:max-h-[calc(100vh-130px)] lg:overflow-hidden"
   >
     <!-- CATEGORY SELECTOR -->
   <div class="mb-6">
@@ -22,7 +22,7 @@
   </div>
 
     <div
-      class="w-full min-w-0 max-w-7xl mx-auto grid grid-cols-1 gap-4 md:grid-cols-2 lg:gap-6 items-start"
+      class="w-full min-w-0 mx-auto grid grid-cols-1 gap-4 md:grid-cols-2 lg:gap-6 items-start"
     >
       <!-- LEFT: height synced to form on md+ (see syncCheckoutPanelHeights); table scrolls inside -->
       <div
@@ -211,152 +211,23 @@
       </div>
 
       <!-- RIGHT: content height only (no stretch); database column matches this height on md+ -->
+       
       <div
         id="checkout-item-removal-form"
         ref="rightPanelRef"
-        class="order-1 md:order-2 min-w-0 w-full bg-white border border-gray-200 rounded-lg shadow-sm p-4 md:p-5 overflow-x-hidden self-start h-auto"
+        class="order-1 md:order-2 bg-white border border-gray-200 rounded-lg shadow-sm p-4 md:p-5 min-h-0 overflow-y-auto overflow-x-hidden"
       >
-        <h2 class="text-xl font-bold text-gray-900 mb-4">Item Removal Form</h2>
-
-        
-
-        <!-- Name + Date -->
-        <div class="flex flex-wrap gap-3 mb-4">
-          <div class="flex items-center gap-2">
-            <label class="text-sm font-medium text-gray-700">Name:</label>
-            <input
-              type="text"
-              v-model="personName"
-              class="w-48 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            />
-          </div>
-          <div class="flex items-center gap-2">
-            <label class="text-sm font-medium text-gray-700">Date:</label>
-            <input
-              type="date"
-              v-model="todayDate"
-              class="w-44 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            />
-          </div>
-        </div>
-        
-
-        
-
-<!-- DYNAMIC CATEGORY CONTENT -->
-<div class="border border-gray-200 rounded-2xl p-6 bg-gray-50 shadow-sm" v-if="items.length">
-  <!-- SIMPLE ITEMS -->
-  <template
-    v-if="[
-      'Snack Packs',
-      'Hygiene Packs',
-      'Blankets'
-    ].includes(selectedCategory)"
-  >
-
-    <div class="flex items-center justify-between max-w-sm">
-      <h3 class="text-lg font-bold text-gray-800">
-        Quantity
-      </h3>
-
-      <input
-        type="number"
-        min="0"
-        placeholder="0"
-        v-model="items[0][0].quantity"
-        class="w-32 px-3 py-2 border border-gray-300 rounded-md text-center"
-      />
-    </div>
-
-  </template>
-  <template v-else-if="selectedCategory === 'Other Items'">
-    {{ selectedCategory }}
-    <div class="space-y-4 max-w-md">
-
-      <div>
-        <label class="block text-sm font-semibold mb-1">
-          Item Name
-        </label>
-
-        <input
-          type="text"
-          placeholder="e.g. Toaster, Diapers"
-          v-model="items[0][0].otherItemName"
-          class="w-full px-3 py-2 border border-gray-300 rounded-md"
-        />
-      </div>
-
-      <div>
-        <label class="block text-sm font-semibold mb-1">
-          Quantity
-        </label>
-
-        <input
-          type="number"
-          min="0"
-          placeholder="0"
-          v-model="items[0][0].quantity"
-          class="w-full px-3 py-2 border border-gray-300 rounded-md"
-        />
-      </div>
-
-    </div>
-
-  </template>
-  <template v-else>
-
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">    
-
-      <div
-        v-for="(gender,genIdx) in visibleGenders"
-        :key="gender"
-        class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm"      >
-
-        <h3 class="text-lg font-bold text-gray-900 mb-4">
-          {{ gender }}
-        </h3>
-
-        <div
-          v-for="(size,idx) in (
-            selectedCategory === 'Shoes'
-              ? shoeSizes
-              : apparelSizes
-          )"
-          :key="size"
-          class="flex items-center gap-3 mb-4"
-        >
-
-          <span class="font-semibold text-gray-700 w-12 shrink-0 text-base text-left">
-            {{ size }}
-          </span>
-
-          <input
-            v-model="items[genIdx][idx].quantity"
-            type="number"
-            min="0"
-            placeholder="qty"
-            class="flex-1 min-w-0 max-w-[180px] px-1 py-2 border border-gray-300 rounded-xl text-center text-base shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          />
-
-        </div>
-
-      </div>
-
-    </div>
-
-  </template>
-
-</div>
-
-
-        <div class="mt-4 flex justify-end">
-          <button
-            class="bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-md shadow-sm font-semibold"
-            @click="openCheckoutConfirm"
-          >
-            Checkout
-          </button>
-        </div>
+      <InOutForm
+          :inForm="false"
+          :selected-category="selectedCategory"
+          :submitForm="openCheckoutConfirm"
+          :isSimpleCategory="isSimpleCategory"
+          :is-other-category="isOtherItems"
+          :visibleGenders="visibleGenders"
+          :shoe-sizes="shoeSizes"
+          :apparel-sizes="apparelSizes"
+          :items="items"
+         />
       </div>
     </div>
 
@@ -440,6 +311,7 @@ import {
 } from "vue";
 import { $fetch } from "ofetch";
 import { useRouter } from "vue-router";
+import InOutForm from "../components/Inventory/InOutForm.vue";
 
 type InventoryInfoRow = {
   size: string;
@@ -582,7 +454,8 @@ const categories = [
   { name: "Blankets", hasSize: false },
   { name: "Other Items", hasSize: false },
 ];
-
+const isSimpleCategory = ref(false);
+const isOtherItems = ref(false);
 const items = ref<CheckoutItem[][]>([]);
 
 function selectCategory(catName:string){
@@ -598,6 +471,7 @@ function selectCategory(catName:string){
         otherItemName:""
       }]
     )
+    isSimpleCategory.value = true;
   }
   else if (selectedCategory.value == "Shoes"){
     for(const gender of visibleGenders){
@@ -612,6 +486,8 @@ function selectCategory(catName:string){
         }))
       )
     }
+    isSimpleCategory.value = false;
+    isOtherItems.value = false;
   }
   else if(selectedCategory.value == "Other Items"){
     items.value.push(
@@ -623,6 +499,7 @@ function selectCategory(catName:string){
         otherItemName:""
       }]
     )
+    isOtherItems.value = true;
   }
   else{
     for(const gender of visibleGenders){
@@ -637,6 +514,8 @@ function selectCategory(catName:string){
         }))
       )
     }
+    isSimpleCategory.value = false;
+    isOtherItems.value = false;
   }
 }
 
@@ -957,29 +836,31 @@ const removedList = computed(() =>
 
 function openCheckoutConfirm() {
   const removals = items.value.flatMap((gender) => gender.filter((i) => i.quantity > 0));
-  
   if (!removals.length) {
     alert("No items selected.");
     return;
   }
   for (const r of removals) {
     if (r.name === "Other Items") {
-      // Skip strict availability check for Other Items (uses free-text name)
-      continue;
+      if(!availableMap.value[r.name+r.gender+r.otherItemName] || r.quantity > availableMap.value[r.name+r.gender+r.otherItemName]){
+        alert(`${r.name} ${r.gender} ${r.otherItemName}: Requested ${r.quantity}, Available ${availableMap.value[r.name+r.gender+r.otherItemName]?availableMap.value[r.name+r.gender+r.otherItemName]: '0'}`);
+        return;
+      }
+      
     }
-    const usesSharedInventory = simpleCategories.includes(r.name);
-    const requestedGender = usesSharedInventory
-      ? ""
-      : r.gender;
-    const available =
-      (availableMap.value[r.name + requestedGender + r.size] ?? 0) +
-      (usesSharedInventory
-        ? 0
-        : (availableMap.value[r.name + "" + r.size] ?? 0));
-    if (r.quantity > available) {
-      alert(`${r.gender} ${r.name} ${r.size}: Requested ${r.quantity}, Available ${available}`);
-      return;
+    else{
+      const usesSharedInventory = simpleCategories.includes(r.name);
+      const requestedGender = usesSharedInventory ? "": r.gender;
+      const available =
+        (availableMap.value[r.name + requestedGender + r.size] ?? 0) +
+          (usesSharedInventory? 0 : (availableMap.value[r.name + "" + r.size] ?? 0));
+          console.log("Available:", availableMap.value);
+      if (r.quantity > available) {
+        alert(`${r.gender} ${r.name} ${r.size}: Requested ${r.quantity}, Available ${available}`);
+        return;
+      }
     }
+    
   }
 
   showCheckoutConfirm.value = true;
