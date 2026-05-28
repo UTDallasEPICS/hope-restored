@@ -3,23 +3,13 @@
     class="flex flex-col min-h-screen lg:min-h-0 lg:h-[calc(100vh-130px)] lg:max-h-[calc(100vh-130px)] lg:overflow-hidden"
   >
     <!-- CATEGORY SELECTOR -->
-  <div class="mb-6">
-    <div class="flex flex-wrap gap-3">
-      <button
-        v-for="cat in categories"
-        :key="cat.name"
-        @click="selectCategory(cat.name)"
-        :class="[
-          'px-10 py-5 rounded-xl border text-base font-semibold transition-all shadow-sm',
-          selectedCategory === cat.name
-            ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
-            : 'bg-white text-gray-700 border-gray-300 hover:border-indigo-500 hover:text-indigo-700'
-        ]"
-      >
-        {{ cat.name }}
-      </button>
-    </div>
-  </div>
+  <CategorySelector
+    :categories="categories"
+    :selected-category="selectedCategory"
+    aria-label="Checkout categories"
+    mobile-placeholder="Select category"
+    @select="selectCategory"
+  />
 
     <div
       class="w-full min-w-0 mx-auto grid grid-cols-1 gap-4 md:grid-cols-2 lg:gap-6 items-start"
