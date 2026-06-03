@@ -1,31 +1,68 @@
 <template>
   <div
-    class="flex flex-col min-h-screen lg:min-h-0 lg:h-[calc(100vh-130px)] lg:max-h-[calc(100vh-130px)] lg:overflow-hidden"
+    class="checkout-page flex flex-col w-full min-h-0 flex-1 lg:min-h-0 lg:h-[calc(100vh-130px)] lg:max-h-[calc(100vh-130px)] lg:overflow-hidden"
   >
-    <!-- CATEGORY SELECTOR -->
-  <CategorySelector
-    :categories="categories"
-    :selected-category="selectedCategory"
-    aria-label="Checkout categories"
-    mobile-placeholder="Select category"
-    @select="selectCategory"
-  />
-
     <div
-      class="w-full min-w-0 mx-auto grid grid-cols-1 gap-4 md:grid-cols-2 lg:gap-6 items-start"
+      class="flex flex-col flex-1 min-h-0 overflow-hidden bg-gray-100 p-3 sm:p-4 md:p-6 lg:p-8 gap-3 sm:gap-4 font-sans"
     >
-      <!-- LEFT: height synced to form on md+ (see syncCheckoutPanelHeights); table scrolls inside -->
+      <CategorySelector
+        :categories="categories"
+        :selected-category="selectedCategory"
+        title="Select a Category to Remove"
+        aria-label="Checkout categories"
+        mobile-placeholder="Select category"
+        @select="selectCategory"
+      />
+
       <div
-        class="order-2 md:order-1 min-w-0 bg-white border border-gray-200 rounded-lg shadow-sm p-4 md:p-5 flex flex-col min-h-0 overflow-hidden"
-        :style="checkoutLeftPanelStyle"
+        v-if="inventoryLoadError"
+        class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
+        role="alert"
       >
-        <div class="flex items-center justify-between gap-3 mb-3">
-          <h3 class="text-lg font-semibold text-gray-900">
-            Inventory Database
-          </h3>
+        <p>{{ inventoryLoadError }}</p>
+        <NuxtLink
+          v-if="inventoryAuthStatus === 401"
+          to="/login"
+          class="mt-2 inline-block font-semibold text-indigo-700 underline"
+        >
+          Go to login
+        </NuxtLink>
+        <button
+          v-else
+          type="button"
+          class="mt-2 inline-block font-semibold text-indigo-700 underline"
+          @click="loadInventory"
+        >
+          Try again
+        </button>
+      </div>
+
+      <section
+        class="checkout-panels grid grid-cols-1 gap-3 sm:gap-4 lg:grid-cols-2 lg:gap-6 flex-1 min-h-0 w-full min-w-0 items-stretch"
+        :class="!selectedCategory ? 'grid-rows-2 lg:grid-rows-none' : ''"
+      >
+        <!-- LEFT: inventory for selected category; height synced to form on lg+ -->
+        <div
+          class="checkout-panel checkout-panel--inventory order-2 lg:order-1 min-w-0 h-full min-h-0 bg-white border border-gray-200 rounded-lg shadow-sm p-4 md:p-5 flex flex-col overflow-hidden"
+          :style="selectedCategory ? checkoutLeftPanelStyle : undefined"
+        >
+        <div class="flex items-start justify-between gap-3 mb-4 shrink-0">
+          <h2
+            v-if="selectedCategory"
+            class="text-[1.15rem] font-semibold text-indigo-600 m-0 leading-snug"
+          >
+            {{ selectedCategory }} – Current Inventory
+          </h2>
+          <h2
+            v-else
+            class="text-[1.15rem] font-normal text-gray-500 m-0 leading-snug"
+          >
+            Select a category above to view inventory
+          </h2>
           <div
+            v-if="selectedCategory"
             ref="filtersWrapperRef"
-            class="relative"
+            class="relative shrink-0"
             :class="{ 'filters-dropdown-open': filtersDropdownOpen }"
           >
             <div class="relative">
@@ -122,24 +159,25 @@
           </div>
         </div>
 
-        <!-- md:h-0 + flex-1: classic pattern so long table scrolls inside fixed-height card -->
+        <!-- lg:h-0 + flex-1: long table scrolls inside fixed-height card on desktop -->
         <div
-          class="mt-2 min-h-0 overflow-x-auto md:h-0 md:flex-1 md:min-h-0 md:overflow-y-auto md:overscroll-contain"
+          v-if="selectedCategory"
+          class="min-h-0 flex-1 overflow-x-auto lg:h-0 lg:flex-1 lg:min-h-0 lg:overflow-y-auto lg:overscroll-contain"
         >
           <table
-            class="w-full max-w-full min-w-0 table-fixed border border-gray-200 text-sm"
+            class="w-full max-w-full min-w-0 table-fixed border border-gray-200 bg-white text-sm"
           >
             <template v-if="loadingInventory">
               <td colspan="2" class="px-3 py-2 text-center">Loading...</td>
             </template>
-            <template v-else-if="!inventoryDisplay.length">
-              <td colspan="2" class="px-3 py-2 text-center">
-                No inventory rows
+            <template v-else-if="!checkoutInventoryRows.length">
+              <td colspan="2" class="px-3 py-2 text-center text-gray-500">
+                No inventory for this category.
               </td>
             </template>
             <template
               v-else
-              v-for="row in inventoryDisplay"
+              v-for="row in checkoutInventoryRows"
               :key="row.category"
             >
               <thead>
@@ -161,72 +199,79 @@
                   </th>
                 </tr>
               </thead>
-              <template v-for="genders in row.genders">
-                <tr>
-                  <td
-                    class="px-3 py-2 font-semibold text-base text-gray-800"
-                    colspan="2"
+              <template
+                v-for="genders in row.genders"
+                :key="`${row.category}-${genders.name}`"
+              >
+                <template v-if="genderInventoryTotal(genders) > 0">
+                  <tr class="bg-white">
+                    <td
+                      class="bg-white px-3 py-2 font-semibold text-base text-gray-800"
+                      colspan="2"
+                    >
+                      {{ genders.name }}
+                    </td>
+                  </tr>
+                  <tr
+                    v-for="info in genders.info"
+                    :key="`${row.category}-${genders.name}-${info.size}`"
+                    class="bg-white"
                   >
-                    {{ genders.name }}
-                  </td>
-                </tr>
-
-                <template
-                  v-if="genders.info.length > 0"
-                  v-for="info in genders.info"
-                >
-                  <tr v-if="info.quantity !== 0">
-                    <td class="border-t border-gray-200 px-3 py-2">
+                    <td class="border-t border-gray-200 bg-white px-3 py-2">
                       {{ info.size }}
                     </td>
-                    <td class="border-t border-gray-200 px-3 py-2">
+                    <td class="border-t border-gray-200 bg-white px-3 py-2 text-right">
                       {{ info.quantity }}
                     </td>
                   </tr>
                 </template>
-                <template v-else>
-                  <tr>
-                    <td
-                      colspan="2"
-                      class="border-t border-gray-200 px-3 py-2 text-gray-600"
-                    >
-                      No {{ genders.name }} {{ row.category }} in inventory
-                    </td>
-                  </tr>
-                </template>
+                <tr v-else class="bg-white">
+                  <td
+                    class="border-t border-gray-200 bg-white px-3 py-2 font-semibold text-base text-gray-800"
+                  >
+                    {{ genders.name }}
+                  </td>
+                  <td
+                    class="border-t border-gray-200 bg-white px-3 py-2 text-right font-semibold text-base text-gray-800"
+                  >
+                    0
+                  </td>
+                </tr>
               </template>
             </template>
           </table>
         </div>
-      </div>
+        </div>
 
-      <!-- RIGHT: content height only (no stretch); database column matches this height on md+ -->
-       
-      <div
-        id="checkout-item-removal-form"
-        ref="rightPanelRef"
-        class="order-1 md:order-2 bg-white border border-gray-200 rounded-lg shadow-sm p-4 md:p-5 min-h-0 overflow-y-auto overflow-x-hidden md:max-h-[700px]"
-      >
-      <InOutForm
-          :inForm="false"
-          :selected-category="selectedCategory"
-          :submitForm="openCheckoutConfirm"
-          :isSimpleCategory="isSimpleCategory"
-          :is-other-category="isOtherItems"
-          :visibleGenders="visibleGenders"
-          :shoe-sizes="shoeSizes"
-          :apparel-sizes="apparelSizes"
-          :items="items"
-         />
-      </div>
+        <!-- RIGHT: removal form first on mobile -->
+        <div
+          id="checkout-item-removal-form"
+          ref="rightPanelRef"
+          class="checkout-panel checkout-panel--form order-1 lg:order-2 min-w-0 h-full min-h-0 flex flex-col"
+        >
+          <InOutForm
+            class="h-full min-h-0"
+            :inForm="false"
+            :selectedCategory="selectedCategory"
+            :submitForm="openCheckoutConfirm"
+            :isSimpleCategory="isSimpleCategory"
+            :isOtherCategory="isOtherItems"
+            :visibleGenders="visibleGenders"
+            :shoeSizes="shoeSizes"
+            :apparelSizes="apparelSizes"
+            :items="items"
+            empty-prompt="Select a category above to view inventory"
+          />
+        </div>
+      </section>
     </div>
 
     <!-- Confirm Modal -->
     <div
       v-if="showCheckoutConfirm"
-      class="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
+      class="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4"
     >
-      <div class="bg-white rounded-lg p-5 w-full max-w-md shadow-xl">
+      <div class="bg-white rounded-lg p-5 w-full max-w-md shadow-xl max-h-[90vh] overflow-y-auto">
         <h3 class="text-lg font-semibold text-gray-900">Confirm Removal</h3>
 
         <ul
@@ -238,18 +283,20 @@
           </li>
         </ul>
 
-        <div class="mt-4 flex justify-end gap-2">
+        <div class="mt-4 flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
           <button
-            class="px-4 py-2 rounded-md bg-red-600 text-white font-semibold hover:bg-red-700"
-            @click="confirmCheckout"
-          >
-            Yes
-          </button>
-          <button
-            class="px-4 py-2 rounded-md bg-gray-200 text-gray-800 font-semibold hover:bg-gray-300"
+            type="button"
+            class="w-full sm:w-auto px-4 py-2.5 rounded-md bg-gray-200 text-gray-800 font-semibold hover:bg-gray-300 min-h-[2.75rem]"
             @click="showCheckoutConfirm = false"
           >
             No
+          </button>
+          <button
+            type="button"
+            class="w-full sm:w-auto px-4 py-2.5 rounded-md bg-red-600 text-white font-semibold hover:bg-red-700 min-h-[2.75rem]"
+            @click="confirmCheckout"
+          >
+            Yes
           </button>
         </div>
       </div>
@@ -258,9 +305,9 @@
     <!-- Success Modal -->
     <div
       v-if="showRemovedModal"
-      class="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
+      class="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4"
     >
-      <div class="bg-white rounded-lg p-5 w-full max-w-md shadow-xl">
+      <div class="bg-white rounded-lg p-5 w-full max-w-md shadow-xl max-h-[90vh] overflow-y-auto">
         <h3 class="text-lg font-semibold text-gray-900">
           Removed from Inventory
         </h3>
@@ -271,15 +318,15 @@
           </li>
         </ul>
 
-        <div class="mt-4 flex flex-col gap-2">
+        <div class="mt-4 flex flex-col sm:flex-row gap-2">
           <button
-            class="px-4 py-2 rounded-md bg-indigo-600 text-white font-semibold hover:bg-indigo-700"
+            class="w-full sm:flex-1 px-4 py-2.5 rounded-md bg-indigo-600 text-white font-semibold hover:bg-indigo-700 min-h-[2.75rem]"
             @click="newCheckout"
           >
             NEW CHECKOUT
           </button>
           <button
-            class="px-4 py-2 rounded-md bg-gray-200 text-gray-800 font-semibold hover:bg-gray-300"
+            class="w-full sm:flex-1 px-4 py-2.5 rounded-md bg-gray-200 text-gray-800 font-semibold hover:bg-gray-300 min-h-[2.75rem]"
             @click="goToInventory"
           >
             GO TO INVENTORY
@@ -337,16 +384,28 @@ type CheckoutItem = {
 
 const router = useRouter();
 
-function isAuthError(error: unknown) {
-  const status =
+const inventoryLoadError = ref("");
+const inventoryAuthStatus = ref<number | null>(null);
+
+function getErrorStatus(error: unknown) {
+  return (
     (error as { status?: number; statusCode?: number })?.statusCode ??
-    (error as { status?: number; statusCode?: number })?.status;
-  return status === 401 || status === 403;
+    (error as { status?: number; statusCode?: number })?.status ??
+    null
+  );
 }
 
-function redirectToLoginIfUnauthorized(error: unknown) {
-  if (!isAuthError(error)) return false;
-  router.push("/login");
+function setInventoryAuthError(error: unknown) {
+  const status = getErrorStatus(error);
+  if (status !== 401 && status !== 403) return false;
+  inventoryAuthStatus.value = status;
+  if (status === 401) {
+    inventoryLoadError.value =
+      "You are not signed in (or your session expired). Log in again to use Checkout.";
+  } else {
+    inventoryLoadError.value =
+      "Your account does not have staff access. Add your email to BETTER_AUTH_STAFF_EMAILS or BETTER_AUTH_ADMIN_EMAILS in admin/.env.";
+  }
   return true;
 }
 
@@ -355,7 +414,7 @@ function redirectToLoginIfUnauthorized(error: unknown) {
 ---------------------- */
 
 const selectedGender = ref("Male");
-const selectedCategory = ref("Shirts");
+const selectedCategory = ref("");
 
 const personName = ref("");
 const todayDate = ref(new Date().toISOString().split("T")[0]);
@@ -367,7 +426,7 @@ const sizeOptions = ["XS", "S", "M", "L", "XL", "2XL", "3XL", "4XL+"];
 const rightPanelRef = ref<HTMLElement | null>(null);
 const leftPanelHeightPx = ref<number | null>(null);
 /** Must match Tailwind `md:` two-column layout (see admin/assets/css/main.css --breakpoint-md) */
-const CHECKOUT_TWO_COL_MQL = "(min-width: 768px)";
+const CHECKOUT_TWO_COL_MQL = "(min-width: 1024px)";
 
 function isCheckoutTwoColumnLayout() {
   if (typeof window === "undefined") return false;
@@ -375,12 +434,14 @@ function isCheckoutTwoColumnLayout() {
 }
 
 function getRightFormPanelEl(): HTMLElement | null {
-  return (
-    rightPanelRef.value ??
-    (typeof document !== "undefined"
-      ? document.getElementById("checkout-item-removal-form")
-      : null)
-  );
+  const wrapper = rightPanelRef.value as HTMLElement | null;
+  if (wrapper) {
+    const formEl = wrapper.firstElementChild as HTMLElement | null;
+    return formEl ?? wrapper;
+  }
+  return typeof document !== "undefined"
+    ? document.getElementById("checkout-item-removal-form")
+    : null;
 }
 
 /** Grid min-height:auto would ignore a plain height:px and grow with the table; clamp with maxHeight + minHeight 0 */
@@ -451,6 +512,11 @@ const items = ref<CheckoutItem[][]>([]);
 function selectCategory(catName:string){
   selectedCategory.value = catName;
   items.value= [];
+  if (!catName) {
+    isSimpleCategory.value = false;
+    isOtherItems.value = false;
+    return;
+  }
   if(simpleCategories.includes(selectedCategory.value)){
     items.value.push(
       [{name:selectedCategory.value,
@@ -537,6 +603,17 @@ const shoeSizes = (() => {
   for (let n = 5; n <= 14.5; n += 0.5) arr.push(String(n));
   return arr;
 })();
+
+function genderInventoryTotal(genders: InventoryGenderGroup) {
+  return genders.info.reduce((sum, row) => sum + (row.quantity || 0), 0);
+}
+
+const checkoutInventoryRows = computed(() => {
+  if (!selectedCategory.value) return [];
+  return inventoryDisplay.value.filter(
+    (row) => row.category === selectedCategory.value,
+  );
+});
 
 const inventoryDisplay = computed(() => {
   // Aggregate to one row per category. Quantity is the sum of matching size/gender rows
@@ -673,6 +750,8 @@ watch(
 
 async function loadInventory() {
   loadingInventory.value = true;
+  inventoryLoadError.value = "";
+  inventoryAuthStatus.value = null;
   const map: Record<string, number> = {};
   const normalized: InventoryRow[] = [];
 
@@ -742,7 +821,7 @@ async function loadInventory() {
         map[catName] = totalQty;
       }
     } catch (e) {
-      if (redirectToLoginIfUnauthorized(e)) {
+      if (setInventoryAuthError(e)) {
         loadingInventory.value = false;
         return;
       }
@@ -771,8 +850,6 @@ onMounted(async () => {
     await nextTick();
     attachRightPanelResizeObserver();
   }
-
-  selectCategory("Shirts");
 });
 
 let filtersClickOutsideHandler: ((e: MouseEvent) => void) | null = null;
@@ -884,7 +961,7 @@ async function confirmCheckout() {
       body: { removals },
     });
   } catch (error) {
-    if (redirectToLoginIfUnauthorized(error)) return;
+    if (setInventoryAuthError(error)) return;
     console.error("Checkout request failed", error);
     alert("Checkout failed. Please try again.");
     return;
@@ -903,13 +980,13 @@ async function confirmCheckout() {
 }
 
 function newCheckout() {
-  selectCategory(selectedCategory.value)
   showRemovedModal.value = false;
+  if (selectedCategory.value) {
+    selectCategory(selectedCategory.value);
+  }
 }
 
 function goToInventory() {
   router.push("/inventory");
 }
-
-onMounted(newCheckout);
 </script>

@@ -41,26 +41,82 @@ function parseCsv(value: string | undefined): string[] {
 
 function getTrustedOrigins() {
 	const envTrusted = parseCsv(process.env.BETTER_AUTH_TRUSTED_ORIGINS);
+	const port = process.env.PORT || "3000";
 	const fallback = [
 		"http://localhost:3000",
 		"http://localhost:3001",
+		`http://localhost:${port}`,
 		"http://127.0.0.1:3000",
 		"http://127.0.0.1:3001",
+		`http://127.0.0.1:${port}`,
 		"http://localhost:4000",
 		"http://127.0.0.1:4000",
 	];
 	return [...new Set([...fallback, ...envTrusted])];
 }
 
+/** Home Wi‑Fi / LAN URLs used when testing on a phone (npm run dev -- --host). */
+function isLocalDevOrigin(origin: string | null) {
+	if (!origin) return false;
+	try {
+		const { hostname, protocol } = new URL(origin);
+		if (protocol !== "http:" && protocol !== "https:") return false;
+		if (hostname === "localhost" || hostname === "127.0.0.1") return true;
+		if (/^192\.168\.\d{1,3}\.\d{1,3}$/.test(hostname)) return true;
+		if (/^10\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(hostname)) return true;
+		if (/^172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3}$/.test(hostname)) return true;
+		return false;
+	} catch {
+		return false;
+	}
+}
+
+const isProd = process.env.NODE_ENV === "production";
+
+function getAuthBaseURL() {
+	if (isProd) {
+		return process.env.BETTER_AUTH_URL || "http://localhost:3000";
+	}
+	const port = process.env.PORT || "3000";
+	return {
+		allowedHosts: [
+			`localhost:${port}`,
+			`127.0.0.1:${port}`,
+			`192.168.*:${port}`,
+			`10.*:${port}`,
+			`172.*:${port}`,
+		],
+		protocol: "http" as const,
+	};
+}
+
 export const auth = betterAuth({
 	appName: "Hope Restored Admin",
-	baseURL: process.env.BETTER_AUTH_URL || "http://localhost:3000",
+	baseURL: getAuthBaseURL(),
 	basePath: "/api/auth",
 	secret: process.env.BETTER_AUTH_SECRET,
 	database: prismaAdapter(prisma, {
 		provider: "sqlite",
 	}),
-	trustedOrigins: getTrustedOrigins(),
+	trustedOrigins: async (request) => {
+		const origins = getTrustedOrigins();
+		if (!request) return origins;
+		const origin = request.headers.get("origin");
+		if (!isProd && origin && isLocalDevOrigin(origin)) {
+			return [...new Set([...origins, origin])];
+		}
+		return origins;
+	},
+	user: {
+		additionalFields: {
+			role: {
+				type: "string",
+				required: false,
+				defaultValue: "staff",
+				input: false,
+			},
+		},
+	},
 	emailAndPassword: {
 		enabled: true,
 	},

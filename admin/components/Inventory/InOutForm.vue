@@ -1,12 +1,14 @@
 <template>
-    <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-4 md:p-5 min-h-0 overflow-y-auto">
+    <div
+        class="bg-white border border-gray-200 rounded-lg shadow-sm p-4 md:p-5 min-h-0 h-full overflow-y-auto overflow-x-hidden flex flex-col box-border"
+    >
         <h2 v-if="selectedCategory" class="text-[1.15rem] font-semibold text-indigo-600 mb-4 mt-0">
             {{inForm? "Add " : "Remove "}} {{selectedCategory}}
         </h2>
         <h2 v-else class="text-[1.15rem] font-normal text-gray-500 mb-4 mt-0">
-            Select a category to {{inForm? "add " : "remove "}}  items
+            {{ emptyPrompt ?? `Select a category to ${inForm ? "add " : "remove "} items` }}
         </h2>
-        <form v-if="selectedCategory" class="flex flex-col gap-4" @submit.prevent="submitForm">
+        <form v-if="selectedCategory" class="flex flex-col gap-5" @submit.prevent="submitForm">
             <div v-if="items.length">
                 <div v-if="isSimpleCategory">  
                     <label class="block mb-1 text-[0.95rem] font-medium text-gray-800">
@@ -70,7 +72,7 @@
                     </div>
                 </div>
                 <div v-else>   
-                    <section v-for="(gender,genIdx) in visibleGenders" :key="gender" class="border border-gray-200 rounded-lg p-3">
+                    <section v-for="(gender,genIdx) in visibleGenders" :key="gender" class="border border-gray-200 rounded-lg p-4">
                         <h3 class="text-[1rem] font-semibold text-indigo-600 mb-2">{{ gender }}</h3>
                         <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
                             <label
@@ -91,10 +93,10 @@
                     </section>
                 </div>
             </div> 
-           <div class="pt-2 flex justify-end">
+           <div class="pt-2 flex justify-stretch sm:justify-end">
               <button
                 type="submit"
-                class="inline-flex items-center rounded-md px-5 py-2.5 text-white text-base font-semibold shadow-sm focus:outline-none focus:ring-2"
+                class="w-full sm:w-auto inline-flex items-center justify-center rounded-md px-5 py-2.5 text-white text-base font-semibold shadow-sm focus:outline-none focus:ring-2 min-h-[2.75rem]"
                 :class="{'bg-green-600 hover:bg-green-700 focus:ring-green-500': inForm, 'bg-red-600 hover:bg-red-700 focus:ring-red-500':!inForm}"
               >
                 {{inForm?"Confirm Addition":"Checkout"}}
@@ -115,7 +117,8 @@ const props = defineProps<{
         apparelSizes:string[],
         visibleGenders:string[],
         items:{name: string, gender:string, hasSize: boolean, size:string, quantity:number, otherItemName: string;}[][]
-        submitForm:()=>void
+        submitForm:()=>void,
+        emptyPrompt?: string,
     }>();
 
 const otherItemsSubcategories = [

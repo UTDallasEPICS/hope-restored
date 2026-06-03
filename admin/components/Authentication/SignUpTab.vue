@@ -1,53 +1,107 @@
 <template>
     <div>
-      <form @submit.prevent="handleSubmit" v-if="!validEmail" class="flex flex-col items-center w-full">
-        <h2 class="text-xl font-semibold mb-4">{{props.signupForm? "Sign up" : "Login"}}</h2>
-        <p class="whitespace-pre-wrap" v-if="Error">{{ ErrorMsg }}</p>
-        <div v-if="props.signupForm" class="flex gap-5">
+      <form
+        @submit.prevent="handleSubmit"
+        v-if="!validEmail"
+        class="flex flex-col items-stretch w-full max-w-full"
+      >
+        <h2 class="text-xl font-semibold mb-4 text-center">{{props.signupForm? "Sign up" : "Login"}}</h2>
+        <p
+          v-if="ErrorMsg"
+          class="whitespace-pre-wrap text-red-600 text-sm mb-4 w-full text-center"
+          role="alert"
+        >
+          {{ ErrorMsg }}
+        </p>
+        <div
+          v-if="props.signupForm"
+          class="flex flex-col sm:flex-row gap-3 sm:gap-5 w-full"
+        >
           <input
             type="text"
             v-model="firstName"
             placeholder="First Name"
-            class="border p-2 w-full mb-4"
+            class="auth-input"
           />
           <input
             type="text"
             v-model="lastName"
             placeholder="Last Name"
-            class="border p-2 w-full mb-4"
+            class="auth-input"
           />
         </div>
         <input
-          type="text"
+          type="email"
           v-model="email"
+          autocomplete="email"
           placeholder="example@email.com"
-          class="border p-2 w-full mb-4"
+          class="auth-input"
         />
-        <button
-          type="submit"
-          class="px-4 py-2 rounded bg-[#2563eb] text-white hover:bg-[#1d4ed8]"
-        >
-        <span>Submit</span>
-          
-        </button>
-      </form>
-      <form @submit.prevent="handleOTPSubmit" v-if="validEmail" class="flex flex-col items-center">
-       <p class="whitespace-pre-wrap" v-if="Error">{{ ErrorMsg }}</p>
-        <input
-          type="text"
-          v-model="otp"
-          :placeholder="props.signupForm ? 'Enter sign up code here' : 'Enter login code here'"
-          class="border p-2 w-full mb-4"
-        />
-        <button
-          type="submit"
-          class="px-4 py-2 rounded bg-[#2563eb] text-white hover:bg-[#1d4ed8]"
-        >
+        <button type="submit" class="auth-submit">
           Submit
         </button>
-      </form> 
+      </form>
+      <form
+        @submit.prevent="handleOTPSubmit"
+        v-if="validEmail"
+        class="flex flex-col items-stretch w-full max-w-full"
+      >
+        <h2 class="text-xl font-semibold mb-2">Enter your code</h2>
+        <p class="text-sm text-gray-600 mb-4 text-center">
+          We sent a 6-digit code to {{ email }}.
+        </p>
+        <p
+          v-if="ErrorMsg"
+          class="whitespace-pre-wrap text-red-600 text-sm mb-4 w-full text-center"
+          role="alert"
+        >
+          {{ ErrorMsg }}
+        </p>
+        <input
+          type="text"
+          inputmode="numeric"
+          autocomplete="one-time-code"
+          maxlength="6"
+          v-model="otp"
+          :placeholder="props.signupForm ? 'Enter sign up code here' : 'Enter login code here'"
+          class="auth-input text-center tracking-widest"
+        />
+        <button type="submit" class="auth-submit">
+          Submit
+        </button>
+      </form>
     </div>
   </template>
+
+<style scoped>
+.auth-input {
+  width: 100%;
+  margin-bottom: 1rem;
+  padding: 0.75rem 0.875rem;
+  font-size: 1rem;
+  line-height: 1.25;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  box-sizing: border-box;
+}
+
+.auth-submit {
+  width: 100%;
+  min-height: 2.75rem;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #fff;
+  background-color: #2563eb;
+  border: none;
+  border-radius: 0.375rem;
+  cursor: pointer;
+}
+
+.auth-submit:hover {
+  background-color: #1d4ed8;
+}
+</style>
   
 <script setup lang="ts">
 import { ref, watch } from "vue";
@@ -77,76 +131,82 @@ watch(
   },
 );
 
+async function sendLoginCode() {
+  const result = await authClient.emailOtp.sendVerificationOtp({
+    email: email.value,
+    type: "sign-in",
+  });
+  if (result.error) {
+    ErrorMsg.value =
+      result.error.message ||
+      result.error.statusText ||
+      `Error ${result.error.status}: Failed to send code. Check SMTP settings in admin/.env.`;
+    return false;
+  }
+  validEmail.value = true;
+  ErrorMsg.value = "";
+  return true;
+}
+
 const handleSubmit = async () => {
   Error.value = false;
-  ErrorMsg.value = '';
+  ErrorMsg.value = "";
 
   const regex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-  if(email.value.length == 0){
-    ErrorMsg.value = 'Email field is required';
+  if (email.value.length === 0) {
+    ErrorMsg.value = "Email field is required";
+    Error.value = true;
+    return;
   }
-  else if(!regex.test(email.value)){
-    ErrorMsg.value = 'Invalid formatting for email\tExample:\texample@email.com';
+  if (!regex.test(email.value)) {
+    ErrorMsg.value =
+      "Invalid formatting for email. Example: example@email.com";
+    Error.value = true;
+    return;
   }
-  else{
-    if(props.signupForm){
-      if(firstName.value.length == 0){
-        ErrorMsg.value += 'First Name is required';
-      }
-      if(lastName.value.length == 0){
-        ErrorMsg.value += '\nLast Name is required';
-      }
-      if(ErrorMsg.value !== ''){
-        Error.value = true;
-        return;
-      }
-    }
 
+  if (props.signupForm) {
+    if (firstName.value.length === 0) {
+      ErrorMsg.value = "First Name is required";
+    }
+    if (lastName.value.length === 0) {
+      ErrorMsg.value += ErrorMsg.value ? "\nLast Name is required" : "Last Name is required";
+    }
+    if (ErrorMsg.value) {
+      Error.value = true;
+      return;
+    }
     try {
-      const {data, refresh} = await useFetch('/api/user',{
-        params:{email:email.value} 
-      });
-      console.log(data.value);
-      if(!props.signupForm && data.value){
-        const result = await authClient.emailOtp.sendVerificationOtp({
-          email: email.value,
-          type: 'sign-in',
-        });
-        if(result.error){
-          ErrorMsg.value = result.error.message || result.error.statusText || `Error ${result.error.status}: Failed to send code. Check SMTP settings in admin/.env.`;
-          Error.value = true;
-        } else {
-          validEmail.value = true;
-          Error.value = false;
-          ErrorMsg.value = '';
-        }
-      }else if(props.signupForm){
-        const result = await authClient.emailOtp.sendVerificationOtp({
-          email: email.value,
-          type: 'sign-in',
-        });
-        if(result.error){
-          ErrorMsg.value = result.error.message || result.error.statusText || `Error ${result.error.status}: Failed to send code. Check SMTP settings in admin/.env.`;
-          Error.value = true;
-        } else {
-          validEmail.value = true;
-          Error.value = false;
-          ErrorMsg.value = '';
-        }
-      }
-      else{
-        ErrorMsg.value = "User not Found";
-        Error.value = true;
-      }   
+      await sendLoginCode();
+      if (ErrorMsg.value) Error.value = true;
     } catch (err) {
-      ErrorMsg.value = (err as Error)?.message || 'Network error: could not reach auth server.';
+      ErrorMsg.value =
+        (err as Error)?.message ||
+        "Network error: could not reach auth server.";
       Error.value = true;
     }
+    return;
   }
-  if(ErrorMsg.value !== ''){
+
+  try {
+    const userExists = await $fetch<boolean>("/api/user", {
+      params: { email: email.value.trim() },
+    });
+    if (!userExists) {
+      ErrorMsg.value =
+        "No account found for this email. Use Sign up or check the address.";
+      Error.value = true;
+      return;
+    }
+    await sendLoginCode();
+    if (ErrorMsg.value) Error.value = true;
+  } catch (err) {
+    ErrorMsg.value =
+      (err as Error)?.message ||
+      "Network error: could not reach auth server.";
     Error.value = true;
   }
-}
+};
 
 const handleOTPSubmit = async () =>{
   Error.value = false;

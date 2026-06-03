@@ -1,5 +1,6 @@
 import { createError, getHeaders } from "h3";
 import { auth } from "~/lib/auth";
+import prisma from "~/lib/prisma";
 
 type AppRole = "staff" | "admin";
 
@@ -45,6 +46,21 @@ export async function getRequestSession(event: Parameters<typeof getHeaders>[0])
   return session;
 }
 
+/** Session payload may omit `role`; load it from the user table when needed. */
+async function resolveSessionUser(user: SessionUserLike): Promise<SessionUserLike> {
+  if (user.role || !user.email) {
+    return user;
+  }
+  const dbUser = await prisma.user.findUnique({
+    where: { email: user.email },
+    select: { role: true },
+  });
+  if (dbUser?.role) {
+    return { ...user, role: dbUser.role };
+  }
+  return user;
+}
+
 export async function requireSession(
   event: Parameters<typeof getHeaders>[0],
   requiredRole: AppRole = "staff",
@@ -69,18 +85,14 @@ export async function requireSession(
     return session;
   }
 
-  if (
-    !hasRequiredRole(
-      session.user as SessionUserLike,
-      requiredRole,
-      adminEmails,
-      staffEmails,
-    )
-  ) {
+  const user = await resolveSessionUser(session.user as SessionUserLike);
+
+  if (!hasRequiredRole(user, requiredRole, adminEmails, staffEmails)) {
     throw createError({
       statusCode: 403,
       statusMessage: "Forbidden",
-      message: "You do not have permission for this action.",
+      message:
+        "You do not have permission for this action. Your account needs the staff or admin role, or your email must be listed in BETTER_AUTH_STAFF_EMAILS / BETTER_AUTH_ADMIN_EMAILS in admin/.env.",
     });
   }
 

@@ -1,6 +1,6 @@
 <template>
     <div class="app-layout">
-      <HeaderComponent v-if="route.path != '/'"/>
+      <HeaderComponent v-if="route.path !== '/'" />
       <main class="page-content">
         <NuxtPage />
       </main>
@@ -40,5 +40,6 @@ html, body {
   display: flex;
   flex-direction: column;
   min-height: 0;
+  width: 100%;
 }
 </style>

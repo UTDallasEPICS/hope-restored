@@ -59,7 +59,7 @@
             <input
               v-model.trim="search"
               type="text"
-              placeholder="person, page, or IP address"
+              placeholder="Search by person or action"
               class="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
           </div>
@@ -129,6 +129,16 @@
       >
         <div v-if="loading" class="p-5 text-sm text-gray-600 animate-pulse">
           Loading changes...
+        </div>
+        <div v-else-if="loadError" class="p-8 text-center">
+          <p class="text-sm font-semibold text-red-600">{{ loadError }}</p>
+          <button
+            type="button"
+            class="mt-3 px-4 py-2 rounded-md bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700"
+            @click="loadEntries"
+          >
+            Try again
+          </button>
         </div>
         <div v-else-if="!entries.length" class="p-8 text-center">
           <p class="text-sm font-semibold text-gray-700">No changes yet</p>
@@ -226,6 +236,7 @@ type ActivityEntry = {
 
 const entries = ref<ActivityEntry[]>([]);
 const loading = ref(false);
+const loadError = ref("");
 const search = ref("");
 const method = ref("");
 const limit = ref(200);
@@ -287,6 +298,7 @@ function describeAction(entry: ActivityEntry) {
 
 async function loadEntries() {
   loading.value = true;
+  loadError.value = "";
   try {
     const data = await $fetch<ActivityEntry[]>("/api/activity", {
       params: {
@@ -299,7 +311,20 @@ async function loadEntries() {
     lastRefreshAt.value = new Date();
   } catch (error) {
     console.error("Failed to load activity log", error);
-    alert("Could not load the changes right now.");
+    entries.value = [];
+    const status =
+      (error as { statusCode?: number; status?: number })?.statusCode ??
+      (error as { status?: number })?.status;
+    if (status === 401) {
+      loadError.value =
+        "You are not signed in. Log in again, then return to Activity.";
+    } else if (status === 403) {
+      loadError.value =
+        "Your account does not have permission to view activity.";
+    } else {
+      loadError.value =
+        "Could not load activity right now. Refresh the page or try again.";
+    }
   } finally {
     loading.value = false;
   }

@@ -35,15 +35,15 @@ export default defineEventHandler(async (event) => {
       additions:0,
       removals:0,
       genders:cat.category !== "Other Items"? [{
-          name:"Child",
-          info:[]
-        },
-        {
           name:"Male",
           info:[]
         },
         {
           name:"Female",
+          info:[]
+        },
+        {
+          name:"Child",
           info:[]
         },
       ] :[

@@ -18,11 +18,12 @@
 
       <!-- Bottom 2/3: Left = DB display, Right = Add form -->
       <section
-        class="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6 flex-1 min-h-0"
+        class="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6 flex-1 min-h-0 items-stretch"
+        :class="!selectedCategory ? 'grid-rows-2 lg:grid-rows-none' : ''"
       >
         <!-- Left half: Inventory display for selected category -->
         <div
-          class="bg-white border border-gray-200 rounded-lg shadow-sm p-4 md:p-5 min-h-0 overflow-y-auto overflow-x-hidden"
+          class="bg-white border border-gray-200 rounded-lg shadow-sm p-4 md:p-5 min-h-0 h-full flex flex-col overflow-y-auto overflow-x-hidden"
         >
           <h2
             v-if="selectedCategory"
@@ -110,20 +111,20 @@
           </div>
         </div>
 
-        <!-- Right half: Add form -->
-         <div class="overflow-y-auto">
-          <InOutForm
-            :inForm="true"
-            :selectedCategory="selectedCategory"
-            :isSimpleCategory="isSimpleCategory"
-            :isOtherCategory="isOtherItems"
-            :shoeSizes="shoeSizeOptions"
-            :apparelSizes="sizeOptions"
-            :visibleGenders="visibleGenders"
-            :items="items"
-            :submitForm="confirmAddition"
-          />
-        </div>
+        <!-- Right half: Add form (match left panel height) -->
+        <InOutForm
+          class="h-full min-h-0"
+          :inForm="true"
+          :selectedCategory="selectedCategory"
+          :isSimpleCategory="isSimpleCategory"
+          :isOtherCategory="isOtherItems"
+          :shoeSizes="shoeSizeOptions"
+          :apparelSizes="sizeOptions"
+          :visibleGenders="visibleGenders"
+          :items="items"
+          :submitForm="confirmAddition"
+          empty-prompt="Select a category above to add items"
+        />
       </section>
 
       <!-- Addition success popup -->
@@ -266,6 +267,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from "vue";
 import InOutForm from "../components/Inventory/InOutForm.vue";
+import { formatApiError } from "../utils/format-api-error";
 
 const categories = [
   "Shirts",
@@ -332,9 +334,12 @@ const formSizeOptions = computed(() =>
   isShoes.value ? shoeSizeOptions : sizeOptions,
 );
 const visibleCategoryGenders = computed(() =>
-  (categoryDetails.value.catDetails[0]?.genders || []).filter(
-    (gender) => gender.name !== "Unisex",
-  ),
+  (categoryDetails.value.catDetails[0]?.genders || [])
+    .filter((gender) => gender.name !== "Unisex")
+    .sort(
+      (a, b) =>
+        visibleGenders.indexOf(a.name) - visibleGenders.indexOf(b.name),
+    ),
 );
 
 function sizesToShowForGender(gender: {
@@ -479,10 +484,14 @@ async function confirmPendingAdditions() {
       console.log(body);
       await $fetch("/api/inventory/", {
         method: "POST",
-        body:{
+        credentials: "include",
+        body: {
           ...body,
-          category:selectedCategory.value,
-          size:selectedCategory.value !== "Other Items"? body.size : body.otherItemName
+          category: selectedCategory.value,
+          size:
+            selectedCategory.value !== "Other Items"
+              ? body.size
+              : body.otherItemName,
         },
       });
     }
@@ -491,12 +500,12 @@ async function confirmPendingAdditions() {
     pendingAdditionPayloads.value = [];
     additionPreviewItems.value = [];
     showAdditionSuccessPopup.value = true;
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("Error adding item:", err);
-    addErrorMessage.value =
-      err?.data?.error ??
-      err?.message ??
-      "The item could not be saved. Please try again.";
+    addErrorMessage.value = formatApiError(
+      err,
+      "The item could not be saved. Please try again.",
+    );
   }
 }
 async function getInventory() {
