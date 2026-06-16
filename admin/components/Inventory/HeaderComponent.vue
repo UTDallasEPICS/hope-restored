@@ -4,45 +4,111 @@
     <!-- Top bar: site name -->
     <div class="header-top">
       <div class="header-top-inner">
-        <h1 class="site-name">Hope Restored Missions</h1>
+        <NuxtLink to="/Home" class="site-name-link" aria-label="Go to home page">
+          <h1 class="site-name">Hope Restored Missions</h1>
+        </NuxtLink>
       </div>
     </div>
     <!-- Bottom bar: navigation -->
     <nav class="header-nav" aria-label="Main navigation">
-      <ul class="nav-list">
-        <li>
-          <NuxtLink to="/Home" class="nav-link" exact-active-class="nav-link--active">
-            <i class="fas fa-home" aria-hidden="true"></i>
-            <span>Home</span>
-          </NuxtLink>
-        </li>
-        <li>
-          <NuxtLink to="/reports" class="nav-link" exact-active-class="nav-link--active">
-            <i class="fas fa-chart-bar" aria-hidden="true"></i>
-            <span>Reports</span>
-          </NuxtLink>
-        </li>
-        <li>
-          <NuxtLink to="/inventory" class="nav-link" exact-active-class="nav-link--active">
-            <i class="fas fa-box" aria-hidden="true"></i>
-            <span>Inventory</span>
-          </NuxtLink>
-        </li>
-        <li>
-          <NuxtLink to="/checkout" class="nav-link" exact-active-class="nav-link--active">
-            <i class="fas fa-shopping-cart" aria-hidden="true"></i>
-            <span>Checkout</span>
-          </NuxtLink>
-        </li>
+      <ul class="nav-list" :class="{ 'nav-list--unauth': !isAuthenticated }">
+        <template v-if="isAuthenticated">
+          <li>
+            <NuxtLink to="/Home" class="nav-link" exact-active-class="nav-link--active">
+              <i class="fas fa-home" aria-hidden="true"></i>
+              <span>Home</span>
+            </NuxtLink>
+          </li>
+          <li>
+            <NuxtLink to="/reports" class="nav-link" exact-active-class="nav-link--active">
+              <i class="fas fa-chart-bar" aria-hidden="true"></i>
+              <span>Reports</span>
+            </NuxtLink>
+          </li>
+          <li>
+            <NuxtLink to="/activity" class="nav-link" exact-active-class="nav-link--active">
+              <i class="fas fa-clock-rotate-left" aria-hidden="true"></i>
+              <span>Activity</span>
+            </NuxtLink>
+          </li>
+          <li>
+            <NuxtLink to="/inventory" class="nav-link" exact-active-class="nav-link--active">
+              <i class="fas fa-box" aria-hidden="true"></i>
+              <span>Inventory</span>
+            </NuxtLink>
+          </li>
+          <li>
+            <NuxtLink to="/checkout" class="nav-link" exact-active-class="nav-link--active">
+              <i class="fas fa-shopping-cart" aria-hidden="true"></i>
+              <span>Checkout</span>
+            </NuxtLink>
+          </li>
+          <li>
+            <button type="button" class="nav-link" @click="handleSignOut">
+              <i class="fas fa-right-from-bracket" aria-hidden="true"></i>
+              <span>Logout</span>
+            </button>
+          </li>
+        </template>
+        <template v-else>
+          <li>
+            <NuxtLink to="/Home" class="nav-link" exact-active-class="nav-link--active">
+              <i class="fas fa-home" aria-hidden="true"></i>
+              <span>Home</span>
+            </NuxtLink>
+          </li>
+          <li>
+            <NuxtLink to="/login" class="nav-link" exact-active-class="nav-link--active">
+              <i class="fas fa-right-to-bracket" aria-hidden="true"></i>
+              <span>Login</span>
+            </NuxtLink>
+          </li>
+        </template>
       </ul>
     </nav>
   </header>
 </template>
 
-<script>
-export default {
-  name: 'HeaderComponent',
+
+
+<script setup lang="ts">
+import { computed, watch } from "vue";
+import { navigateTo, useRoute } from "nuxt/app";
+import { authClient } from "../../lib/auth-client";
+
+const sessionState = authClient.useSession();
+const isAuthenticated = computed(() => Boolean(sessionState.value?.data));
+const route = useRoute();
+
+if (typeof window !== "undefined") {
+  watch(
+    () => route.fullPath,
+    (path) => {
+      sessionStorage.setItem("hr:lastRouteBeforeReload", path);
+    },
+    { immediate: true },
+  );
+
+  watch(
+    isAuthenticated,
+    (authed) => {
+      if (authed && route.path === "/login") {
+        void navigateTo("/Home");
+      }
+    },
+    { immediate: true },
+  );
+}
+
+const handleSignOut = async () => {
+  try {
+    await authClient.signOut();
+  } finally {
+    await navigateTo("/login");
+  }
 };
+
+
 </script>
 
 <style scoped>
@@ -72,11 +138,19 @@ export default {
   letter-spacing: 0.06em;
 }
 
+.site-name-link {
+  text-decoration: none;
+  color: inherit;
+  display: inline-flex;
+  align-items: center;
+}
+
 /* Bottom bar: nav links */
 .header-nav {
   background: #fff;
-  padding: 0 clamp(0.5rem, 2vw, 1.5rem);
+  padding: 0 clamp(0.25rem, 1.5vw, 1.5rem);
   border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  overflow: hidden;
 }
 
 .nav-list {
@@ -84,26 +158,42 @@ export default {
   margin: 0;
   padding: 0;
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: clamp(0.25rem, 1.5vw, 0.5rem) clamp(0.75rem, 3vw, 1.5rem);
+  flex-wrap: nowrap;
+  align-items: stretch;
+  width: 100%;
   max-width: 1400px;
-  min-height: clamp(2.25rem, 5vw, 2.75rem);
+  min-height: clamp(2.35rem, 5.5vw, 3.1rem);
+  gap: clamp(0.125rem, 0.8vw, 0.75rem);
 }
 
 .nav-list li {
-  display: inline-flex;
+  display: flex;
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.nav-list--unauth li {
+  flex: 0 0 auto;
+}
+
+.nav-list--unauth .nav-link {
+  width: auto !important;
+  justify-content: flex-start !important;
 }
 
 .nav-link {
   display: inline-flex;
   align-items: center;
-  gap: 0.35em;
-  padding: clamp(0.4rem, 1vw, 0.5rem) clamp(0.5rem, 1.2vw, 0.75rem);
+  justify-content: center;
+  width: 100%;
+  min-width: 0;
+  gap: clamp(0.1em, 0.4vw, 0.35em);
+  padding: clamp(0.45rem, 1vw, 0.65rem) clamp(0.1rem, 0.6vw, 0.75rem);
   font-family: 'sans-serif', Arial;
-  font-size: clamp(0.95rem, 1.2vw + 0.5rem, 1.1rem);
+  font-size: clamp(0.625rem, 1.6vw + 0.35rem, 1.1rem);
   font-weight: 700;
-  letter-spacing: 0.05em;
+  letter-spacing: clamp(0, 0.02em, 0.05em);
+  white-space: nowrap;
   color: #878787;
   text-decoration: none;
   border: none;
@@ -112,6 +202,12 @@ export default {
   border-bottom: 2px solid transparent;
   margin-bottom: -1px;
   transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+@media (max-width: 520px) {
+  .nav-link i {
+    display: none;
+  }
 }
 
 .nav-link:hover {

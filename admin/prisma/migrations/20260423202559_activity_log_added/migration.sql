@@ -1,11 +1,54 @@
 -- CreateTable
 CREATE TABLE "user" (
-    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "id" TEXT NOT NULL PRIMARY KEY,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "username" TEXT NOT NULL,
-    "password" TEXT NOT NULL,
+    "updatedAt" DATETIME NOT NULL,
     "name" TEXT,
-    "role" TEXT NOT NULL DEFAULT 'ADMIN'
+    "email" TEXT NOT NULL,
+    "emailVerified" BOOLEAN NOT NULL DEFAULT false,
+    "image" TEXT,
+    "role" TEXT NOT NULL DEFAULT 'staff'
+);
+
+-- CreateTable
+CREATE TABLE "session" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "expiresAt" DATETIME NOT NULL,
+    "token" TEXT NOT NULL,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" DATETIME NOT NULL,
+    "ipAddress" TEXT,
+    "userAgent" TEXT,
+    "userId" TEXT NOT NULL,
+    CONSTRAINT "session_userId_fkey" FOREIGN KEY ("userId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+-- CreateTable
+CREATE TABLE "account" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "accountId" TEXT NOT NULL,
+    "providerId" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "accessToken" TEXT,
+    "refreshToken" TEXT,
+    "idToken" TEXT,
+    "accessTokenExpiresAt" DATETIME,
+    "refreshTokenExpiresAt" DATETIME,
+    "scope" TEXT,
+    "password" TEXT,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" DATETIME NOT NULL,
+    CONSTRAINT "account_userId_fkey" FOREIGN KEY ("userId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+-- CreateTable
+CREATE TABLE "verification" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "identifier" TEXT NOT NULL,
+    "value" TEXT NOT NULL,
+    "expiresAt" DATETIME NOT NULL,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" DATETIME NOT NULL
 );
 
 -- CreateTable
@@ -66,6 +109,7 @@ CREATE TABLE "location" (
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     "addressLine1" TEXT NOT NULL,
     "addressLine2" TEXT NOT NULL,
+    "locationName" TEXT,
     "city" TEXT NOT NULL,
     "state" TEXT NOT NULL,
     "postalCode" TEXT NOT NULL,
@@ -77,42 +121,43 @@ CREATE TABLE "location" (
 );
 
 -- CreateTable
-CREATE TABLE "ItemCategory" (
-    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-    "name" TEXT NOT NULL
-);
-
--- CreateTable
-CREATE TABLE "ItemStyle" (
-    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-    "name" TEXT NOT NULL
-);
-
--- CreateTable
-CREATE TABLE "Size" (
-    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-    "sizeCode" TEXT NOT NULL
-);
-
--- CreateTable
-CREATE TABLE "Gender" (
-    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-    "name" TEXT NOT NULL
-);
-
--- CreateTable
 CREATE TABLE "Inventory" (
-    "barcode" TEXT NOT NULL PRIMARY KEY,
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "code" TEXT NOT NULL,
     "quantity" INTEGER NOT NULL DEFAULT 0,
+    "additions" INTEGER NOT NULL DEFAULT 0,
+    "removals" INTEGER NOT NULL DEFAULT 0,
     "lastUpdated" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "categoryId" INTEGER NOT NULL,
-    "styleId" INTEGER NOT NULL,
-    "sizeId" INTEGER NOT NULL,
-    "genderId" INTEGER NOT NULL,
-    CONSTRAINT "Inventory_categoryId_fkey" FOREIGN KEY ("categoryId") REFERENCES "ItemCategory" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
-    CONSTRAINT "Inventory_styleId_fkey" FOREIGN KEY ("styleId") REFERENCES "ItemStyle" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
-    CONSTRAINT "Inventory_sizeId_fkey" FOREIGN KEY ("sizeId") REFERENCES "Size" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
-    CONSTRAINT "Inventory_genderId_fkey" FOREIGN KEY ("genderId") REFERENCES "Gender" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
+    "category" TEXT NOT NULL,
+    "size" TEXT,
+    "gender" TEXT
+);
+
+-- CreateTable
+CREATE TABLE "InventoryRecords" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "date" DATETIME NOT NULL,
+    "code" TEXT NOT NULL,
+    "quantity" INTEGER NOT NULL DEFAULT 0,
+    "additions" INTEGER NOT NULL DEFAULT 0,
+    "removals" INTEGER NOT NULL DEFAULT 0,
+    "lastUpdated" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "category" TEXT NOT NULL,
+    "size" TEXT,
+    "gender" TEXT
+);
+
+-- CreateTable
+CREATE TABLE "ActivityLog" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "email" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "category" TEXT NOT NULL,
+    "size" TEXT,
+    "gender" TEXT,
+    "action" TEXT NOT NULL,
+    "amount" INTEGER NOT NULL,
+    "time" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 -- CreateTable
@@ -132,7 +177,28 @@ CREATE TABLE "_DemographicToResource" (
 );
 
 -- CreateIndex
-CREATE UNIQUE INDEX "user_username_key" ON "user"("username");
+CREATE UNIQUE INDEX "user_id_key" ON "user"("id");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "user_email_key" ON "user"("email");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "session_id_key" ON "session"("id");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "session_token_key" ON "session"("token");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "account_id_key" ON "account"("id");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "account_providerId_accountId_key" ON "account"("providerId", "accountId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "verification_id_key" ON "verification"("id");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "verification_identifier_value_key" ON "verification"("identifier", "value");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "resource_name_key" ON "resource"("name");
@@ -147,19 +213,16 @@ CREATE UNIQUE INDEX "group_name_key" ON "group"("name");
 CREATE UNIQUE INDEX "demographic_name_key" ON "demographic"("name");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "phone_number_number_key" ON "phone_number"("number");
-
--- CreateIndex
 CREATE UNIQUE INDEX "email_email_key" ON "email"("email");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "location_addressLine1_key" ON "location"("addressLine1");
+CREATE UNIQUE INDEX "Inventory_id_key" ON "Inventory"("id");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "ItemCategory_name_key" ON "ItemCategory"("name");
+CREATE UNIQUE INDEX "Inventory_code_key" ON "Inventory"("code");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Gender_name_key" ON "Gender"("name");
+CREATE UNIQUE INDEX "InventoryRecords_id_key" ON "InventoryRecords"("id");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "_LanguageToResource_AB_unique" ON "_LanguageToResource"("A", "B");

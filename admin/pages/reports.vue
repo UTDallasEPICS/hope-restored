@@ -6,6 +6,9 @@
             <button @click="showPreviousReportsModal = true" class="monthly-reports-button">
                 <i class="fas fa-folder-open"></i> View Report
             </button>
+            <button @click="showFullInv= !showFullInv" class="monthly-reports-button">
+                <i class="fas fa-folder-open"></i> {{ !showFullInv? "Master Report": "Detail View" }}
+            </button>
         </div>
 
         <!-- Previous Reports Modal -->
@@ -150,35 +153,56 @@
         </div>
 
         <!-- Selected report results modal -->
-        <div v-if="viewingSelectedReport" class="modal-overlay" >
-            <div class="modal-content overflow-y-auto">
-                <button class="back-button" @click="goBackToCalendar"> Back
-                </button>
-                <h2>Report for: {{ selectedReportTitle }}</h2>
-
+        <div v-if="viewingSelectedReport" class="modal-overlay report-results-overlay">
+            <div class="modal-content report-results-modal overflow-y-auto">
+                <div class="report-modal-toolbar">
+                    <button
+                        type="button"
+                        class="report-toolbar-btn report-toolbar-btn--back"
+                        @click="goBackToCalendar"
+                    >
+                        Back
+                    </button>
+                    <button
+                        type="button"
+                        class="report-toolbar-btn report-toolbar-btn--toggle"
+                        @click="showFullReport = !showFullReport"
+                    >
+                        {{ !showFullReport ? "Master Report" : "Detail View" }}
+                    </button>
+                </div>
+                <h2 class="report-modal-title">Report for: {{ selectedReportTitle }}</h2>
+                
                 <div v-if="isLoadingSelected">Loading...</div>
                 <div v-else>
                     <div v-if="selectedError" style="color: #b00020; margin-bottom: 1em;">{{ selectedError }}</div>
                     <div v-else>
                         <div id="reports-summary">
-                            <table>
+                            <table class="report-data-table" :class="{ 'report-data-table--master': showFullReport }">
+                                <colgroup>
+                                    <col class="report-col-category" />
+                                    <col class="report-col-num" />
+                                    <col class="report-col-num" />
+                                    <col class="report-col-num" />
+                                    <col v-if="!showFullReport" class="report-col-details" />
+                                </colgroup>
                                 <thead>
                                     <tr>
                                         <th>Category</th>
                                         <th>Total</th>
                                         <th>Added</th>
                                         <th>Removed</th>
-                                        <th>Details</th>
+                                        <th v-if="!showFullReport">Details</th>
                                     </tr>
                                 </thead>
-                                <tbody>
-                                    <tr v-for="r in selectedReportRows" :key="r.category">
-                                        <td>{{ r.category }}</td>
-                                        <td>{{ r.quantity }}</td>
-                                        <td>{{ r.additions }}</td>
-                                        <td>{{ r.removals }}</td>
-                                        <td>
-                                            <button v-if="!simpleCategores.includes(r.category)" @click="getDetails(r.category,r.genders)" class="bg-blue-700 rounded-md p-1 text-white">
+                                <tbody v-for="row in selectedReportRows" :key="row.category">
+                                    <tr class="master-category-row report-summary-row">
+                                        <td class="master-category-label">{{ row.category }}</td>
+                                        <td class="master-value">{{ row.quantity }}</td>
+                                        <td class="master-value">{{ row.additions }}</td>
+                                        <td class="master-value">{{ row.removals }}</td>
+                                        <td v-if="!showFullReport">
+                                            <button v-if="!simpleCategores.includes(row.category)" @click="getDetails(row.category,row.genders)" class="bg-blue-700 rounded-md p-2 text-white">
                                                 View Sizes
                                             </button>
                                             <button v-if="r.category === 'Other Items'" @click="getDetails(r.category,r.genders)" class="bg-blue-700 rounded-md p-2 text-white">
@@ -186,6 +210,26 @@
                                             </button>
                                         </td>
                                     </tr>
+                                    <template v-if="showFullReport && hasMasterBreakdown(row)">
+                                        <template v-for="gender in gendersWithQuantity(row.genders)" :key="`${row.category}-${gender.name}`">
+                                            <tr class="master-section-row">
+                                                <td class="master-section-label">{{ gender.name }}</td>
+                                                <td></td>
+                                                <td></td>
+                                                <td></td>
+                                            </tr>
+                                            <tr
+                                                v-for="infoRow in infoRowsWithQuantity(gender)"
+                                                :key="`${row.category}-${gender.name}-${infoRow.size}`"
+                                                class="master-detail-row"
+                                            >
+                                                <td class="master-detail-label">{{ infoRow.size }}</td>
+                                                <td class="master-value">{{ infoRow.quantity }}</td>
+                                                <td class="master-value">{{ infoRow.additions }}</td>
+                                                <td class="master-value">{{ infoRow.removals }}</td>
+                                            </tr>
+                                        </template>
+                                    </template>
                                 </tbody>
                             </table>
                         </div>
@@ -199,24 +243,33 @@
         </div>
         <!-- Reports Summary Table Section -->
         <h2 class="reports-section-title">Today's Data:</h2>
+        <p v-if="pageLoading" class="text-sm text-gray-600 mb-3">Loading report data…</p>
+        <p v-else-if="pageLoadError" class="text-sm text-red-600 mb-3">{{ pageLoadError }}</p>
         <div id="reports-summary" class="inventory_table_container">
-            <table>
+            <table class="report-data-table" :class="{ 'report-data-table--master': showFullInv }">
+                <colgroup>
+                    <col class="report-col-category" />
+                    <col class="report-col-num" />
+                    <col class="report-col-num" />
+                    <col class="report-col-num" />
+                    <col v-if="!showFullInv" class="report-col-details" />
+                </colgroup>
                 <thead>
                     <tr>
-                        <th>Category</th>
-                        <th>Quantity</th>
-                        <th>Added</th>
-                        <th>Removed</th>
-                        <th>Details</th>
+                        <th class="bg-[#3f51b5] text-white font-bold">Category</th>
+                        <th class="bg-[#3f51b5] text-white font-bold">Quantity</th>
+                        <th class="bg-[#3f51b5] text-white font-bold">Added</th>
+                        <th class="bg-[#3f51b5] text-white font-bold">Removed</th>
+                        <th class="bg-[#3f51b5] text-white font-bold" v-if="!showFullInv">Details</th>
                     </tr>
                 </thead>
-                <tbody>
-                    <tr v-for="row in fullReport" :key="row.category">
-                        <td>{{ row.category }}</td>
-                        <td>{{ row.quantity }}</td>
-                        <td>{{ row.additions }}</td>
-                        <td>{{ row.removals }}</td>
-                        <td>
+                <tbody v-for="row in fullReport" :key="row.category">
+                    <tr class="master-category-row report-summary-row">
+                        <td class="master-category-label">{{ row.category }}</td>
+                        <td class="master-value">{{ row.quantity }}</td>
+                        <td class="master-value">{{ row.additions }}</td>
+                        <td class="master-value">{{ row.removals }}</td>
+                        <td v-if="!showFullInv">
                             <button v-if="!simpleCategores.includes(row.category)" @click="getDetails(row.category,row.genders)" class="bg-blue-700 rounded-md p-2 text-white">
                                 View Sizes
                             </button>
@@ -225,12 +278,36 @@
                             </button>
                         </td>
                     </tr>
+                    <template v-if="showFullInv && hasMasterBreakdown(row)">
+                        <template v-for="gender in gendersWithQuantity(row.genders)" :key="`${row.category}-${gender.name}`">
+                            <tr class="master-section-row">
+                                <td class="master-section-label">{{ gender.name }}</td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                            </tr>
+                            <tr
+                                v-for="infoRow in infoRowsWithQuantity(gender)"
+                                :key="`${row.category}-${gender.name}-${infoRow.size}`"
+                                class="master-detail-row"
+                            >
+                                <td class="master-detail-label">{{ infoRow.size }}</td>
+                                <td class="master-value">{{ infoRow.quantity }}</td>
+                                <td class="master-value">{{ infoRow.additions }}</td>
+                                <td class="master-value">{{ infoRow.removals }}</td>
+                            </tr>
+                        </template>
+                    </template>
                 </tbody>
             </table>
         </div>
-        <div  v-if="showDetails" class="fixed top-0 left-0 w-full h-full bg-[rgba(20,20,20,0.45)] flex items-center justify-center z-20">
-            <CategoryDetails  
-                :genders=detailRow
+        <div
+            v-if="showDetails"
+            class="category-details-overlay"
+            @click.self="closeDetails"
+        >
+            <CategoryDetails
+                :genders="detailRow"
                 :close-function="closeDetails"
                 :category="detailCategory"
             />
@@ -239,11 +316,26 @@
 </template>
 
 <script setup>
-import { computed, ref, watchEffect } from 'vue';
-import { useFetch } from '#app';
+import { computed, onMounted, ref, watchEffect } from 'vue';
 import CategoryDetails from '../components/categoryDetails.vue';
 
+function getTodayInCentralTime() {
+    const now = new Date();
+    const centralTimeString = now.toLocaleString('en-US', {
+        timeZone: 'America/Chicago',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+    });
+    const [month, day, year] = centralTimeString.split('/');
+    const centralDate = new Date(parseInt(year, 10), parseInt(month, 10) - 1, parseInt(day, 10));
+    centralDate.setHours(0, 0, 0, 0);
+    return centralDate;
+}
+
 const fullReport = ref([]);
+const pageLoading = ref(true);
+const pageLoadError = ref('');
 const showPreviousReportsModal = ref(false);
 const ChooseDailyReport = ref(false);
 const ChooseWeeklyReport = ref(false);
@@ -255,12 +347,8 @@ const isLoadingSelected = ref(false);
 const selectedError = ref(null);
 const lastReportType = ref(null);
 const selectedDate = ref(null);
-
-onMounted(()=>{
-    $fetch(`/api/reports`,{
-        method:"POST"
-    })
-})
+const showFullInv = ref(false);
+const showFullReport = ref(false);
 
 const monthNames = [
     'January','February','March','April','May','June',
@@ -278,16 +366,7 @@ const detailRow = ref();
 const detailCategory = ref();
 const simpleCategores = ['Blankets', 'Snack Packs', 'Hygiene Packs', 'Other Items'];
 
-const currentInventory = await $fetch('/api/inventory');
-fullReport.value = currentInventory;
-
 const firstInventoryDate = ref(null);
-const { data: firstDateData } = await useFetch('/api/inventory/first-date');
-watchEffect(() => {
-  if (firstDateData?.value?.firstDate) {
-    firstInventoryDate.value = new Date(firstDateData.value.firstDate);
-  }
-});
 
 const firstAllowedDate = computed(() => {
     if (firstInventoryDate.value instanceof Date && !isNaN(firstInventoryDate.value.getTime())) {
@@ -327,19 +406,43 @@ const visibleDays = computed(() => {
     return days;
 });
 
-function getTodayInCentralTime() {
-    const now = new Date();
-    const centralTimeString = now.toLocaleString('en-US', {
-        timeZone: 'America/Chicago',
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-    });
-    const [month, day, year] = centralTimeString.split('/');
-    const centralDate = new Date(parseInt(year, 10), parseInt(month, 10) - 1, parseInt(day, 10));
-    centralDate.setHours(0, 0, 0, 0);
-    return centralDate;
-}
+onMounted(async () => {
+    pageLoading.value = true;
+    pageLoadError.value = '';
+    try {
+        const [inventory, firstDate] = await Promise.all([
+            $fetch('/api/inventory'),
+            $fetch('/api/inventory/first-date').catch(() => null),
+        ]);
+        fullReport.value = Array.isArray(inventory) ? inventory : [];
+        if (firstDate?.firstDate) {
+            firstInventoryDate.value = new Date(firstDate.firstDate);
+        }
+        try {
+            await $fetch('/api/reports', { method: 'POST' });
+        } catch (reportErr) {
+            console.warn('Daily report snapshot failed', reportErr);
+        }
+    } catch (err) {
+        console.error('Failed to load reports page data', err);
+        const status = err?.statusCode ?? err?.status ?? err?.response?.status;
+        if (status === 401) {
+            pageLoadError.value =
+                'You are not signed in (or your session expired). Log in again, then return to Reports.';
+        } else if (status === 403) {
+            pageLoadError.value =
+                'Your account does not have staff access. Add your email to BETTER_AUTH_STAFF_EMAILS or BETTER_AUTH_ADMIN_EMAILS in admin/.env.';
+        } else {
+            pageLoadError.value =
+                status
+                    ? `Could not load inventory data (HTTP ${status}).`
+                    : 'Could not load inventory data. Try logging in again or refresh the page.';
+        }
+        fullReport.value = [];
+    } finally {
+        pageLoading.value = false;
+    }
+});
 
 function resetCalendarToToday() {
     const t = getTodayInCentralTime();
@@ -609,6 +712,7 @@ async function saveDaily() {
         viewingSelectedReport.value = true;
         ChooseDailyReport.value = false;
         selectedDate.value = null;
+        console.log(selectedReportRows.value);
     } catch (err) {
         selectedError.value = err?.message || String(err);
     } finally {
@@ -644,27 +748,79 @@ function closeDetails(){
     detailRow.value = null;
     showDetails.value = false;
 }
+
+function gendersWithQuantity(genders) {
+    return (genders ?? []).filter((g) =>
+        g.info?.some((i) => i.quantity !== 0),
+    );
+}
+
+function infoRowsWithQuantity(gender) {
+    return (gender.info ?? []).filter((i) => i.quantity !== 0);
+}
+
+function hasMasterBreakdown(row) {
+    if (simpleCategores.includes(row.category)) {
+        return false;
+    }
+    return gendersWithQuantity(row.genders).length > 0;
+}
 </script>
 
 <style scoped>
 .reports-container {
     font-family: 'Open Sans', sans-serif;
-    padding: 2em;
-    background-color: #f0f2f5; /* Light gray background */
+    padding: clamp(0.75rem, 3vw, 2em);
+    background-color: #f0f2f5;
     min-height: 100vh;
-    max-height: 300px; 
-    overflow-y: auto; /* Vertical scroll */
-    overflow-x: auto; /* Horizontal scroll */
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow-x: hidden;
+}
+
+.inventory_table_container {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: 8px;
 }
 
 /* Reuse inventory table styles */
-#reports-summary table {
+#reports-summary table.report-data-table {
     width: 100%;
+    min-width: min(100%, 32rem);
     border-collapse: collapse;
     table-layout: fixed;
     background-color: #fff;
     border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.report-col-category {
+    width: 42%;
+}
+
+.report-col-num {
+    width: 19%;
+}
+
+.report-col-details {
+    width: 20%;
+}
+
+#reports-summary .report-data-table thead th {
+    background: #3f51b5;
+    color: #fff;
+    font-weight: 700;
+}
+
+#reports-summary .report-data-table thead th:first-child {
+    border-top-left-radius: 8px;
+}
+
+#reports-summary .report-data-table thead th:last-child {
+    border-top-right-radius: 8px;
 }
 
 #reports-summary th,
@@ -672,24 +828,115 @@ function closeDetails(){
     padding: 12px;
     border-bottom: 1px solid #ddd;
     text-align: center;
-}
-
-#reports-summary th {
-    background-color: #3f51b5; /* Indigo */
-    color: #fff;
-    font-weight: bold;
-}
-
-#reports-summary tr:nth-child(even) {
-    background-color: #f9f9f9;
-}
-
-#reports-summary tr:hover {
-    background-color: #e0e0e0;
+    vertical-align: middle;
 }
 
 #reports-summary td {
     color: #333;
+}
+
+/* Shared summary row styling (detail + master category rows) */
+.report-data-table .report-summary-row:hover {
+    background: #e0e0e0;
+}
+
+.report-data-table .master-category-label {
+    font-weight: 700;
+    font-size: 1.125rem;
+    color: #333;
+    text-align: center;
+}
+
+.report-data-table .master-category-row .master-value {
+    font-weight: 400;
+    font-size: 1rem;
+    color: #333;
+}
+
+/* Master report: match detail view sizing; subtle hierarchy for nested rows */
+.report-data-table--master .master-section-row td {
+    background: #f9f9f9;
+    border-bottom: 1px solid #ddd;
+}
+
+.report-data-table--master .master-section-label {
+    font-weight: 600;
+    font-size: 1rem;
+    color: #333;
+    text-align: center;
+}
+
+.report-data-table--master .master-detail-row:hover {
+    background: #f5f5f5;
+}
+
+.report-data-table--master .master-detail-label {
+    font-weight: 400;
+    font-size: 0.9375rem;
+    color: #333;
+    text-align: center;
+}
+
+.report-data-table--master .master-detail-row .master-value {
+    font-weight: 400;
+    font-size: 0.9375rem;
+    color: #333;
+}
+
+.report-data-table--master .master-value {
+    font-variant-numeric: tabular-nums;
+    text-align: center;
+}
+
+.category-details-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: clamp(0.5rem, 3vw, 1rem);
+    background: rgba(20, 20, 20, 0.45);
+    box-sizing: border-box;
+}
+
+.report-results-overlay {
+    width: 100%;
+}
+
+.report-results-modal {
+    display: flex;
+    flex-direction: column;
+}
+
+.report-modal-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+
+.report-toolbar-btn {
+    padding: 0.5em 1em;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: clamp(0.8rem, 2.5vw, 0.9em);
+    white-space: nowrap;
+}
+
+.report-toolbar-btn--back {
+    background-color: #757575;
+}
+
+.report-toolbar-btn--toggle {
+    background-color: #4c5baf;
+}
+
+.report-modal-title {
+    margin-top: 0;
 }
 
 .reports-section-title {
@@ -774,7 +1021,7 @@ function closeDetails(){
   border-radius: 8px;
   padding: 20px;
   min-width: 320px;
-  max-width: 480px;
+  max-width: 50%;
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
   position: relative;
 }
@@ -829,13 +1076,15 @@ function closeDetails(){
 
 .modal-content {
     background-color: #fff;
-    padding: 2em;
+    padding: clamp(1rem, 4vw, 2em);
     border-radius: 8px;
-    width: 90%;
-    max-width: 500px;
+    width: min(95vw, 100%);
+    max-width: min(50rem, 95vw);
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     position: relative;
-    height: 90%;
+    max-height: 92vh;
+    height: auto;
+    box-sizing: border-box;
 }
 
 .modal-content h2 {
@@ -882,6 +1131,7 @@ function closeDetails(){
 
 .actions-row {
     display: flex;
+    flex-wrap: wrap;
     justify-content: flex-end;
     gap: 0.75rem;
     margin-bottom: 1em;
@@ -969,17 +1219,23 @@ function closeDetails(){
     justify-content: space-between;
     align-items: center;
     margin-bottom: 0.5em;
+    gap: 0.5rem;
+    font-size: clamp(0.9rem, 2.5vw, 1.1rem);
 }
 .calendar-header button {
     background: transparent;
     border: none;
-    font-size: 1.2em;
+    font-size: clamp(1.1rem, 4vw, 1.4em);
     cursor: pointer;
+    flex-shrink: 0;
+    min-width: 2rem;
+    min-height: 2rem;
 }
 .calendar-grid {
     display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 0.25em;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: clamp(0.1rem, 1vw, 0.25em);
+    width: 100%;
 }
 .calendar-weekday {
     text-align: center;
@@ -989,13 +1245,16 @@ function closeDetails(){
     color: #666;
 }
 .calendar-day {
-    padding: 0.5em 0.25em;
-    min-height: 40px;
+    padding: clamp(0.25em, 1.5vw, 0.5em) clamp(0.1em, 1vw, 0.25em);
+    min-height: clamp(2rem, 9vw, 2.5rem);
     border-radius: 6px;
     border: 1px solid transparent;
     background: #fafafa;
     cursor: pointer;
     text-align: center;
+    font-size: clamp(0.75rem, 2.5vw, 1rem);
+    width: 100%;
+    box-sizing: border-box;
 }
 .calendar-day.other-month {
     color: #bbb;
@@ -1019,17 +1278,20 @@ function closeDetails(){
 /* Month grid (3 columns x 4 rows) */
 .month-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 0.5em;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: clamp(0.35em, 2vw, 0.5em);
     margin-top: 0.5em;
+    width: 100%;
 }
 .month-cell {
-    padding: 0.75em 0.5em;
+    padding: clamp(0.45em, 2vw, 0.75em) clamp(0.25em, 1.5vw, 0.5em);
     background: #fafafa;
     border: 1px solid transparent;
     border-radius: 6px;
     cursor: pointer;
     text-align: center;
+    font-size: clamp(0.7rem, 2.8vw, 1rem);
+    word-break: break-word;
 }
 .month-cell.selected {
     background: #3f51b5;
@@ -1087,5 +1349,117 @@ function closeDetails(){
     color: #666;
     margin-top: 0.25em;
     font-style: italic;
+}
+
+@media (max-width: 768px) {
+    .reports-section-title {
+        font-size: clamp(1.15rem, 5vw, 1.35rem);
+        margin: 0.75em 0 0.5em;
+    }
+
+    .actions-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .actions-row .monthly-reports-button {
+        width: 100%;
+        justify-content: center;
+        font-size: clamp(0.75rem, 3vw, 0.9rem);
+        padding: 0.65em 1em;
+        text-transform: none;
+    }
+
+    .report-buttons .daily-reports-button,
+    .report-buttons .weekly-reports-button,
+    .report-buttons .monthly-reports-button {
+        width: 100%;
+        justify-content: center;
+        font-size: 1em;
+        padding: 0.65em 1em;
+        text-transform: uppercase;
+    }
+
+    #reports-summary th,
+    #reports-summary td {
+        padding: clamp(6px, 2vw, 10px) clamp(4px, 1.5vw, 8px);
+        font-size: clamp(0.7rem, 2.8vw, 0.875rem);
+    }
+
+    #reports-summary td.font-bold.text-lg,
+    #reports-summary .font-bold.text-lg {
+        font-size: clamp(0.8rem, 3vw, 1rem);
+    }
+
+    .report-data-table .master-category-label {
+        font-size: 1rem;
+    }
+
+    .report-data-table--master .master-section-label,
+    .report-data-table--master .master-detail-label,
+    .report-data-table--master .master-detail-row .master-value {
+        font-size: 0.875rem;
+    }
+
+    #reports-summary .bg-blue-700 {
+        padding: 0.35em 0.5em;
+        font-size: clamp(0.65rem, 2.5vw, 0.8rem);
+    }
+
+    .modal-content {
+        width: 95vw;
+        max-width: 95vw;
+        max-height: 90vh;
+        padding: 1rem;
+    }
+
+    .modal-content h2 {
+        font-size: clamp(1rem, 4.5vw, 1.25rem);
+    }
+
+    .report-modal-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .report-toolbar-btn {
+        width: 100%;
+        text-align: center;
+    }
+
+    .report-modal-title {
+        font-size: clamp(1rem, 4vw, 1.2rem);
+        line-height: 1.3;
+        word-break: break-word;
+    }
+
+    .calendar-weekday {
+        font-size: clamp(0.6rem, 2.2vw, 0.75rem);
+        padding: 0.15em 0;
+    }
+
+    .form-actions {
+        flex-wrap: wrap;
+        justify-content: stretch;
+        gap: 0.5rem;
+    }
+
+    .save-button,
+    .cancel-button {
+        flex: 1 1 45%;
+        justify-content: center;
+        padding: 0.5em 0.75em;
+        font-size: 0.9rem;
+    }
+}
+
+@media (max-width: 400px) {
+    .month-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .calendar-day {
+        min-height: 1.75rem;
+    }
 }
 </style>

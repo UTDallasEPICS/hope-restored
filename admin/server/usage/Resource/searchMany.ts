@@ -8,6 +8,39 @@ export type SortOption = {
   order: string;
 };
 
+function getOrderByClause(sortBy: SortOption) {
+  const field = sortBy.field.toLowerCase();
+  const order = sortBy.order.toLowerCase() === "asc" ? "asc" : "desc";
+
+  if (field === "relevance") {
+    return order === "asc"
+      ? Prisma.sql`resource.id ASC`
+      : Prisma.sql`resource.id DESC`;
+  }
+  if (field === "name") {
+    return order === "asc"
+      ? Prisma.sql`resource.name ASC`
+      : Prisma.sql`resource.name DESC`;
+  }
+  if (field === "cost") {
+    return order === "asc"
+      ? Prisma.sql`resource.cost ASC`
+      : Prisma.sql`resource.cost DESC`;
+  }
+  if (field === "createdat") {
+    return order === "asc"
+      ? Prisma.sql`resource.createdAt ASC`
+      : Prisma.sql`resource.createdAt DESC`;
+  }
+  if (field === "updatedat") {
+    return order === "asc"
+      ? Prisma.sql`resource.updatedAt ASC`
+      : Prisma.sql`resource.updatedAt DESC`;
+  }
+
+  return Prisma.sql`resource.name ASC`;
+}
+
 export class SearchManyResourceUseCase {
   async execute(
     search: string,
@@ -15,12 +48,12 @@ export class SearchManyResourceUseCase {
     skip?: number,
     take?: number
   ): Promise<{ id: number }[]> {
-    const { field, order } = sortBy;
     search = search.trim();
     if (search) search = removeStopWords(search) || search;
+    const orderByClause = getOrderByClause(sortBy);
     const queryRaw = Prisma.sql`SELECT resource.id
         ${ //add other fields? also relevance doesn't cuurently work
-          field === "relevance"
+          sortBy.field.toLowerCase() === "relevance"
             ? Prisma.empty //replace with bm25() search?
             : Prisma.empty
         }
@@ -33,13 +66,7 @@ export class SearchManyResourceUseCase {
             OR city LIKE '%' || ${search} || '%' OR state LIKE '%' || ${search} || '%' OR postalCode LIKE '%' || ${search} || '%'`  
             : Prisma.empty
         }
-        ORDER BY ${
-          field === "relevance"
-            ? Prisma.sql`${Prisma.raw(order)}`
-            : Prisma.sql`${Prisma.raw(field.toLowerCase())} ${Prisma.raw(
-                order
-              )}`
-        }
+        ORDER BY ${orderByClause}
         ${take ? Prisma.sql`LIMIT ${take}` : Prisma.empty}
         ${skip ? Prisma.sql`OFFSET ${skip}` : Prisma.empty};
         `;

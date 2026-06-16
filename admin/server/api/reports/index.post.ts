@@ -2,14 +2,12 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 export default defineEventHandler(async () =>{
-    console.log("API called");
     try{
         const firstRep = await prisma.inventoryRecords.findFirst({
             orderBy:{
                 date:"desc"
             }
         });
-        console.log(firstRep);
         const inv = await prisma.inventory.findMany();
         const curDate = new Date()
         curDate.setHours(0,0,0,0);
@@ -40,27 +38,40 @@ export default defineEventHandler(async () =>{
         SOD.setHours(0,0,0,0);
         EOD.setHours(23,59,59,99);
         
-        if(firstRep && SOD <= firstRep.date <= EOD){ //report exists for today
-            console.log('report for today exists')
-            for(const row of inv){
-                await prisma.inventoryRecords.updateMany({
-                    where:{
-                        date:{
-                            gte: SOD,
-                            lte: EOD
-                        },
-                        code: row.code
-                    },
-                    data:{
-                        quantity: row.quantity,
-                        additions: row.quantity,
-                        removals: row.removals
-                    }
+        if(firstRep && SOD <= firstRep.date <= EOD){
+            for (const row of inv) {
+            const existing = await prisma.inventoryRecords.findFirst({
+                where: {
+                date: { gte: SOD, lte: EOD },
+                code: row.code
+                }
+            })
+
+            if (existing) {
+                await prisma.inventoryRecords.update({
+                where: { id: existing.id },  // use the found record's id
+                data: {
+                    quantity: row.quantity,
+                    additions: row.quantity,
+                    removals: row.removals
+                }
                 })
+            } else {
+                await prisma.inventoryRecords.create({
+                data: {
+                    code: row.code,
+                    category: row.category,
+                    gender: row.gender,
+                    size: row.size,
+                    quantity: row.quantity,
+                    additions: row.quantity,
+                    date: curDate
+                }
+                })
+            }
             }
         }  
         else{
-            console.log('no report for today');
              const record = await prisma.inventoryRecords.createMany({
             data:recordRows
         })
@@ -77,9 +88,8 @@ export default defineEventHandler(async () =>{
                 removals:0
             }
         })
-        console.log("inv record created")
     }catch(error){
-        console.log("Error:", error)
+        console.error("Error creating inventory records:", error)
     }
     
 
