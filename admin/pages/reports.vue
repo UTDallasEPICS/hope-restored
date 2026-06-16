@@ -1,14 +1,14 @@
 <!-- pages/reports.vue -->
 <template>
     <div class="reports-container">
-        <h1 style="color: red;"> NOTE: Please enter data in chronological order from earliest date to the most recent date/today. Do NOT enter data for a date without entering any previous days' data. In addition, for each date, please enter all additions first and then all removals. This ensures that the reports and inventory show correct data for all dates. </h1>
-
-        <!-- Actions Row: View Previous Reports + Amend Data -->
+        <!-- Actions Row: View Previous Reports -->
         <div class="actions-row">
             <button @click="showPreviousReportsModal = true" class="monthly-reports-button">
-                <i class="fas fa-folder-open"></i> View Previous Reports
+                <i class="fas fa-folder-open"></i> View Report
             </button>
-            <button class="amendData-btn" @click="openAmendData">Amend Data</button>
+            <button @click="showFullInv= !showFullInv" class="monthly-reports-button">
+                <i class="fas fa-folder-open"></i> {{ !showFullInv? "Master Report": "Detail View" }}
+            </button>
         </div>
 
         <!-- Previous Reports Modal -->
@@ -41,7 +41,7 @@
                 </div>
 
                 <div class="form-actions" style="margin-top:1em;">
-                    <button class="cancel-button" @click="closePreviousReportsModal">Close</button>
+                    <button class="cancel-button" @click="showPreviousReportsModal = false">Close</button>
                 </div>
             </div>
         </div>
@@ -65,7 +65,6 @@
                                         :class="{ 
                                             'selected': selectedDate && selectedDate.year === displayYear && selectedDate.month === idx,
                                             'disabled': isMonthDisabled(displayYear, idx),
-                                            'has-amend': monthHasAmendment(displayYear, idx)
                                         }"
                                 :disabled="isMonthDisabled(displayYear, idx)"
                                 @click="selectMonth(idx)">
@@ -102,7 +101,6 @@
                                        'other-month': !day.inMonth, 
                                        'selected': day.isSelected,
                                        'disabled': isWeekDisabled(day.date),
-                                       'has-amend': day.hasAmendment
                                    }"
                                 :disabled="isWeekDisabled(day.date)"
                                 @click="selectWeek(day.date)">
@@ -139,7 +137,6 @@
                                        'other-month': !day.inMonth, 
                                        'selected': day.isSelected,
                                        'disabled': isDayDisabled(day.date),
-                                       'has-amend': day.hasAmendment
                                    }"
                                 :disabled="isDayDisabled(day.date)"
                                 @click="selectDate(day.date)">
@@ -156,36 +153,83 @@
         </div>
 
         <!-- Selected report results modal -->
-        <div v-if="viewingSelectedReport" class="modal-overlay" >
-            <div class="modal-content">
-                <button class="back-button" @click="goBackToCalendar"> Back
-                </button>
-                <h2>Report for: {{ selectedReportTitle }}</h2>
-                <div v-if="selectedReportHasAmendments && selectedReportLatestAmendDateFormatted" class="updated-note">
-                    Updated: {{ selectedReportLatestAmendDateFormatted }}
+        <div v-if="viewingSelectedReport" class="modal-overlay report-results-overlay">
+            <div class="modal-content report-results-modal overflow-y-auto">
+                <div class="report-modal-toolbar">
+                    <button
+                        type="button"
+                        class="report-toolbar-btn report-toolbar-btn--back"
+                        @click="goBackToCalendar"
+                    >
+                        Back
+                    </button>
+                    <button
+                        type="button"
+                        class="report-toolbar-btn report-toolbar-btn--toggle"
+                        @click="showFullReport = !showFullReport"
+                    >
+                        {{ !showFullReport ? "Master Report" : "Detail View" }}
+                    </button>
                 </div>
-
+                <h2 class="report-modal-title">Report for: {{ selectedReportTitle }}</h2>
+                
                 <div v-if="isLoadingSelected">Loading...</div>
                 <div v-else>
                     <div v-if="selectedError" style="color: #b00020; margin-bottom: 1em;">{{ selectedError }}</div>
                     <div v-else>
                         <div id="reports-summary">
-                            <table>
+                            <table class="report-data-table" :class="{ 'report-data-table--master': showFullReport }">
+                                <colgroup>
+                                    <col class="report-col-category" />
+                                    <col class="report-col-num" />
+                                    <col class="report-col-num" />
+                                    <col class="report-col-num" />
+                                    <col v-if="!showFullReport" class="report-col-details" />
+                                </colgroup>
                                 <thead>
                                     <tr>
                                         <th>Category</th>
                                         <th>Total</th>
                                         <th>Added</th>
                                         <th>Removed</th>
+                                        <th v-if="!showFullReport">Details</th>
                                     </tr>
                                 </thead>
-                                <tbody>
-                                    <tr v-for="r in selectedReportRows" :key="r.category">
-                                        <td>{{ r.category }}</td>
-                                        <td>{{ r.total }}</td>
-                                        <td>{{ r.added }}</td>
-                                        <td>{{ r.removed }}</td>
+                                <tbody v-for="row in selectedReportRows" :key="row.category">
+                                    <tr class="master-category-row report-summary-row">
+                                        <td class="master-category-label">{{ row.category }}</td>
+                                        <td class="master-value">{{ row.quantity }}</td>
+                                        <td class="master-value">{{ row.additions }}</td>
+                                        <td class="master-value">{{ row.removals }}</td>
+                                        <td v-if="!showFullReport">
+                                            <button v-if="!simpleCategores.includes(row.category)" @click="getDetails(row.category,row.genders)" class="bg-blue-700 rounded-md p-2 text-white">
+                                                View Sizes
+                                            </button>
+                                            <button v-if="r.category === 'Other Items'" @click="getDetails(r.category,r.genders)" class="bg-blue-700 rounded-md p-2 text-white">
+                                                View Items
+                                            </button>
+                                        </td>
                                     </tr>
+                                    <template v-if="showFullReport && hasMasterBreakdown(row)">
+                                        <template v-for="gender in gendersWithQuantity(row.genders)" :key="`${row.category}-${gender.name}`">
+                                            <tr class="master-section-row">
+                                                <td class="master-section-label">{{ gender.name }}</td>
+                                                <td></td>
+                                                <td></td>
+                                                <td></td>
+                                            </tr>
+                                            <tr
+                                                v-for="infoRow in infoRowsWithQuantity(gender)"
+                                                :key="`${row.category}-${gender.name}-${infoRow.size}`"
+                                                class="master-detail-row"
+                                            >
+                                                <td class="master-detail-label">{{ infoRow.size }}</td>
+                                                <td class="master-value">{{ infoRow.quantity }}</td>
+                                                <td class="master-value">{{ infoRow.additions }}</td>
+                                                <td class="master-value">{{ infoRow.removals }}</td>
+                                            </tr>
+                                        </template>
+                                    </template>
                                 </tbody>
                             </table>
                         </div>
@@ -197,905 +241,586 @@
                 </div>
             </div>
         </div>
-
-      
-
-      <!-- Amend Data Modal -->
-      <div v-if="showAmendData" class="modal-overlay">
-        <div class="modal-content">
-            <h2>Amend Data</h2>
-            <p>Choose a date to amend data for that date:</p>
-
-            <!-- Calendar for Daily Report -->
-            <div class="calendar">
-                <div class="calendar-header">
-                    <button @click="prevMonth">‹</button>
-                    <div>{{ monthNames[currentMonth] }} {{ currentYear }}</div>
-                    <button @click="nextMonth">›</button>
-                </div>
-                <div class="calendar-grid">
-                    <div class="calendar-weekday" v-for="d in weekDayNames" :key="d">{{ d }}</div>
-                    <button class="calendar-day" 
-                            v-for="day in visibleDays" 
-                            :key="day.key"
-                            :class="{ 
-                                'other-month': !day.inMonth, 
-                                'selected': day.isSelected,
-                                'disabled': isDayDisabled(day.date)
-                            }"
-                            :disabled="isDayDisabled(day.date)"
-                            @click="selectDate(day.date)">
-                        {{ day.date.getDate() }}
-                    </button>
-                </div>
-            </div>
-
-            <div class="form-actions">
-                <button class="save-button" @click="selectDateForAmend">Select</button>
-                <button class="cancel-button" @click="closeAmendData">Close</button>
-            </div>
-        </div>
-      </div>
-
-        <!-- Second pop-up: Amend Data Form -->
-        <div v-if="showAmendForm" class="modal-overlay" >
-        <div class="modal-content">
-            <h2>Amend Data for {{ selectedDateFormatted }}</h2>
-
-            <div v-if="errorMessage" style="color: red; margin-bottom: 1em;">{{ errorMessage }}</div>
-
-            <div class="form-group">
-            <label>Category:</label>
-            <select v-model="form.category">
-                <option disabled value="">Select category</option>
-                <option v-for="opt in categories" :key="opt">{{ opt }}</option>
-            </select>
-            </div>
-
-            <div class="form-group">
-            <label>Quantity:</label>
-            <input type="number" v-model.number="form.quantity" min="1" />
-            </div>
-
-            <div class="form-group">
-            <label>Action:</label>
-            <select v-model="form.action">
-                <option disabled value="">Select action</option>
-                <option>Add</option>
-                <option>Remove</option>
-            </select>
-            </div>
-
-            <div class="form-actions">
-            <button class="save-button" @click="submitAmend">Confirm</button>
-            <button class="cancel-button" @click="showAmendForm = false">Cancel</button>
-            </div>
-        </div>
-        </div>
-
-        <!-- Success message -->
-        <div v-if="showSuccess" class="modal-overlay" >
-        <div class="modal-content">
-            <h2>Amendment of data successful for</h2>
-            <div v-if="lastAmendedForDisplay || lastAmendDateDisplay" style="color:#333; margin-top:0.5em; text-align:center;">
-                {{ lastAmendedForDisplay || lastAmendDateDisplay }}
-            </div>
-            <div v-if="lastAmendedCount && lastAmendAction" style="color:#333; margin-top:0.25em; text-align:center;">
-                {{ lastAmendCountDisplay }}
-            </div>
-            <div class="form-actions">
-            <button class="save-button" @click="closeSuccess">OK</button>
-            </div>
-         </div>
-         </div>
-
         <!-- Reports Summary Table Section -->
         <h2 class="reports-section-title">Today's Data:</h2>
+        <p v-if="pageLoading" class="text-sm text-gray-600 mb-3">Loading report data…</p>
+        <p v-else-if="pageLoadError" class="text-sm text-red-600 mb-3">{{ pageLoadError }}</p>
         <div id="reports-summary" class="inventory_table_container">
-            <table>
+            <table class="report-data-table" :class="{ 'report-data-table--master': showFullInv }">
+                <colgroup>
+                    <col class="report-col-category" />
+                    <col class="report-col-num" />
+                    <col class="report-col-num" />
+                    <col class="report-col-num" />
+                    <col v-if="!showFullInv" class="report-col-details" />
+                </colgroup>
                 <thead>
                     <tr>
-                        <th>Category</th>
-                        <th>Total</th>
-                        <th>Added</th>
-                        <th>Removed</th>
+                        <th class="bg-[#3f51b5] text-white font-bold">Category</th>
+                        <th class="bg-[#3f51b5] text-white font-bold">Quantity</th>
+                        <th class="bg-[#3f51b5] text-white font-bold">Added</th>
+                        <th class="bg-[#3f51b5] text-white font-bold">Removed</th>
+                        <th class="bg-[#3f51b5] text-white font-bold" v-if="!showFullInv">Details</th>
                     </tr>
                 </thead>
-                <tbody>
-                    <tr v-for="row in reportRows" :key="row.category">
-                        <td>{{ row.category }}</td>
-                        <td>{{ row.total }}</td>
-                        <td>{{ row.added }}</td>
-                        <td>{{ row.removed }}</td>
+                <tbody v-for="row in fullReport" :key="row.category">
+                    <tr class="master-category-row report-summary-row">
+                        <td class="master-category-label">{{ row.category }}</td>
+                        <td class="master-value">{{ row.quantity }}</td>
+                        <td class="master-value">{{ row.additions }}</td>
+                        <td class="master-value">{{ row.removals }}</td>
+                        <td v-if="!showFullInv">
+                            <button v-if="!simpleCategores.includes(row.category)" @click="getDetails(row.category,row.genders)" class="bg-blue-700 rounded-md p-2 text-white">
+                                View Sizes
+                            </button>
+                            <button v-if="row.category === 'Other Items'" @click="getDetails(row.category,row.genders)" class="bg-blue-700 rounded-md p-2 text-white">
+                                View Items
+                            </button>
+                        </td>
                     </tr>
+                    <template v-if="showFullInv && hasMasterBreakdown(row)">
+                        <template v-for="gender in gendersWithQuantity(row.genders)" :key="`${row.category}-${gender.name}`">
+                            <tr class="master-section-row">
+                                <td class="master-section-label">{{ gender.name }}</td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                            </tr>
+                            <tr
+                                v-for="infoRow in infoRowsWithQuantity(gender)"
+                                :key="`${row.category}-${gender.name}-${infoRow.size}`"
+                                class="master-detail-row"
+                            >
+                                <td class="master-detail-label">{{ infoRow.size }}</td>
+                                <td class="master-value">{{ infoRow.quantity }}</td>
+                                <td class="master-value">{{ infoRow.additions }}</td>
+                                <td class="master-value">{{ infoRow.removals }}</td>
+                            </tr>
+                        </template>
+                    </template>
                 </tbody>
             </table>
+        </div>
+        <div
+            v-if="showDetails"
+            class="category-details-overlay"
+            @click.self="closeDetails"
+        >
+            <CategoryDetails
+                :genders="detailRow"
+                :close-function="closeDetails"
+                :category="detailCategory"
+            />
         </div>
     </div>
 </template>
 
 <script setup>
-import { ref, watchEffect, getCurrentInstance } from 'vue';
-import { useFetch } from '#app';
+import { computed, onMounted, ref, watchEffect } from 'vue';
+import CategoryDetails from '../components/categoryDetails.vue';
 
-// Reports data (SSR-friendly): fetch at top-level so renders data immediately
-const reportRows = ref([]);
-const { data: summaryData, error: summaryError, refresh: refreshSummary } = await useFetch('/api/reports/summary');
-
-watchEffect(() => {
-  if (summaryError?.value) {
-    // eslint-disable-next-line no-console
-    console.error('Failed to load report summary', summaryError.value);
-    reportRows.value = [];
-  } else if (summaryData?.value) {
-    reportRows.value = Array.isArray(summaryData.value) ? summaryData.value : [];
-  }
-});
-
-// Fetch the first inventory date dynamically
-const firstInventoryDate = ref(null);
-const { data: firstDateData } = await useFetch('/api/inventory/first-date');
-watchEffect(() => {
-  if (firstDateData?.value?.firstDate) {
-    firstInventoryDate.value = new Date(firstDateData.value.firstDate);
-  }
-});
-
-// Expose refreshSummary and firstInventoryDate to the Options API part via the instance
-const instance = getCurrentInstance();
-if (instance) {
-  instance.appContext.config.globalProperties.$refreshSummaryData = refreshSummary;
-  instance.appContext.config.globalProperties.$firstInventoryDate = firstInventoryDate;
+function getTodayInCentralTime() {
+    const now = new Date();
+    const centralTimeString = now.toLocaleString('en-US', {
+        timeZone: 'America/Chicago',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+    });
+    const [month, day, year] = centralTimeString.split('/');
+    const centralDate = new Date(parseInt(year, 10), parseInt(month, 10) - 1, parseInt(day, 10));
+    centralDate.setHours(0, 0, 0, 0);
+    return centralDate;
 }
-</script>
 
-<script>
-export default {
-    name: 'ReportsLandingPage',
-    data() {
-        // Calculate today in Central Time before returning data
-        const now = new Date();
-        const centralTimeString = now.toLocaleString('en-US', { 
-            timeZone: 'America/Chicago',
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit'
+const fullReport = ref([]);
+const pageLoading = ref(true);
+const pageLoadError = ref('');
+const showPreviousReportsModal = ref(false);
+const ChooseDailyReport = ref(false);
+const ChooseWeeklyReport = ref(false);
+const ChooseMonthlyReport = ref(false);
+const viewingSelectedReport = ref(false);
+const selectedReportRows = ref([]);
+const selectedReportTitle = ref('');
+const isLoadingSelected = ref(false);
+const selectedError = ref(null);
+const lastReportType = ref(null);
+const selectedDate = ref(null);
+const showFullInv = ref(false);
+const showFullReport = ref(false);
+
+const monthNames = [
+    'January','February','March','April','May','June',
+    'July','August','September','October','November','December',
+];
+const weekDayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+const today = getTodayInCentralTime();
+const currentMonth = ref(today.getMonth());
+const currentYear = ref(today.getFullYear());
+const displayYear = ref(today.getFullYear());
+
+const showDetails = ref(false);
+const detailRow = ref();
+const detailCategory = ref();
+const simpleCategores = ['Blankets', 'Snack Packs', 'Hygiene Packs', 'Other Items'];
+
+const firstInventoryDate = ref(null);
+
+const firstAllowedDate = computed(() => {
+    if (firstInventoryDate.value instanceof Date && !isNaN(firstInventoryDate.value.getTime())) {
+        return firstInventoryDate.value;
+    }
+    return new Date(2020, 0, 1);
+});
+
+const visibleDays = computed(() => {
+    const year = currentYear.value;
+    const month = currentMonth.value;
+    const firstOfMonth = new Date(year, month, 1);
+    const startDay = firstOfMonth.getDay();
+    const gridStart = new Date(year, month, 1 - startDay);
+
+    const days = [];
+    for (let i = 0; i < 42; i++) {
+        const d = new Date(gridStart);
+        d.setDate(gridStart.getDate() + i);
+        const inMonth = d.getMonth() === month;
+        let isSelected = false;
+
+        if (selectedDate.value instanceof Date) {
+            isSelected = d.toDateString() === selectedDate.value.toDateString();
+        } else if (selectedDate.value?.weekStart && selectedDate.value?.weekEnd) {
+            isSelected = d >= selectedDate.value.weekStart && d <= selectedDate.value.weekEnd;
+        }
+
+        days.push({
+            date: d,
+            inMonth,
+            key: `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}-${i}`,
+            isSelected,
         });
-        const [month, day, year] = centralTimeString.split('/');
-        const todayCentral = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-        todayCentral.setHours(0, 0, 0, 0);
-        
-        return {
-            // Controls the "Previous Reports" chooser modal
-            showPreviousReportsModal: false,
+    }
 
-            // Individual report modals
-            ChooseMonthlyReport: false,
-            ChooseWeeklyReport: false,
-            ChooseDailyReport: false,
-            // Calendar state (shared by daily and weekly views)
-            today: todayCentral,
-            currentMonth: todayCentral.getMonth(),
-            currentYear: todayCentral.getFullYear(),
-            selectedDate: null,
-            // Monthly view year display
-            displayYear: new Date().getFullYear(),
-            showAmendData: false,
-            showAmendForm: false,
-            showSuccess: false,           
-            lastAmendDate: null,
-            // The date that was amended (the day the user intended to change)
-            lastAmendedFor: null,
-            // Number of items changed in the last amendment (positive integer)
-            lastAmendedCount: null,
-            // Action of the last amendment: 'Add' or 'Remove'
-            lastAmendAction: '',
-            // Category of the last amendment (e.g. 'Shirts')
-            lastAmendedCategory: '',
-            errorMessage: '',
-            form: { category: '', quantity: null, action: '' },
-            categories: ['Shirts','Jackets','Pants','Underwear','Shoes','Snack Packs','Hygiene Packs','Blankets'],
-            // Selected-report popup
-                // the date range currently shown in the selected-report modal
-                lastViewedRangeStart: null,
-                lastViewedRangeEnd: null,
-            viewingSelectedReport: false,
-            selectedReportRows: [],
-            selectedReportTitle: '',
-            isLoadingSelected: false,
-            selectedError: null,
-            lastReportType: null, // Track which report type was selected (daily, weekly, or monthly)
-            // map of yyyy-mm-dd -> true when that day has amended data
-            amendmentsByDate: {},
+    return days;
+});
+
+onMounted(async () => {
+    pageLoading.value = true;
+    pageLoadError.value = '';
+    try {
+        const [inventory, firstDate] = await Promise.all([
+            $fetch('/api/inventory'),
+            $fetch('/api/inventory/first-date').catch(() => null),
+        ]);
+        fullReport.value = Array.isArray(inventory) ? inventory : [];
+        if (firstDate?.firstDate) {
+            firstInventoryDate.value = new Date(firstDate.firstDate);
         }
-    },
-    methods: {
-        // Get today's date in US Central Time
-        getTodayInCentralTime() {
-            const now = new Date();
-            // Get the date/time components in Central Time
-            const centralTimeString = now.toLocaleString('en-US', { 
-                timeZone: 'America/Chicago',
-                year: 'numeric',
-                month: '2-digit',
-                day: '2-digit'
-            });
-            // Parse the MM/DD/YYYY format
-            const [month, day, year] = centralTimeString.split('/');
-            // Create a new date at midnight
-            const centralDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-            centralDate.setHours(0, 0, 0, 0);
-            return centralDate;
-        },
-        // Reset calendar state to today and clear any selection
-        resetCalendarToToday() {
-            const t = this.getTodayInCentralTime();
-            this.today = new Date(t);
-            this.currentMonth = t.getMonth();
-            this.currentYear = t.getFullYear();
-            this.displayYear = t.getFullYear();
-            this.selectedDate = null;
-        },
-        // Helper method to check if a date (day) is disabled
-        // Helper method to check if a date (day) is disabled
-        isDayDisabled(date) {
-            // Normalize all dates to midnight for accurate comparison
-            const checkDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-            checkDate.setHours(0, 0, 0, 0);
-            
-            // Get today in Central Time
-            const todayDate = this.getTodayInCentralTime();
-            
-            const firstDate = new Date(this.firstAllowedDate.getFullYear(), this.firstAllowedDate.getMonth(), this.firstAllowedDate.getDate());
-            firstDate.setHours(0, 0, 0, 0);
-            
-            // Disable if before first allowed date or after today (allow today)
-            return checkDate < firstDate || checkDate > todayDate;
-        },
-        
-        // Helper method to check if a week is disabled
-        isWeekDisabled(date) {
-            // Calculate the week start (Sunday) for the clicked date
-            const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-            const day = d.getDay();
-            const weekStart = new Date(d);
-            weekStart.setDate(d.getDate() - day);
-            weekStart.setHours(0, 0, 0, 0);
-            
-            // Calculate week end (Saturday) at end of day
-            const weekEnd = new Date(weekStart);
-            weekEnd.setDate(weekStart.getDate() + 6);
-            weekEnd.setHours(23, 59, 59, 999);
-            
-            // Get first allowed date and today
-            const firstDate = new Date(this.firstAllowedDate.getFullYear(), this.firstAllowedDate.getMonth(), this.firstAllowedDate.getDate());
-            firstDate.setHours(0, 0, 0, 0);
-            
-            const today = this.getTodayInCentralTime();
-            today.setHours(23, 59, 59, 999); // Include all of today
-            
-            // The week is valid only if the intersection of [weekStart, weekEnd] and [firstDate, today] is non-empty
-            // Intersection is non-empty if: max(weekStart, firstDate) <= min(weekEnd, today)
-            const intersectionStart = Math.max(weekStart.getTime(), firstDate.getTime());
-            const intersectionEnd = Math.min(weekEnd.getTime(), today.getTime());
-            
-            const hasValidDates = intersectionStart <= intersectionEnd;
-            
-            return !hasValidDates;
-        },
-        
-        // Helper method to check if a month is disabled
-        isMonthDisabled(year, monthIndex) {
-            // Create date for last day of the selected month at end of day
-            const selectedMonthEnd = new Date(year, monthIndex + 1, 0);
-            selectedMonthEnd.setHours(23, 59, 59, 999);
-            
-            // Create first day of selected month at start of day
-            const selectedMonthStart = new Date(year, monthIndex, 1);
-            selectedMonthStart.setHours(0, 0, 0, 0);
-            
-            // Get first allowed date and today
-            const firstDate = new Date(this.firstAllowedDate.getFullYear(), this.firstAllowedDate.getMonth(), this.firstAllowedDate.getDate());
-            firstDate.setHours(0, 0, 0, 0);
-            
-            const today = this.getTodayInCentralTime();
-            today.setHours(23, 59, 59, 999); // Include all of today
-            
-            // The month is valid only if the intersection of [monthStart, monthEnd] and [firstDate, today] is non-empty
-            // Intersection is non-empty if: max(monthStart, firstDate) <= min(monthEnd, today)
-            const intersectionStart = Math.max(selectedMonthStart.getTime(), firstDate.getTime());
-            const intersectionEnd = Math.min(selectedMonthEnd.getTime(), today.getTime());
-            
-            const hasValidDates = intersectionStart <= intersectionEnd;
-            
-            return !hasValidDates;
-        },
-        
-        closePreviousReportsModal() {
-            this.showPreviousReportsModal = false;
-        },
-        closeMonthlyReport() {
-            this.ChooseMonthlyReport = false;
-            this.selectedDate = null;
-        },
-        closeWeeklyReport() {
-            this.ChooseWeeklyReport = false;
-            this.selectedDate = null;
-        },
-        closeDailyReport() {
-            this.ChooseDailyReport = false;
-            this.selectedDate = null;
-        },
-        closeAmendData() {
-            this.showAmendData = false;
-            this.selectedDate = null;
-        },
-        // Close the success modal and clear last-amend tracking fields
-        closeSuccess() {
-            this.showSuccess = false;
-            this.lastAmendDate = null;
-            this.lastAmendedFor = null;
-            this.lastAmendedCount = null;
-            this.lastAmendAction = '';
-            this.lastAmendedCategory = '';
-        },
-        openMonthlyFromPrevious() {
-            this.showPreviousReportsModal = false;
-            this.resetCalendarToToday();
-            // load amendment flags for the whole year (so months can show indicators)
-            const year = this.displayYear;
-            const startY = new Date(year, 0, 1);
-            const endY = new Date(year, 11, 31);
-            this.loadAmendmentsForRange(startY, endY);
-            this.ChooseMonthlyReport = true;
-        },
-        openWeeklyFromPrevious() {
-            this.showPreviousReportsModal = false;
-            this.resetCalendarToToday();
-            // load amendments for the currently displayed month
-            const startW = new Date(this.currentYear, this.currentMonth, 1);
-            const endW = new Date(this.currentYear, this.currentMonth + 1, 0);
-            this.loadAmendmentsForRange(startW, endW);
-            this.ChooseWeeklyReport = true;
-        },
-        openDailyFromPrevious() {
-            this.showPreviousReportsModal = false;
-            this.resetCalendarToToday();
-            // load amendments for the current month so day markers appear
-            const startD = new Date(this.currentYear, this.currentMonth, 1);
-            const endD = new Date(this.currentYear, this.currentMonth + 1, 0);
-            this.loadAmendmentsForRange(startD, endD);
-            this.ChooseDailyReport = true;
-        },
-        openAmendData() {
-            this.showAmendData = true;
-            this.resetCalendarToToday();
-        },
-        goBackToCalendar() {
-            // Close the report view
-            this.viewingSelectedReport = false;
-            // Reopen the appropriate calendar modal based on last report type
-            if (this.lastReportType === 'daily') {
-                this.ChooseDailyReport = true;
-            } else if (this.lastReportType === 'weekly') {
-                this.ChooseWeeklyReport = true;
-            } else if (this.lastReportType === 'monthly') {
-                this.ChooseMonthlyReport = true;
-            }
-        },
-        selectDateForAmend() {
-            if (!this.selectedDate || !(this.selectedDate instanceof Date)) {
-                // No date selected, do nothing
-                return;
-            }
-            // Close calendar pop-up
-            this.showAmendData = false;
-            // Open amend form modal
-            this.showAmendForm = true;
-        },
-        // Helper: produce YYYY-MM-DD key for a Date
-        dateKey(date) {
-            const y = date.getFullYear();
-            const m = String(date.getMonth() + 1).padStart(2, '0');
-            const d = String(date.getDate()).padStart(2, '0');
-            return `${y}-${m}-${d}`;
-        },
-
-        // Load amendment flags for a date range.
-        // The API may return either an array of date-strings (YYYY-MM-DD) or an array of objects
-        // with fields like { date: 'YYYY-MM-DD', changedAt: '2025-10-19T14:32:00Z' }.
-        // We normalize into this.amendmentsByDate[YYYY-MM-DD] = [ { changedAt: Date|null, amendedFor: YYYY-MM-DD }, ... ]
-        async loadAmendmentsForRange(startDate, endDate) {
-            try {
-                const s = this.dateKey(startDate);
-                const e = this.dateKey(endDate);
-                const res = await fetch(`/api/reports/amendments?start=${s}&end=${e}`);
-                if (!res.ok) throw new Error(`API error ${res.status}`);
-                const list = await res.json();
-                if (!Array.isArray(list)) return;
-
-                // Normalize each item
-                list.forEach(item => {
-                    let amendedFor = null;
-                    let changedAt = null;
-
-                    if (typeof item === 'string') {
-                        // item is the date that was amended (no timestamp available)
-                        amendedFor = item;
-                    } else if (item && typeof item === 'object') {
-                        // try common key names
-                        amendedFor = item.date || item.day || item.amendedDate || item.amended_for || item.amended || null;
-                        const ts = item.changedAt || item.changed_at || item.timestamp || item.updatedAt || item.updated_at || item.modifiedAt || item.modified_at || item.when;
-                        if (ts) {
-                            try { changedAt = new Date(ts); if (isNaN(changedAt)) changedAt = null; } catch (e) { changedAt = null; }
-                        }
-                    }
-
-                    // If amendedFor missing but we have a changedAt, derive the amendedFor key from changedAt local date
-                    if (!amendedFor && changedAt instanceof Date) {
-                        const y = changedAt.getFullYear();
-                        const m = String(changedAt.getMonth() + 1).padStart(2, '0');
-                        const d = String(changedAt.getDate()).padStart(2, '0');
-                        amendedFor = `${y}-${m}-${d}`;
-                    }
-
-                    if (!amendedFor) return; // can't map this record
-
-                    // ensure array exists
-                    if (!this.amendmentsByDate[amendedFor]) this.amendmentsByDate[amendedFor] = [];
-                    this.amendmentsByDate[amendedFor].push({ changedAt: changedAt instanceof Date ? changedAt : null, amendedFor });
-                });
-            } catch (err) {
-                // eslint-disable-next-line no-console
-                console.warn('Failed to load amendments for range', err);
-            }
-        },
-
-        // Return true if any day in a given month/year has amendments (checks the map)
-        monthHasAmendment(year, monthIndex) {
-            const start = new Date(year, monthIndex, 1);
-            const end = new Date(year, monthIndex + 1, 0);
-            for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-                if (this.amendmentsByDate[this.dateKey(d)]) return true;
-            }
-            return false;
-        },
-        // Calendar helpers
-        prevMonth() {
-            if (this.currentMonth === 0) {
-                this.currentMonth = 11;
-                this.currentYear -= 1;
-            } else {
-                this.currentMonth -= 1;
-            }
-        },
-        nextMonth() {
-            if (this.currentMonth === 11) {
-                this.currentMonth = 0;
-                this.currentYear += 1;
-            } else {
-                this.currentMonth += 1;
-            }
-        },
-        // Select a specific date for daily report
-        selectDate(date) {
-            // Check if date is disabled
-            if (this.isDayDisabled(date)) {
-                return;
-            }
-            
-            const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-            // if already selected same day, deselect
-            if (this.selectedDate instanceof Date && this.selectedDate.toDateString() === d.toDateString()) {
-                this.selectedDate = null;
-                return;
-            }
-            this.selectedDate = d;
-        },
-        // Select a week containing the clicked date (for weekly report)
-        selectWeek(date) {
-            // Check if week is disabled
-            if (this.isWeekDisabled(date)) {
-                return;
-            }
-            
-            // compute week start (Sunday) and end (Saturday)
-            const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-            const day = d.getDay();
-            const start = new Date(d);
-            start.setDate(d.getDate() - day);
-            start.setHours(0,0,0,0);
-            const end = new Date(start);
-            end.setDate(start.getDate() + 6);
-            end.setHours(23,59,59,999);
-            // if same week already selected, deselect
-            if (this.selectedDate && this.selectedDate.weekStart) {
-                const existingStart = new Date(this.selectedDate.weekStart);
-                const existingEnd = new Date(this.selectedDate.weekEnd);
-                if (existingStart.toDateString() === start.toDateString() && existingEnd.toDateString() === end.toDateString()) {
-                    this.selectedDate = null;
-                    return;
-                }
-            }
-            // store or load weekly report for the range start..end
-            this.selectedDate = { weekStart: start, weekEnd: end };
-        },
-        // Monthly navigation and selection
-        prevYear() {
-            this.displayYear -= 1;
-        },
-        nextYear() {
-            this.displayYear += 1;
-        },
-        selectMonth(monthIndex) {
-            // Check if month is disabled
-            if (this.isMonthDisabled(this.displayYear, monthIndex)) {
-                return;
-            }
-            
-            // If current selectedDate is a month selection
-            if (this.selectedDate && this.selectedDate.year !== undefined && this.selectedDate.month !== undefined) {
-                if (this.selectedDate.year === this.displayYear && this.selectedDate.month === monthIndex) {
-                    // toggle off
-                    this.selectedDate = null;
-                    return;
-                }
-            }
-            // set month selection
-            this.selectedDate = { year: this.displayYear, month: monthIndex };
-        },
-        async submitAmend() {
-            this.errorMessage = '';
-            const { category, quantity, action } = this.form;
-            
-            if (!category || !quantity || !action || quantity <= 0) {
-                this.errorMessage = 'Please fill all fields with valid values.';
-                return;
-            }
-
-            try {
-                // Use native fetch API with JSON serialization
-                const response = await fetch('/api/amend', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        selectedDate: this.selectedDate,
-                        category,
-                        quantity,
-                        action
-                    })
-                });
-                
-                if (!response.ok) {
-                    const errorData = await response.json().catch(() => ({}));
-                    throw new Error(errorData.message || `HTTP error ${response.status}`);
-                }
-
-                const res = await response.json();
-                
-                if (res.success) {
-                    // Determine the change timestamp: prefer server-provided timestamp if present, else use now
-                    let changedAt = null;
-                    const ts = res.changedAt || res.changed_at || res.timestamp || res.updatedAt || res.updated_at || res.modifiedAt || res.modified_at || res.when;
-                    if (ts) {
-                        try { const d = new Date(ts); if (!isNaN(d)) changedAt = d; } catch (e) { changedAt = null; }
-                    }
-                    if (!changedAt) changedAt = new Date();
-
-                    if (this.selectedDate && this.selectedDate instanceof Date) {
-                        // Use the change timestamp as the lastAmendDate so success UI shows when the change occurred
-                        this.lastAmendDate = new Date(changedAt.getTime());
-                        // Record which day was amended (the amended-for day) so the success UI shows that day
-                        this.lastAmendedFor = new Date(this.selectedDate.getFullYear(), this.selectedDate.getMonth(), this.selectedDate.getDate());
-                        // Record the number, action and category so the success UI can display what changed
-                        this.lastAmendedCount = this.form.quantity;
-                        this.lastAmendAction = this.form.action;
-                        this.lastAmendedCategory = this.form.category;
-                        // map keyed by the amended-for day
-                        const k = this.dateKey(this.selectedDate);
-                        if (!this.amendmentsByDate[k]) this.amendmentsByDate[k] = [];
-                        this.amendmentsByDate[k].push({ changedAt: new Date(changedAt.getTime()), amendedFor: k });
-                    } else {
-                        this.lastAmendDate = new Date(changedAt.getTime());
-                    }
-                    this.showAmendForm = false;
-                    this.showSuccess = true;
-                    this.form = { category: '', quantity: null, action: '' };
-                    
-                    if (this.$refreshSummaryData) {
-                        await this.$refreshSummaryData();
-                    } else {
-                    }
-                }
-            } catch (err) {
-                console.error('Amendment error:', err);
-                this.errorMessage = err.message || 'An error occurred.';
-            }
+        try {
+            await $fetch('/api/reports', { method: 'POST' });
+        } catch (reportErr) {
+            console.warn('Daily report snapshot failed', reportErr);
         }
-        ,
-        // Placeholder save handlers for the modal Save buttons
-        async saveMonthly() {
-            if (!this.selectedDate || this.selectedDate.year === undefined || this.selectedDate.month === undefined) {
-                // nothing selected: do nothing (keep modal open)
-                return;
-            }
-            this.isLoadingSelected = true;
-            this.selectedError = null;
-            this.lastReportType = 'monthly'; // Track report type
-            try {
-                const year = this.selectedDate.year;
-                const month = this.selectedDate.month + 1; // 1-based
-                const res = await fetch(`/api/reports/summary?year=${year}&month=${String(month).padStart(2,'0')}`);
-                if (!res.ok) throw new Error(`API error ${res.status}`);
-                const data = await res.json();
-                this.selectedReportRows = Array.isArray(data) ? data : this.mapApiResponseToRows(data);
-                this.selectedReportTitle = `${this.monthNames[this.selectedDate.month]} ${this.selectedDate.year}`;
-                // set the viewed range for the month
-                this.lastViewedRangeStart = new Date(this.selectedDate.year, this.selectedDate.month, 1);
-                this.lastViewedRangeEnd = new Date(this.selectedDate.year, this.selectedDate.month + 1, 0);
-                this.viewingSelectedReport = true;
-                this.ChooseMonthlyReport = false;
-                this.selectedDate = null;
-            } catch (err) {
-                // eslint-disable-next-line no-console
-                console.error('Failed to load monthly report', err);
-                this.selectedError = err.message || String(err);
-            } finally {
-                this.isLoadingSelected = false;
-            }
-        },
-        async saveWeekly() {
-            if (!this.selectedDate || !this.selectedDate.weekStart || !this.selectedDate.weekEnd) return;
-            this.isLoadingSelected = true;
-            this.selectedError = null;
-            this.lastReportType = 'weekly'; // Track report type
-            try {
-                // Format dates as YYYY-MM-DD in local timezone (not UTC)
-                const formatLocalDate = (date) => {
-                    const year = date.getFullYear();
-                    const month = String(date.getMonth() + 1).padStart(2, '0');
-                    const day = String(date.getDate()).padStart(2, '0');
-                    return `${year}-${month}-${day}`;
-                };
-                // Format dates for display (e.g., "October 19")
-                const formatDisplayDate = (date) => {
-                    const monthName = this.monthNames[date.getMonth()];
-                    const day = date.getDate();
-                    return `${monthName} ${day}`;
-                };
-                const start = formatLocalDate(this.selectedDate.weekStart);
-                const end = formatLocalDate(this.selectedDate.weekEnd);
-                const res = await fetch(`/api/reports/summary?start=${start}&end=${end}`);
-                if (!res.ok) throw new Error(`API error ${res.status}`);
-                const data = await res.json();
-                this.selectedReportRows = Array.isArray(data) ? data : this.mapApiResponseToRows(data);
-                // Create readable title with full date range
-                const startDisplay = formatDisplayDate(this.selectedDate.weekStart);
-                const endDisplay = formatDisplayDate(this.selectedDate.weekEnd);
-                const year = this.selectedDate.weekEnd.getFullYear();
-                this.selectedReportTitle = `${startDisplay} - ${endDisplay} ${year}`;
-                // set viewed week range for amendment checks
-                this.lastViewedRangeStart = new Date(this.selectedDate.weekStart);
-                this.lastViewedRangeEnd = new Date(this.selectedDate.weekEnd);
-                this.viewingSelectedReport = true;
-                this.ChooseWeeklyReport = false;
-                this.selectedDate = null;
-            } catch (err) {
-                // eslint-disable-next-line no-console
-                console.error('Failed to load weekly report', err);
-                this.selectedError = err.message || String(err);
-            } finally {
-                this.isLoadingSelected = false;
-            }
-        },
-        async saveDaily() {
-            if (!this.selectedDate || !(this.selectedDate instanceof Date)) return;
-            this.isLoadingSelected = true;
-            this.selectedError = null;
-            this.lastReportType = 'daily'; // Track report type
-            try {
-                // Format date as YYYY-MM-DD in local timezone (not UTC)
-                const year = this.selectedDate.getFullYear();
-                const month = String(this.selectedDate.getMonth() + 1).padStart(2, '0');
-                const day = String(this.selectedDate.getDate()).padStart(2, '0');
-                const d = `${year}-${month}-${day}`;
-                const res = await fetch(`/api/reports/summary?date=${d}`);
-                if (!res.ok) throw new Error(`API error ${res.status}`);
-                const data = await res.json();
-                this.selectedReportRows = Array.isArray(data) ? data : this.mapApiResponseToRows(data);
-                // Format display title (e.g., "October 19 2025")
-                const monthName = this.monthNames[this.selectedDate.getMonth()];
-                const dayNum = this.selectedDate.getDate();
-                this.selectedReportTitle = `${monthName} ${dayNum} ${year}`;
-                // set viewed day range for amendment checks
-                this.lastViewedRangeStart = new Date(this.selectedDate.getFullYear(), this.selectedDate.getMonth(), this.selectedDate.getDate());
-                this.lastViewedRangeEnd = new Date(this.selectedDate.getFullYear(), this.selectedDate.getMonth(), this.selectedDate.getDate());
-                this.viewingSelectedReport = true;
-                this.ChooseDailyReport = false;
-                this.selectedDate = null;
-            } catch (err) {
-                // eslint-disable-next-line no-console
-                console.error('Failed to load daily report', err);
-                this.selectedError = err.message || String(err);
-            } finally {
-                this.isLoadingSelected = false;
-            }
-        },
-
-        // Normalize API shapes like object-by-category into an array of rows
-        mapApiResponseToRows(apiData) {
-            if (!apiData) return [];
-            if (Array.isArray(apiData)) return apiData;
-            // if keyed object { category: { total, added, removed }, ... }
-            return Object.keys(apiData).map(k => {
-                const v = apiData[k] || {};
-                return {
-                    category: k,
-                    total: v.total ?? v.count ?? 0,
-                    added: v.added ?? 0,
-                    removed: v.removed ?? 0,
-                };
-            });
+    } catch (err) {
+        console.error('Failed to load reports page data', err);
+        const status = err?.statusCode ?? err?.status ?? err?.response?.status;
+        if (status === 401) {
+            pageLoadError.value =
+                'You are not signed in (or your session expired). Log in again, then return to Reports.';
+        } else if (status === 403) {
+            pageLoadError.value =
+                'Your account does not have staff access. Add your email to BETTER_AUTH_STAFF_EMAILS or BETTER_AUTH_ADMIN_EMAILS in admin/.env.';
+        } else {
+            pageLoadError.value =
+                status
+                    ? `Could not load inventory data (HTTP ${status}).`
+                    : 'Could not load inventory data. Try logging in again or refresh the page.';
         }
-    },
-    computed: {
-        // true when the currently-viewed selected report contains any amended days
-        selectedReportHasAmendments() {
-            if (!this.lastViewedRangeStart || !this.lastViewedRangeEnd) return false;
-            for (let d = new Date(this.lastViewedRangeStart); d <= this.lastViewedRangeEnd; d.setDate(d.getDate() + 1)) {
-                if (this.amendmentsByDate[this.dateKey(d)]) return true;
-            }
-            return false;
-        },
-        // Return the most recent amended date (formatted) within the currently viewed range, or empty string
-        selectedReportLatestAmendDateFormatted() {
-            if (!this.lastViewedRangeStart || !this.lastViewedRangeEnd) return '';
-            let latestChange = null; // Date
+        fullReport.value = [];
+    } finally {
+        pageLoading.value = false;
+    }
+});
 
-            for (let d = new Date(this.lastViewedRangeStart); d <= this.lastViewedRangeEnd; d.setDate(d.getDate() + 1)) {
-                const k = this.dateKey(d);
-                const records = this.amendmentsByDate[k];
-                if (!records) continue;
+function resetCalendarToToday() {
+    const t = getTodayInCentralTime();
+    currentMonth.value = t.getMonth();
+    currentYear.value = t.getFullYear();
+    displayYear.value = t.getFullYear();
+    selectedDate.value = null;
+}
 
-                // records may be an array of objects { changedAt }
-                if (Array.isArray(records)) {
-                    records.forEach(rec => {
-                        if (rec && rec.changedAt instanceof Date) {
-                            if (!latestChange || rec.changedAt.getTime() > latestChange.getTime()) latestChange = rec.changedAt;
-                        }
-                    });
-                } else if (records instanceof Date) {
-                    // older format: a single Date
-                    if (!latestChange || records.getTime() > latestChange.getTime()) latestChange = records;
-                } else if (records === true) {
-                    // we only know the amended day (no change timestamp) — treat the amended day as fallback
-                    const cand = new Date(d.getFullYear(), d.getMonth(), d.getDate());
-                    if (!latestChange || cand.getTime() > latestChange.getTime()) latestChange = cand;
-                }
-            }
+function toMidnight(date) {
+    const normalized = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    normalized.setHours(0, 0, 0, 0);
+    return normalized;
+}
 
-            if (!latestChange) return '';
-            // Format with date + time in Central Time
-            try {
-                return new Date(latestChange).toLocaleString('en-US', {
-                    timeZone: 'America/Chicago',
-                    month: 'short',
-                    day: 'numeric',
-                    year: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                });
-            } catch (e) {
-                return latestChange.toLocaleDateString();
-            }
-        },
-        // (removed duplicate computed) true when there is at least one day with amended data is handled above
-        // display only the day (no time) in Central Time
-        lastAmendDateDisplay() {
-            if (!this.lastAmendDate) return '';
-            return new Date(this.lastAmendDate).toLocaleDateString('en-US', {
-                timeZone: 'America/Chicago',
-                month: 'short',
-                day: 'numeric',
-                year: 'numeric'
-            });
-        },
-        // Display the day that was amended (the amended-for date), not the change timestamp
-        lastAmendedForDisplay() {
-            if (!this.lastAmendedFor) return '';
-            return new Date(this.lastAmendedFor).toLocaleDateString('en-US', {
-                timeZone: 'America/Chicago',
-                month: 'short',
-                day: 'numeric',
-                year: 'numeric'
-            });
-        },
-        // Display the summary of the last amend count/action/category (e.g. "Added 5 Shirts" or "Removed 3 Shoes")
-        lastAmendCountDisplay() {
-            if (!this.lastAmendedCount || !this.lastAmendAction) return '';
-            const action = String(this.lastAmendAction).toLowerCase() === 'add' ? 'Added' : (String(this.lastAmendAction).toLowerCase() === 'remove' ? 'Removed' : this.lastAmendAction);
-            const category = this.lastAmendedCategory ? ` ${this.lastAmendedCategory}` : '';
-            return `${action} ${this.lastAmendedCount}${category}`;
-        },
-        firstAllowedDate() {
-            // Get the dynamically fetched first inventory date
-            // Fall back to a safe default if not yet loaded
-            const dynamicDate = this.$firstInventoryDate?.value;
-            if (dynamicDate instanceof Date && !isNaN(dynamicDate.getTime())) {
-                return dynamicDate;
-            }
-            // Default fallback date (very old date that won't restrict much)
-            return new Date(2020, 0, 1);
-        },
-        monthNames() {
-            return [
-                'January','February','March','April','May','June',
-                'July','August','September','October','November','December'
-            ];
-        },
-        weekDayNames() {
-            return ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-        },
-        visibleDays() {
-            // Build calendar grid: 6 rows x 7 days = 42 cells
-            const year = this.currentYear;
-            const month = this.currentMonth;
+function isDayDisabled(date) {
+    const checkDate = toMidnight(date);
+    const firstDate = toMidnight(firstAllowedDate.value);
+    const todayDate = getTodayInCentralTime();
+    return checkDate < firstDate || checkDate > todayDate;
+}
 
-            const firstOfMonth = new Date(year, month, 1);
-            const startDay = firstOfMonth.getDay(); // 0-6 (Sun-Sat)
+function isWeekDisabled(date) {
+    const d = toMidnight(date);
+    const day = d.getDay();
+    const weekStart = new Date(d);
+    weekStart.setDate(d.getDate() - day);
+    weekStart.setHours(0, 0, 0, 0);
 
-            // Determine the date that will be placed in the first cell
-            const gridStart = new Date(year, month, 1 - startDay);
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekStart.getDate() + 6);
+    weekEnd.setHours(23, 59, 59, 999);
 
-            const days = [];
-            for (let i = 0; i < 42; i++) {
-                const d = new Date(gridStart);
-                d.setDate(gridStart.getDate() + i);
-                const inMonth = d.getMonth() === month;
-                let isSelected = false;
-                if (this.selectedDate) {
-                    if (this.selectedDate instanceof Date) {
-                        isSelected = d.toDateString() === this.selectedDate.toDateString();
-                    } else if (this.selectedDate && this.selectedDate.weekStart) {
-                        // weekly selection: check if date is within week range
-                        isSelected = d >= this.selectedDate.weekStart && d <= this.selectedDate.weekEnd;
-                    }
-                }
-                const key = this.dateKey(d);
-                const hasAmendment = !!this.amendmentsByDate[key];
-                days.push({ date: d, inMonth, key: d.toISOString(), isSelected, hasAmendment });
-            }
-            return days;
-        },
-        selectedDateFormatted() {
-            if (!this.selectedDate) return '';
-            return this.selectedDate.toDateString();
+    const firstDate = toMidnight(firstAllowedDate.value);
+    const todayDate = getTodayInCentralTime();
+    todayDate.setHours(23, 59, 59, 999);
+
+    const intersectionStart = Math.max(weekStart.getTime(), firstDate.getTime());
+    const intersectionEnd = Math.min(weekEnd.getTime(), todayDate.getTime());
+
+    return intersectionStart > intersectionEnd;
+}
+
+function isMonthDisabled(year, monthIndex) {
+    const monthStart = new Date(year, monthIndex, 1);
+    monthStart.setHours(0, 0, 0, 0);
+    const monthEnd = new Date(year, monthIndex + 1, 0);
+    monthEnd.setHours(23, 59, 59, 999);
+
+    const firstDate = toMidnight(firstAllowedDate.value);
+    const todayDate = getTodayInCentralTime();
+    todayDate.setHours(23, 59, 59, 999);
+
+    const intersectionStart = Math.max(monthStart.getTime(), firstDate.getTime());
+    const intersectionEnd = Math.min(monthEnd.getTime(), todayDate.getTime());
+
+    return intersectionStart > intersectionEnd;
+}
+
+function prevMonth() {
+    if (currentMonth.value === 0) {
+        currentMonth.value = 11;
+        currentYear.value -= 1;
+    } else {
+        currentMonth.value -= 1;
+    }
+}
+
+function nextMonth() {
+    if (currentMonth.value === 11) {
+        currentMonth.value = 0;
+        currentYear.value += 1;
+    } else {
+        currentMonth.value += 1;
+    }
+}
+
+function prevYear() {
+    displayYear.value -= 1;
+}
+
+function nextYear() {
+    displayYear.value += 1;
+}
+
+function openMonthlyFromPrevious() {
+    showPreviousReportsModal.value = false;
+    resetCalendarToToday();
+    ChooseMonthlyReport.value = true;
+}
+
+function openWeeklyFromPrevious() {
+    showPreviousReportsModal.value = false;
+    resetCalendarToToday();
+    ChooseWeeklyReport.value = true;
+}
+
+function openDailyFromPrevious() {
+    showPreviousReportsModal.value = false;
+    resetCalendarToToday();
+    ChooseDailyReport.value = true;
+}
+
+function closeMonthlyReport() {
+    ChooseMonthlyReport.value = false;
+    selectedDate.value = null;
+}
+
+function closeWeeklyReport() {
+    ChooseWeeklyReport.value = false;
+    selectedDate.value = null;
+}
+
+function closeDailyReport() {
+    ChooseDailyReport.value = false;
+    selectedDate.value = null;
+}
+
+function goBackToCalendar() {
+    viewingSelectedReport.value = false;
+    if (lastReportType.value === 'daily') {
+        ChooseDailyReport.value = true;
+    } else if (lastReportType.value === 'weekly') {
+        ChooseWeeklyReport.value = true;
+    } else if (lastReportType.value === 'monthly') {
+        ChooseMonthlyReport.value = true;
+    }
+}
+
+function selectDate(date) {
+    if (isDayDisabled(date)) return;
+    const d = toMidnight(date);
+
+    if (selectedDate.value instanceof Date && selectedDate.value.toDateString() === d.toDateString()) {
+        selectedDate.value = null;
+        return;
+    }
+
+    selectedDate.value = d;
+}
+
+function selectWeek(date) {
+    if (isWeekDisabled(date)) return;
+
+    const d = toMidnight(date);
+    const day = d.getDay();
+    const start = new Date(d);
+    start.setDate(d.getDate() - day);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(start);
+    end.setDate(start.getDate() + 6);
+    end.setHours(23, 59, 59, 999);
+
+    if (selectedDate.value?.weekStart && selectedDate.value?.weekEnd) {
+        const existingStart = new Date(selectedDate.value.weekStart);
+        const existingEnd = new Date(selectedDate.value.weekEnd);
+        if (existingStart.toDateString() === start.toDateString() && existingEnd.toDateString() === end.toDateString()) {
+            selectedDate.value = null;
+            return;
         }
     }
+
+    selectedDate.value = { weekStart: start, weekEnd: end };
+}
+
+function selectMonth(monthIndex) {
+    if (isMonthDisabled(displayYear.value, monthIndex)) return;
+
+    if (selectedDate.value?.year !== undefined && selectedDate.value?.month !== undefined) {
+        if (selectedDate.value.year === displayYear.value && selectedDate.value.month === monthIndex) {
+            selectedDate.value = null;
+            return;
+        }
+    }
+
+    selectedDate.value = { year: displayYear.value, month: monthIndex };
+}
+
+function formatLocalDate(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
+function mapApiResponseToRows(apiData) {
+    if (!apiData) return [];
+    if (Array.isArray(apiData)) return apiData;
+
+    return Object.keys(apiData).map((key) => {
+        const value = apiData[key] || {};
+        return {
+            category: key,
+            quantity: value.total ?? value.count ?? value.quantity ?? 0,
+            additions: value.added ?? value.additions ?? 0,
+            removlas: value.removed ?? value.removals ?? 0,
+        };
+    });
+}
+
+async function saveMonthly() {
+    if (!selectedDate.value || selectedDate.value.year === undefined || selectedDate.value.month === undefined) {
+        return;
+    }
+
+    isLoadingSelected.value = true;
+    selectedError.value = null;
+    lastReportType.value = 'monthly';
+
+    try {
+
+        const year = selectedDate.value.year;
+        const month = selectedDate.value.month + 1;
+        const startDate = new Date(year,month-1,1);
+        const endDate = new Date(year,month,0);
+        const data = await $fetch(`/api/reports?startDate=${startDate}&endDate=${endDate}`);
+        selectedReportRows.value = Array.isArray(data) ? data : mapApiResponseToRows(data);
+        selectedReportTitle.value = `${monthNames[selectedDate.value.month]} ${selectedDate.value.year}`;
+        viewingSelectedReport.value = true;
+        ChooseMonthlyReport.value = false;
+        selectedDate.value = null;
+    } catch (err) {
+        selectedError.value = err?.message || String(err);
+    } finally {
+        isLoadingSelected.value = false;
+    }
+}
+
+async function saveWeekly() {
+    if (!selectedDate.value?.weekStart || !selectedDate.value?.weekEnd) return;
+
+    isLoadingSelected.value = true;
+    selectedError.value = null;
+    lastReportType.value = 'weekly';
+
+    try {
+        const start = formatLocalDate(selectedDate.value.weekStart);
+        const end = formatLocalDate(selectedDate.value.weekEnd);
+        const data = await $fetch(`/api/reports?startDate=${selectedDate.value.weekStart}&endDate=${selectedDate.value.weekEnd}`);
+        selectedReportRows.value = Array.isArray(data) ? data : mapApiResponseToRows(data);
+
+        const startDisplay = `${monthNames[selectedDate.value.weekStart.getMonth()]} ${selectedDate.value.weekStart.getDate()}`;
+        const endDisplay = `${monthNames[selectedDate.value.weekEnd.getMonth()]} ${selectedDate.value.weekEnd.getDate()}`;
+        selectedReportTitle.value = `${startDisplay} - ${endDisplay} ${selectedDate.value.weekEnd.getFullYear()}`;
+        viewingSelectedReport.value = true;
+        ChooseWeeklyReport.value = false;
+        selectedDate.value = null;
+    } catch (err) {
+        selectedError.value = err?.message || String(err);
+    } finally {
+        isLoadingSelected.value = false;
+    }
+}
+
+async function saveDaily() {
+    if (!(selectedDate.value instanceof Date)) return;
+
+    isLoadingSelected.value = true;
+    selectedError.value = null;
+    lastReportType.value = 'daily';
+
+    try {
+        const date = formatLocalDate(selectedDate.value);
+        const data = await $fetch(`/api/reports?startDate=${selectedDate.value}&endDate=${selectedDate.value}`);
+        selectedReportRows.value = Array.isArray(data) ? data : mapApiResponseToRows(data);
+        selectedReportTitle.value = `${monthNames[selectedDate.value.getMonth()]} ${selectedDate.value.getDate()} ${selectedDate.value.getFullYear()}`;
+        viewingSelectedReport.value = true;
+        ChooseDailyReport.value = false;
+        selectedDate.value = null;
+        console.log(selectedReportRows.value);
+    } catch (err) {
+        selectedError.value = err?.message || String(err);
+    } finally {
+        isLoadingSelected.value = false;
+    }
+}
+
+function getDetails(category, row){
+    detailRow.value = row;
+    detailCategory.value = category;
+    showDetails.value = true;
+}
+
+async function getReport(){
+    const Report = await  $fetch('/api/reports',{
+        query:{
+            startDate: new Date().toISOString(),
+            endDate: new Date().toISOString(),
+        }
+    })
+    fullReport.value=Report
+    console.log(fullReport.value)
+}
+
+async function makeReport(){
+    const Report = await  $fetch('/api/reports',{
+        method:"POST"
+    })
+    fullReport.value=Report
+}
+
+function closeDetails(){
+    detailRow.value = null;
+    showDetails.value = false;
+}
+
+function gendersWithQuantity(genders) {
+    return (genders ?? []).filter((g) =>
+        g.info?.some((i) => i.quantity !== 0),
+    );
+}
+
+function infoRowsWithQuantity(gender) {
+    return (gender.info ?? []).filter((i) => i.quantity !== 0);
+}
+
+function hasMasterBreakdown(row) {
+    if (simpleCategores.includes(row.category)) {
+        return false;
+    }
+    return gendersWithQuantity(row.genders).length > 0;
 }
 </script>
 
 <style scoped>
 .reports-container {
     font-family: 'Open Sans', sans-serif;
-    padding: 2em;
-    background-color: #f0f2f5; /* Light gray background */
+    padding: clamp(0.75rem, 3vw, 2em);
+    background-color: #f0f2f5;
     min-height: 100vh;
-    max-height: 300px; 
-    overflow-y: auto; /* Vertical scroll */
-    overflow-x: auto; /* Horizontal scroll */
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow-x: hidden;
+}
+
+.inventory_table_container {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: 8px;
 }
 
 /* Reuse inventory table styles */
-#reports-summary table {
+#reports-summary table.report-data-table {
     width: 100%;
+    min-width: min(100%, 32rem);
     border-collapse: collapse;
     table-layout: fixed;
     background-color: #fff;
     border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.report-col-category {
+    width: 42%;
+}
+
+.report-col-num {
+    width: 19%;
+}
+
+.report-col-details {
+    width: 20%;
+}
+
+#reports-summary .report-data-table thead th {
+    background: #3f51b5;
+    color: #fff;
+    font-weight: 700;
+}
+
+#reports-summary .report-data-table thead th:first-child {
+    border-top-left-radius: 8px;
+}
+
+#reports-summary .report-data-table thead th:last-child {
+    border-top-right-radius: 8px;
 }
 
 #reports-summary th,
@@ -1103,24 +828,115 @@ export default {
     padding: 12px;
     border-bottom: 1px solid #ddd;
     text-align: center;
-}
-
-#reports-summary th {
-    background-color: #3f51b5; /* Indigo */
-    color: #fff;
-    font-weight: bold;
-}
-
-#reports-summary tr:nth-child(even) {
-    background-color: #f9f9f9;
-}
-
-#reports-summary tr:hover {
-    background-color: #e0e0e0;
+    vertical-align: middle;
 }
 
 #reports-summary td {
     color: #333;
+}
+
+/* Shared summary row styling (detail + master category rows) */
+.report-data-table .report-summary-row:hover {
+    background: #e0e0e0;
+}
+
+.report-data-table .master-category-label {
+    font-weight: 700;
+    font-size: 1.125rem;
+    color: #333;
+    text-align: center;
+}
+
+.report-data-table .master-category-row .master-value {
+    font-weight: 400;
+    font-size: 1rem;
+    color: #333;
+}
+
+/* Master report: match detail view sizing; subtle hierarchy for nested rows */
+.report-data-table--master .master-section-row td {
+    background: #f9f9f9;
+    border-bottom: 1px solid #ddd;
+}
+
+.report-data-table--master .master-section-label {
+    font-weight: 600;
+    font-size: 1rem;
+    color: #333;
+    text-align: center;
+}
+
+.report-data-table--master .master-detail-row:hover {
+    background: #f5f5f5;
+}
+
+.report-data-table--master .master-detail-label {
+    font-weight: 400;
+    font-size: 0.9375rem;
+    color: #333;
+    text-align: center;
+}
+
+.report-data-table--master .master-detail-row .master-value {
+    font-weight: 400;
+    font-size: 0.9375rem;
+    color: #333;
+}
+
+.report-data-table--master .master-value {
+    font-variant-numeric: tabular-nums;
+    text-align: center;
+}
+
+.category-details-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: clamp(0.5rem, 3vw, 1rem);
+    background: rgba(20, 20, 20, 0.45);
+    box-sizing: border-box;
+}
+
+.report-results-overlay {
+    width: 100%;
+}
+
+.report-results-modal {
+    display: flex;
+    flex-direction: column;
+}
+
+.report-modal-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+
+.report-toolbar-btn {
+    padding: 0.5em 1em;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: clamp(0.8rem, 2.5vw, 0.9em);
+    white-space: nowrap;
+}
+
+.report-toolbar-btn--back {
+    background-color: #757575;
+}
+
+.report-toolbar-btn--toggle {
+    background-color: #4c5baf;
+}
+
+.report-modal-title {
+    margin-top: 0;
 }
 
 .reports-section-title {
@@ -1205,7 +1021,7 @@ export default {
   border-radius: 8px;
   padding: 20px;
   min-width: 320px;
-  max-width: 480px;
+  max-width: 50%;
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
   position: relative;
 }
@@ -1255,17 +1071,20 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 60;
+  z-index: 10;
 }
 
 .modal-content {
     background-color: #fff;
-    padding: 2em;
+    padding: clamp(1rem, 4vw, 2em);
     border-radius: 8px;
-    width: 90%;
-    max-width: 500px;
+    width: min(95vw, 100%);
+    max-width: min(50rem, 95vw);
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     position: relative;
+    max-height: 92vh;
+    height: auto;
+    box-sizing: border-box;
 }
 
 .modal-content h2 {
@@ -1312,6 +1131,7 @@ export default {
 
 .actions-row {
     display: flex;
+    flex-wrap: wrap;
     justify-content: flex-end;
     gap: 0.75rem;
     margin-bottom: 1em;
@@ -1399,17 +1219,23 @@ export default {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 0.5em;
+    gap: 0.5rem;
+    font-size: clamp(0.9rem, 2.5vw, 1.1rem);
 }
 .calendar-header button {
     background: transparent;
     border: none;
-    font-size: 1.2em;
+    font-size: clamp(1.1rem, 4vw, 1.4em);
     cursor: pointer;
+    flex-shrink: 0;
+    min-width: 2rem;
+    min-height: 2rem;
 }
 .calendar-grid {
     display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 0.25em;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: clamp(0.1rem, 1vw, 0.25em);
+    width: 100%;
 }
 .calendar-weekday {
     text-align: center;
@@ -1419,13 +1245,16 @@ export default {
     color: #666;
 }
 .calendar-day {
-    padding: 0.5em 0.25em;
-    min-height: 40px;
+    padding: clamp(0.25em, 1.5vw, 0.5em) clamp(0.1em, 1vw, 0.25em);
+    min-height: clamp(2rem, 9vw, 2.5rem);
     border-radius: 6px;
     border: 1px solid transparent;
     background: #fafafa;
     cursor: pointer;
     text-align: center;
+    font-size: clamp(0.75rem, 2.5vw, 1rem);
+    width: 100%;
+    box-sizing: border-box;
 }
 .calendar-day.other-month {
     color: #bbb;
@@ -1449,17 +1278,20 @@ export default {
 /* Month grid (3 columns x 4 rows) */
 .month-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 0.5em;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: clamp(0.35em, 2vw, 0.5em);
     margin-top: 0.5em;
+    width: 100%;
 }
 .month-cell {
-    padding: 0.75em 0.5em;
+    padding: clamp(0.45em, 2vw, 0.75em) clamp(0.25em, 1.5vw, 0.5em);
     background: #fafafa;
     border: 1px solid transparent;
     border-radius: 6px;
     cursor: pointer;
     text-align: center;
+    font-size: clamp(0.7rem, 2.8vw, 1rem);
+    word-break: break-word;
 }
 .month-cell.selected {
     background: #3f51b5;
@@ -1517,5 +1349,117 @@ export default {
     color: #666;
     margin-top: 0.25em;
     font-style: italic;
+}
+
+@media (max-width: 768px) {
+    .reports-section-title {
+        font-size: clamp(1.15rem, 5vw, 1.35rem);
+        margin: 0.75em 0 0.5em;
+    }
+
+    .actions-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .actions-row .monthly-reports-button {
+        width: 100%;
+        justify-content: center;
+        font-size: clamp(0.75rem, 3vw, 0.9rem);
+        padding: 0.65em 1em;
+        text-transform: none;
+    }
+
+    .report-buttons .daily-reports-button,
+    .report-buttons .weekly-reports-button,
+    .report-buttons .monthly-reports-button {
+        width: 100%;
+        justify-content: center;
+        font-size: 1em;
+        padding: 0.65em 1em;
+        text-transform: uppercase;
+    }
+
+    #reports-summary th,
+    #reports-summary td {
+        padding: clamp(6px, 2vw, 10px) clamp(4px, 1.5vw, 8px);
+        font-size: clamp(0.7rem, 2.8vw, 0.875rem);
+    }
+
+    #reports-summary td.font-bold.text-lg,
+    #reports-summary .font-bold.text-lg {
+        font-size: clamp(0.8rem, 3vw, 1rem);
+    }
+
+    .report-data-table .master-category-label {
+        font-size: 1rem;
+    }
+
+    .report-data-table--master .master-section-label,
+    .report-data-table--master .master-detail-label,
+    .report-data-table--master .master-detail-row .master-value {
+        font-size: 0.875rem;
+    }
+
+    #reports-summary .bg-blue-700 {
+        padding: 0.35em 0.5em;
+        font-size: clamp(0.65rem, 2.5vw, 0.8rem);
+    }
+
+    .modal-content {
+        width: 95vw;
+        max-width: 95vw;
+        max-height: 90vh;
+        padding: 1rem;
+    }
+
+    .modal-content h2 {
+        font-size: clamp(1rem, 4.5vw, 1.25rem);
+    }
+
+    .report-modal-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .report-toolbar-btn {
+        width: 100%;
+        text-align: center;
+    }
+
+    .report-modal-title {
+        font-size: clamp(1rem, 4vw, 1.2rem);
+        line-height: 1.3;
+        word-break: break-word;
+    }
+
+    .calendar-weekday {
+        font-size: clamp(0.6rem, 2.2vw, 0.75rem);
+        padding: 0.15em 0;
+    }
+
+    .form-actions {
+        flex-wrap: wrap;
+        justify-content: stretch;
+        gap: 0.5rem;
+    }
+
+    .save-button,
+    .cancel-button {
+        flex: 1 1 45%;
+        justify-content: center;
+        padding: 0.5em 0.75em;
+        font-size: 0.9rem;
+    }
+}
+
+@media (max-width: 400px) {
+    .month-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .calendar-day {
+        min-height: 1.75rem;
+    }
 }
 </style>
