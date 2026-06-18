@@ -2,14 +2,15 @@ packages:
   - admin
   - webcomponent
 
+allowBuilds:
+  '@parcel/watcher': true
+  '@prisma/client': true
+  '@prisma/engines': true
+  cypress: true
+  esbuild: true
+  prisma: true
+  sharp: true
+  vue-demi: true
+
 ignoredBuiltDependencies:
   - cypress
-
-onlyBuiltDependencies:
-  - '@parcel/watcher'
-  - '@prisma/client'
-  - '@prisma/engines'
-  - esbuild
-  - prisma
-  - sharp
-  - vue-demi

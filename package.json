@@ -6,8 +6,11 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "devDependencies": {
+    "prisma": "6.17.1",
+    "@prisma/client": "^6.17.1"
+  },
   "keywords": [],
   "author": "",
-  "license": "ISC",
-  "packageManager": "pnpm@10.26.2"
+  "license": "ISC"
 }
