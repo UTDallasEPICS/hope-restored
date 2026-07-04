@@ -106,9 +106,17 @@ const sizeColumnLabel = computed(() =>
     props.category === 'Other Items' ? 'Item' : 'Size',
 );
 
+
+
 onMounted(() => {
     for (const g of props.genders) {
-        genderList.value.push(g.name);
+        if(props.category != "Dresses"){
+            genderList.value.push(g.name);
+        }
+        else if(g.name == "Female"){
+            genderList.value.push(g.name);
+        }
+            
     }
     gender.value = genderList.value[0];
 });

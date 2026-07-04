@@ -7,7 +7,7 @@
       {{ title }}
     </h1>
     <div
-      class="hidden md:grid grid-cols-3 lg:grid-cols-5 xl:grid-cols-9 gap-2"
+      class="hidden md:grid grid-cols-3 lg:grid-cols-5 xl:grid-cols-10 gap-2"
       role="list"
       :aria-label="ariaLabel"
     >

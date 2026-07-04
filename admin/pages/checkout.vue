@@ -418,7 +418,7 @@ const selectedCategory = ref("");
 
 const personName = ref("");
 const todayDate = ref(new Date().toISOString().split("T")[0]);
-const visibleGenders = ["Male", "Female", "Child"];
+let visibleGenders = ["Male", "Female", "Child"];
 
 const sizeOptions = ["XS", "S", "M", "L", "XL", "2XL", "3XL", "4XL+"];
 
@@ -498,6 +498,7 @@ const categories = [
   { name: "Shirts", hasSize: true },
   { name: "Pants", hasSize: true },
   { name: "Jackets", hasSize: true },
+  { name: "Dresses", hasSizee: true},
   { name: "Underwear", hasSize: true },
   { name: "Shoes", hasSize: true },
   { name: "Snack Packs", hasSize: false },
@@ -558,6 +559,12 @@ function selectCategory(catName:string){
     isOtherItems.value = true;
   }
   else{
+    if(selectedCategory.value !== "Dresses"){
+      visibleGenders = ["Male", "Female", "Child"];
+    }
+    else{
+      visibleGenders = ["Female"];
+    }
     for(const gender of visibleGenders){
       items.value.push(
         sizeOptions.map((size) => ({
@@ -593,7 +600,7 @@ const shoeSizeFilter = ref("");
 const pageSize = ref(25);
 const currentPage = ref(1);
 // Category-specific rules
-const apparelCategories = ["Shirts", "Pants", "Jackets", "Underwear"];
+const apparelCategories = ["Shirts", "Pants", "Jackets", "Underwear","Dresses"];
 const simpleCategories = ["Snack Packs", "Hygiene Packs", "Blankets"];
 const otherItemsCategory = "Other Items";
 const shoeCategory = "Shoes";
@@ -627,6 +634,12 @@ const inventoryDisplay = computed(() => {
       quantity: 0,
       genders: (() => {
         const catGenders: InventoryGenderGroup[] = [];
+        if(cat === "Dresses"){
+          visibleGenders = ["Female"];
+        }
+        else{
+          visibleGenders = ["Male","Female","Child"];
+        }
         for (const g of visibleGenders) {
           if (genderFilter.value && g !== genderFilter.value) continue;
           catGenders.push({
@@ -634,6 +647,7 @@ const inventoryDisplay = computed(() => {
             info: [],
           });
         }
+        visibleGenders = ["Male","Female","Child"];
         return catGenders;
       })(),
     });
