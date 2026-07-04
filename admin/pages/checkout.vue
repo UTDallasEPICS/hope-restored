@@ -418,7 +418,10 @@ const selectedCategory = ref("");
 
 const personName = ref("");
 const todayDate = ref(new Date().toISOString().split("T")[0]);
-let visibleGenders = ["Male", "Female", "Child"];
+const visibleGenders = computed(() =>{
+  return selectedCategory.value !== "Dresses" ?["Male", "Female", "Child"]: ["Female"]}
+
+);
 
 const sizeOptions = ["XS", "S", "M", "L", "XL", "2XL", "3XL", "4XL+"];
 
@@ -531,7 +534,7 @@ function selectCategory(catName:string){
     isSimpleCategory.value = true;
   }
   else if (selectedCategory.value == "Shoes"){
-    for(const gender of visibleGenders){
+    for(const gender of visibleGenders.value){
       items.value.push(
         shoeSizes.map((size) => ({
           gender: gender,
@@ -559,13 +562,7 @@ function selectCategory(catName:string){
     isOtherItems.value = true;
   }
   else{
-    if(selectedCategory.value !== "Dresses"){
-      visibleGenders = ["Male", "Female", "Child"];
-    }
-    else{
-      visibleGenders = ["Female"];
-    }
-    for(const gender of visibleGenders){
+    for(const gender of visibleGenders.value){
       items.value.push(
         sizeOptions.map((size) => ({
           gender: gender,
@@ -634,20 +631,13 @@ const inventoryDisplay = computed(() => {
       quantity: 0,
       genders: (() => {
         const catGenders: InventoryGenderGroup[] = [];
-        if(cat === "Dresses"){
-          visibleGenders = ["Female"];
-        }
-        else{
-          visibleGenders = ["Male","Female","Child"];
-        }
-        for (const g of visibleGenders) {
+        for (const g of visibleGenders.value) {
           if (genderFilter.value && g !== genderFilter.value) continue;
           catGenders.push({
             name: g,
             info: [],
           });
         }
-        visibleGenders = ["Male","Female","Child"];
         return catGenders;
       })(),
     });
@@ -658,7 +648,7 @@ const inventoryDisplay = computed(() => {
       quantity: 0,
       genders: (() => {
         const catGenders: InventoryGenderGroup[] = [];
-        for (const g of visibleGenders) {
+        for (const g of visibleGenders.value) {
           if (genderFilter.value && g !== genderFilter.value) continue;
           catGenders.push({
             name: g,
@@ -741,7 +731,7 @@ const categoryOptions = computed(() => {
 
 const genderOptions = computed(() => {
   // Standard order for non-tech users
-  return visibleGenders;
+  return visibleGenders.value;
 });
 
 const clothingSizeOptions = computed(() => apparelSizes);
@@ -782,7 +772,7 @@ async function loadInventory() {
           : {
               category: catName,
               quantity: 0,
-              genders: visibleGenders.map((gender) => ({
+              genders: visibleGenders.value.map((gender) => ({
                 name: gender,
                 info: [],
               })),

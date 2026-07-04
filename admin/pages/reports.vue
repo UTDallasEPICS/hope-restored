@@ -632,7 +632,7 @@ function mapApiResponseToRows(apiData) {
             category: key,
             quantity: value.total ?? value.count ?? value.quantity ?? 0,
             additions: value.added ?? value.additions ?? 0,
-            removlas: value.removed ?? value.removals ?? 0,
+            removals: value.removed ?? value.removals ?? 0,
         };
     });
 }
@@ -676,6 +676,7 @@ async function saveWeekly() {
         const start = formatLocalDate(selectedDate.value.weekStart);
         const end = formatLocalDate(selectedDate.value.weekEnd);
         const data = await $fetch(`/api/reports?startDate=${selectedDate.value.weekStart}&endDate=${selectedDate.value.weekEnd}`);
+        console.log(data);
         selectedReportRows.value = Array.isArray(data) ? data : mapApiResponseToRows(data);
 
         const startDisplay = `${monthNames[selectedDate.value.weekStart.getMonth()]} ${selectedDate.value.weekStart.getDate()}`;

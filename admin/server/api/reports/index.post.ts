@@ -52,11 +52,12 @@ export default defineEventHandler(async () =>{
                 where: { id: existing.id },  // use the found record's id
                 data: {
                     quantity: row.quantity,
-                    additions: row.quantity,
-                    removals: row.removals
+                    additions: existing.additions + row.additions,
+                    removals: existing.removals + row.removals
                 }
                 })
             } else {
+                console.log("making new record");
                 await prisma.inventoryRecords.create({
                 data: {
                     code: row.code,
