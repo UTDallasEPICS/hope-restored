@@ -1,0 +1,98 @@
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
+export default defineEventHandler(async () =>{
+    try{
+        const firstRep = await prisma.inventoryRecords.findFirst({
+            orderBy:{
+                date:"desc"
+            }
+        });
+        const inv = await prisma.inventory.findMany();
+        const curDate = new Date()
+        curDate.setHours(0,0,0,0);
+        const recordRows:{
+            code: string,
+            quantity: number,
+            additions: number, 
+            removals: number, 
+            category: string,
+            size: string | null,
+            gender: string | null,
+            date: Date 
+        }[] =[]
+        for (const item of inv){
+        recordRows.push({
+            code: item.code,
+            quantity: item.quantity,
+            additions: item.additions, 
+            removals: item.removals,
+            category: item.category,
+            size: item.size,
+            gender: item.gender,
+            date: curDate
+        }) 
+        }
+        const SOD = new Date(); 
+        const EOD = new Date();
+        SOD.setHours(0,0,0,0);
+        EOD.setHours(23,59,59,99);
+        
+        if(firstRep && SOD <= firstRep.date <= EOD){
+            for (const row of inv) {
+            const existing = await prisma.inventoryRecords.findFirst({
+                where: {
+                date: { gte: SOD, lte: EOD },
+                code: row.code
+                }
+            })
+
+            if (existing) {
+                await prisma.inventoryRecords.update({
+                where: { id: existing.id },  // use the found record's id
+                data: {
+                    quantity: row.quantity,
+                    additions: existing.additions + row.additions,
+                    removals: existing.removals + row.removals
+                }
+                })
+            } else {
+                console.log("making new record");
+                await prisma.inventoryRecords.create({
+                data: {
+                    code: row.code,
+                    category: row.category,
+                    gender: row.gender,
+                    size: row.size,
+                    quantity: row.quantity,
+                    additions: row.quantity,
+                    date: curDate
+                }
+                })
+            }
+            }
+        }  
+        else{
+             const record = await prisma.inventoryRecords.createMany({
+            data:recordRows
+        })
+        }
+       
+        await prisma.inventory.updateMany({
+            where:{
+                code:{
+                    not:''
+                }
+            },
+            data:{
+                additions:0,
+                removals:0
+            }
+        })
+    }catch(error){
+        console.error("Error creating inventory records:", error)
+    }
+    
+
+    
+})

@@ -1,861 +1,554 @@
 <!-- pages/inventory.vue -->
 <template>
-    <div class="inventory-container">
-        <h1><b>Select a Category to Add</b></h1>
-    
-        <!-- Manual Add Section -->
-        <section class="add-item-section">
-            <div class="category-grid" role="list" aria-label="Quick add categories">
-                <button
-                    v-for="cat in ['Shirts','Pants','Jackets','Underwear','Shoes','Snack Packs','Hygiene Packs', 'Blankets']"
-                    :key="cat"
-                    type="button"
-                    class="category-button"
-                    :aria-pressed="newItem.category === cat"
-                    :class="{ active: newItem.category === cat }"
-                    @click="openQuickPopup(cat)">
-                    <i class="fas fa-plus" aria-hidden="true"></i>
-                    <span class="label">{{ cat }}</span>
-                </button>
-            </div>
-        </section>
-        
- 
-        <!-- Add to existing item modal -->
-        <div v-if="showAddQuantityModal" class="modal-overlay">
-            <div class="modal-content">
-                <h2>Add Inventory Item</h2>
-                <h2>Item Barcode: {{ editedItem.barcode }}</h2>
-                <form @submit.prevent="editItem(editedItem)">
-                    <div class="form-group">
-                        <label for="quantity">Quantity:</label>
-                        <input type="number"
-                               v-model.number="editedItem.quantity"
-                               id="quantity"
-                               required
-                               min="1" />
-                    </div>
-                    <div class="form-actions">
-                        <button type="submit" @click="editItem(editedItem)" class="save-button">
-                            <i class="fas fa-save"></i> Save
-                        </button>
-                        <button type="button"
-                                @click="showAddQuantityModal = false"
-                                class="cancel-button">
-                            <i class="fas fa-times"></i> Cancel
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
+  <div
+    class="flex flex-col min-h-screen lg:min-h-0 lg:h-[calc(100vh-130px)] lg:max-h-[calc(100vh-130px)] lg:overflow-hidden"
+  >
+    <div
+      class="flex flex-col flex-1 min-h-0 overflow-hidden bg-gray-100 p-4 md:p-6 lg:p-8 gap-4 font-sans"
+    >
+      <!-- Top 1/3: Category selection -->
+      <CategorySelector
+        :categories="categories"
+        :selected-category="selectedCategory"
+        title="Select a Category to Add"
+        aria-label="Inventory categories"
+        mobile-placeholder="Select category"
+        @select="selectCategory"
+      />
 
-        <!-- Generic Quick Popup for any category -->
-        <div v-if="showQuickPopup" class="modal-overlay">
-            <div class="modal-content shirt-popup" style="max-width:320px; position:relative;">
-                <button type="button" class="popup-close-x" aria-label="Close" @click="closeQuickPopup">×</button>
-                <h2>Enter Quantity for {{ quickPopupCategory }}:</h2>
-                <div class="form-group">
-                    <input
-                        type="number"
-                        v-model.number="quickQuantity"
-                        min="0"
-                        placeholder="Enter number"
-                        @keyup.enter="showConfirmAdd"
-                    />
-                </div>
-                <div class="form-actions">
-                    <button type="button" @click="showConfirmAdd" class="add-button">Add</button>
-                </div>
+      <!-- Bottom 2/3: Left = DB display, Right = Add form -->
+      <section
+        class="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6 flex-1 min-h-0 items-stretch"
+        :class="!selectedCategory ? 'grid-rows-2 lg:grid-rows-none' : ''"
+      >
+        <!-- Left half: Inventory display for selected category -->
+        <div
+          class="bg-white border border-gray-200 rounded-lg shadow-sm p-4 md:p-5 min-h-0 h-full flex flex-col overflow-y-auto overflow-x-hidden"
+        >
+          <h2
+            v-if="selectedCategory"
+            class="text-[1.15rem] font-semibold text-indigo-600 mb-4 mt-0"
+          >
+            {{ selectedCategory }} – Current Inventory
+          </h2>
+          <h2 v-else class="text-[1.15rem] font-normal text-gray-500 mb-4 mt-0">
+            Select a category above to view inventory
+          </h2>
+          <div v-if="selectedCategory" class="flex flex-col gap-3">
+            <div
+              class="flex gap-2 text-base pb-3 mb-1 border-b border-gray-200"
+            >
+              <span class="font-semibold text-gray-800 min-w-[140px]"
+                >Total quantity:</span
+              >
+              <span class="text-gray-900">{{
+                categoryDetails.catDetails[0]
+                  ? categoryDetails.catDetails[0].quantity
+                  : 0
+              }}</span>
             </div>
-        </div>
-
-        <!-- Confirm Add Modal -->
-        <div v-if="showConfirmAddModal" class="modal-overlay" @keydown.enter.prevent="confirmAddQuick">
-            <div class="modal" tabindex="-1">
-                <h3>Add {{ quickQuantity }} {{ quickPopupCategory }}?</h3>
-                <p>Confirm Yes/No</p>
-                <div class="modal-actions">
-                    <button type="button" @click="confirmAddQuick" class="btn danger" autofocus ref="confirmAddYesBtn">Yes</button>
-                    <button type="button" @click="cancelConfirmAdd" class="btn">No</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Remove from existing item modal -->
-        <div v-if="showReduceQuantityModal" class="modal-overlay">
-            <div class="modal-content">
-                <h2>Remove Inventory Item</h2>
-                <h2>Item Barcode: {{ editedItem.barcode }}</h2>
-                <form @submit.prevent="editItem({ barcode: editedItem.barcode, quantity: editedItem.quantity ? editedItem.quantity * -1 : 0 })">
-                    <div class="form-group">
-                        <label for="quantity">Quantity:</label>
-                        <input type="number"
-                               v-model.number="editedItem.quantity"
-                               id="quantity"
-                               required
-                               min="0"
-                               :max="editedItem.quantity ?? 0" />
-                    </div>
-                    <div class="form-actions">
-                        <button type="submit" @click="editItem({ barcode: editedItem.barcode, quantity: editedItem.quantity ? editedItem.quantity * -1 : 0 })" class="save-button">
-                            <i class="fas fa-save"></i> Save
-                        </button>
-                        <button type="button"
-                                @click="showReduceQuantityModal = false"
-                                class="cancel-button">
-                            <i class="fas fa-times"></i> Cancel
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        <div v-if="showInvalidQuantityPopup" class="modal-overlay">
-            <div class="modal-content">
-                <h1>Invalid Action</h1>
-                <p>You cannot remove that quantity because you do not have enough existing quantity in the inventory.</p>
-                <form>
-                    <div class="form-actions">
-                        <button type="button" @click="showInvalidQuantityPopup = false" class="save-button">
-                            <i class="fas fa-save"></i> Ok
-                        </button>
-                        <button type="button"
-                            @click="showInvalidQuantityPopup = false"
-                            class="cancel-button">
-                            <i class="fas fa-times"></i> Cancel
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        <!-- Inventory Table Section -->
-        <div id="inventory" class="inventory_table_container">
-            <table>
-                <thead>
+            <p
+              v-if="
+                isOtherItems && !categoryDetails.catDetails[0]?.genders?.length
+              "
+              class="text-sm text-gray-500"
+            >
+              No other items in inventory.
+            </p>
+            <template v-if="!isSimpleCategory || isOtherItems">
+              <div
+                v-for="row in visibleCategoryGenders"
+                :key="row.name"
+                class="border border-gray-200 rounded-lg p-3"
+              >
+                <h3 class="text-[1rem] font-semibold text-indigo-600 mb-2">
+                  {{ row.name }}
+                </h3>
+                <p
+                  v-if="isShoes && !genderHasAnyInventory(row)"
+                  class="text-sm text-gray-500"
+                >
+                  No {{ row.name }} shoes in Inventory
+                </p>
+                <table
+                  v-else
+                  class="w-full text-[0.9rem] border border-gray-200 rounded-md overflow-hidden"
+                  :aria-label="`${row.name} quantities by size`"
+                >
+                  <thead class="bg-gray-50">
                     <tr>
-                        <th>Category</th>
-                        <th>Quantity</th>
+                      <th class="px-3 py-2 text-left border-b border-gray-200">
+                        {{
+                          isOtherItems ? "Item" : isShoes ? "Shoe size" : "Size"
+                        }}
+                      </th>
+                      <th class="px-3 py-2 text-right border-b border-gray-200">
+                        Quantity
+                      </th>
                     </tr>
-                </thead>
-                <tbody>
-                    <tr v-for="item in sortedAndFilteredInventory" :key="item.barcode">
-                        <td>{{ item.category?.name ?? '—' }}</td>
-                        <td>{{ item.quantity }}</td>
+                  </thead>
+                  <tbody>
+                    <tr
+                      v-for="(inf, idx) in row.info"
+                      :key="
+                        isOtherItems
+                          ? row.name + '-' + inf.size + '-' + idx
+                          : inf.size
+                      "
+                      class="odd:bg-white even:bg-gray-50"
+                    >
+                      <td class="px-3 py-2 border-b border-gray-100">
+                        {{ inf.size }}
+                      </td>
+                      <td class="px-3 py-2 border-b border-gray-100 text-right">
+                        {{ inf.quantity }}
+                      </td>
                     </tr>
-                </tbody>
-            </table>
+                  </tbody>
+                </table>
+              </div>
+            </template>
+          </div>
         </div>
-    
-    
+
+        <!-- Right half: Add form (match left panel height) -->
+        <InOutForm
+          class="h-full min-h-0"
+          :inForm="true"
+          :selectedCategory="selectedCategory"
+          :isSimpleCategory="isSimpleCategory"
+          :isOtherCategory="isOtherItems"
+          :shoeSizes="shoeSizeOptions"
+          :apparelSizes="sizeOptions"
+          :visibleGenders="visibleGenders"
+          :items="items"
+          :submitForm="confirmAddition"
+          empty-prompt="Select a category above to add items"
+        />
+      </section>
+
+      <!-- Addition success popup -->
+      <div
+        v-if="showAdditionSuccessPopup"
+        class="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+        role="alertdialog"
+        aria-labelledby="success-title"
+        aria-describedby="success-message"
+      >
+        <div class="bg-white rounded-lg p-5 w-full max-w-md shadow-xl">
+          <h2 id="success-title" class="text-lg font-semibold text-green-600">
+            Success
+          </h2>
+          <p id="success-message" class="text-sm text-gray-700">
+            Your addition has been added to the inventory.
+          </p>
+          <div class="mt-4 flex justify-end gap-2">
+            <button
+              type="button"
+              class="px-4 py-2 rounded-md bg-green-600 text-white font-semibold hover:bg-green-700"
+              @click="showAdditionSuccessPopup = false"
+            >
+              Ok
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Empty inputs error popup -->
+      <div
+        v-if="showEmptyInputError"
+        class="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+        role="alertdialog"
+        aria-labelledby="error-title"
+        aria-describedby="error-message"
+      >
+        <div class="bg-white rounded-lg p-5 w-full max-w-md shadow-xl">
+          <h2 id="error-title" class="text-lg font-semibold text-red-600">
+            Missing Information
+          </h2>
+          <p id="error-message" class="text-sm text-gray-700">
+            {{
+              isSizedCategory
+                ? "Please enter at least one valid quantity (1 or greater). Leave boxes empty to skip sizes."
+                : isSimpleCategory && !isOtherItems
+                ? "Please enter a quantity."
+                : isOtherItems
+                  ? "Please fill in item name, category, and quantity."
+                  : "Please fill in all fields: quantity, gender, and size are required before confirming."
+            }}
+          </p>
+          <div class="mt-4 flex justify-end gap-2">
+            <button
+              type="button"
+              class="px-4 py-2 rounded-md bg-green-600 text-white font-semibold hover:bg-green-700"
+              @click="showEmptyInputError = false"
+            >
+              Ok
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Add failed error popup -->
+      <div
+        v-if="addErrorMessage"
+        class="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+        role="alertdialog"
+        aria-labelledby="add-error-title"
+      >
+        <div class="bg-white rounded-lg p-5 w-full max-w-md shadow-xl">
+          <h2 id="add-error-title" class="text-lg font-semibold text-red-600">
+            Could not add item
+          </h2>
+          <p class="text-sm text-gray-700">{{ addErrorMessage }}</p>
+          <div class="mt-4 flex justify-end gap-2">
+            <button
+              type="button"
+              class="px-4 py-2 rounded-md bg-green-600 text-white font-semibold hover:bg-green-700"
+              @click="addErrorMessage = ''"
+            >
+              Ok
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Addition confirmation popup -->
+      <div
+        v-if="showAdditionConfirmPopup"
+        class="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+        role="alertdialog"
+        aria-labelledby="confirm-addition-title"
+        aria-describedby="confirm-addition-message"
+      >
+        <div class="bg-white rounded-lg p-5 w-full max-w-md shadow-xl">
+          <h2
+            id="confirm-addition-title"
+            class="text-lg font-semibold text-gray-900"
+          >
+            Confirm Addition
+          </h2>
+          <p id="confirm-addition-message" class="text-sm text-gray-700">
+            Please confirm the following addition details are correct.
+          </p>
+          <ul class="mt-2 pl-5 list-disc text-sm text-gray-700">
+            <li
+              v-for="(item, idx) in additionPreviewItems"
+              :key="`${item.category}-${item.gender}-${item.size}-${idx}`"
+            >
+              <strong>{{ item.category }}</strong>
+              <span v-if="item.gender"> - {{item.gender }}</span>
+              <span v-if="item.size"> - {{ item.size }}</span>
+              : {{ item.quantity }}
+            </li>
+          </ul>
+          <div class="mt-4 flex justify-end gap-2">
+            <button
+              type="button"
+              class="px-4 py-2 rounded-md bg-gray-300 text-gray-800 font-semibold hover:bg-gray-400"
+              @click="showAdditionConfirmPopup = false"
+            >
+              Go Back
+            </button>
+            <button
+              type="button"
+              class="px-4 py-2 rounded-md bg-green-600 text-white font-semibold hover:bg-green-700"
+              @click="confirmPendingAdditions"
+            >
+              Confirm Addition
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
+  </div>
 </template>
 
 <script setup lang="ts">
-    import { ref, computed, onMounted, watch, nextTick } from 'vue';
-    
-    
-    const inventory = ref<any[]>([]);
-    const searchQuery = ref('');
-    const selectedSort = ref('alphabetical');
-    const showAddItemModal = ref(false);
-    const showAddQuantityModal = ref(false);
-    const showReduceQuantityModal = ref(false);
-    const showInvalidQuantityPopup = ref(false);
-    
-    const showQuickPopup = ref(false);
-    const showConfirmAddModal = ref(false);
-    const confirmAddYesBtn = ref<any>(null);
-    const quickPopupCategory = ref('');
-    const quickQuantity = ref<number | null>(null);
-    const editedItem = ref<{ barcode: string | null; quantity: number | null }>({ barcode: null, quantity: null });
-    
-    // making the drop down dynamic
+import { ref, computed, onMounted, watch } from "vue";
+import InOutForm from "../components/Inventory/InOutForm.vue";
+import { formatApiError } from "../utils/format-api-error";
 
-    const styleOptions: Record<string, string[]> = {
-        Tops: ["Long Sleeve", "Short Sleeve", "T-Shirt"],
-        OuterWear: ["Jackets", "Hoodies", "Coats"],
-        Pants: ["Jeans", "Sweat Pants", "Cargos"],
-        Suits: ["Blazer", "Business"],
-        // Jeans: ["Casual"],
-        Shorts: ["Cargo", "Athletic"],
-        Socks: ["Misc."],
-        Underwear: ["Misc."],
-        Shoes: ["Boots", "Canvas", "Leather", "Athletic"]
-    }    
+const categories = [
+  "Shirts",
+  "Pants",
+  "Jackets",
+  "Dresses",
+  "Underwear",
+  "Shoes",
+  "Snack Packs",
+  "Hygiene Packs",
+  "Blankets",
+  "Other Items"
+];
+const sizeOptions = ["XS", "S", "M", "L", "XL","2XL","3XL","4XL+"];
+const shoeSizeOptions = (() => {
+  const sizes: string[] = [];
+  for (let n = 5; n <= 14.5; n += 0.5) sizes.push(String(n));
+  return sizes;
+})();
+let visibleGenders = ["Male", "Female", "Child"];
+const items= ref<{name: string, gender:string, hasSize: boolean, size:string, quantity:number, otherItemName: string}[][]>([]);
 
-    const newItem = ref({
-        category: '',
-        style: '',
-        gender: '',
-        size: '',
-        quantity: 1,
-        location: '',
-        lastUpdated: '',
+
+
+type CategoryDetail = {
+  category: string;
+  quantity: number;
+  genders: { name: string; info: { size: string; quantity: number }[] }[];
+};
+
+const selectedCategory = ref("");
+const categoryDetails = ref<{
+  catDetails: CategoryDetail[];
+}>({
+  catDetails: [],
+});
+const showEmptyInputError = ref(false);
+const showAdditionSuccessPopup = ref(false);
+const addErrorMessage = ref("");
+const showAdditionConfirmPopup = ref(false);
+const inventory = ref<any[]>([]);
+type AdditionPayload = {
+    name: string;
+    gender: string;
+    hasSize: boolean;
+    size: string;
+    quantity: number;
+    otherItemName: string;
+};
+const pendingAdditionPayloads = ref<AdditionPayload[]>([]);
+const additionPreviewItems = ref<
+  { category: string; gender: string; size: string; quantity: number }[]
+>([]);
+
+const isShoes = computed(() => selectedCategory.value === "Shoes");
+const simpleCategories = ["Snack Packs", "Hygiene Packs", "Blankets"];
+const isOtherItems = computed(() => selectedCategory.value === "Other Items");
+const isSimpleCategory = computed(() =>
+  simpleCategories.includes(selectedCategory.value),
+);
+const isSizedCategory = computed(
+  () => !isSimpleCategory.value && !isOtherItems.value,
+);
+const formSizeOptions = computed(() =>
+  isShoes.value ? shoeSizeOptions : sizeOptions,
+);
+const visibleCategoryGenders = computed(() => {
+  if(selectedCategory.value !== "Dresses"){
+    return (categoryDetails.value.catDetails[0]?.genders || [])
+    .filter((gender) => gender.name !== "Unisex")
+    .sort(
+      (a, b) =>
+        visibleGenders.indexOf(a.name) - visibleGenders.indexOf(b.name),
+    )
+  }
+  else{
+    return (categoryDetails.value.catDetails[0]?.genders || [])
+    .filter((gender) => gender.name === "Female")
+    .sort(
+      (a, b) =>
+        visibleGenders.indexOf(a.name) - visibleGenders.indexOf(b.name),
+    )
+  }
+}); 
+
+
+function sizesToShowForGender(gender: {
+  name: string;
+  info: { size: string; quantity: number }[];
+}): string[] {
+  return shoeSizeOptions.filter((s) =>
+    gender.info.some((row) => row.size === s && row.quantity > 0),
+  );
+}
+
+function genderHasAnyInventory(gender: {
+  name: string;
+  info: { size: string; quantity: number }[];
+}): boolean {
+  if (!isShoes.value) return true;
+  return sizesToShowForGender(gender).length > 0;
+}
+
+function selectCategory(catName:string){
+  selectedCategory.value = catName;
+  items.value= [];
+   fetchCategoryDetails(catName);
+  if(simpleCategories.includes(selectedCategory.value)){
+    items.value.push(
+      [{name:selectedCategory.value,
+        gender:"",
+        hasSize:false,
+        size:"",
+        quantity:0,
+        otherItemName:""
+      }]
+    )
+  }
+  else if (selectedCategory.value == "Shoes"){
+    for(const gender of visibleGenders){
+      items.value.push(
+        shoeSizeOptions.map((size) => ({
+          gender: gender,
+          name: selectedCategory.value,
+          hasSize: true,
+          size:size,
+          quantity: 0,
+          otherItemName: ""
+        }))
+      )
+    }
+  }
+  else if(selectedCategory.value == "Other Items"){
+    items.value.push(
+      [{name:selectedCategory.value,
+        gender:"",
+        hasSize:false,
+        size:"N/A",
+        quantity:0,
+        otherItemName:""
+      }]
+    )
+  }
+  else{
+    if(selectedCategory.value == "Dresses"){
+        visibleGenders = ["Female"]
+    }
+    else{
+      visibleGenders = ["Male", "Female", "Child"];
+    }
+    for(const gender of visibleGenders){  
+      items.value.push(
+        sizeOptions.map((size) => ({
+          gender: gender,
+          name: selectedCategory.value,
+          hasSize: true,
+          size:size,
+          quantity: 0,
+          otherItemName: ""
+        }))
+      )
+    }
+  }
+}
+
+watch(isShoes, () => {
+});
+
+watch(
+  [selectedCategory, formSizeOptions],
+  () => {
+  },
+  { immediate: true },
+);
+
+async function fetchCategoryDetails(category: string) {
+  try {
+    const data = await $fetch<CategoryDetail[]>("/api/inventory", {
+      params: { category },
     });
-
-    // Open Add modal for a specific category and preselect it
-    function openAddModal(category: string) {
-        newItem.value.category = category;
-        showAddItemModal.value = true;
-    }
-
-    
-
-    function openQuickPopup(category: string) {
-        quickPopupCategory.value = category;
-        quickQuantity.value = null;
-        showQuickPopup.value = true;
-    }
-
-    function closeQuickPopup() {
-        showQuickPopup.value = false;
-        showConfirmAddModal.value = false;
-    }
-
-    function showConfirmAdd() {
-        showQuickPopup.value = false;
-        showConfirmAddModal.value = true;
-    }
-
-    function cancelConfirmAdd() {
-        showConfirmAddModal.value = false;
-        showQuickPopup.value = true;
-    }
-
-    async function confirmAddQuick() {
-        const payload = {
-            category: quickPopupCategory.value,
-            style: 'Misc.',
-            gender: 'Unisex',
-            size: 'M',
-            quantity: Number(quickQuantity.value || 0),
-        };
-
-        if (!payload.quantity || payload.quantity <= 0) return;
-
-        try {
-            await $fetch('/api/inventory/', {
-                method: 'POST',
-                body: payload,
-            });
-            await getInventory();
-        } catch (err) {
-            console.error('Error adding item:', err);
-        } finally {
-            showConfirmAddModal.value = false;
-            quickQuantity.value = null;
-        }
-    }
-
-    // Focus the Yes button when the confirm modal opens so Enter activates it
-    watch(showConfirmAddModal, (val) => {
-        if (val) {
-            nextTick(() => {
-                confirmAddYesBtn.value?.focus();
-            });
-        }
-    });
-
-    function openAddQuantityModal(item: any) {
-        editedItem.value = item;
-        showAddQuantityModal.value = true;
-    }
-
-    function openReduceQuantityModal(item: any) {
-        editedItem.value = item;
-        showReduceQuantityModal.value = true;
-    }
-
-    function openInvalidQuantityPopup() {
-        showInvalidQuantityPopup.value = true;
-    }
-
-    async function editItem(editedItem: any) {
-        let item = null;
-
-        if (editedItem.barcode && editedItem.quantity){
-            item = await $fetch('/api/inventory/:id', {  // update entry in database; call [id].put.ts
-                method: 'PUT',
-                body: { // data for database entry
-                    barcode: editedItem.barcode,
-                    quantity: editedItem.quantity,
-                },
-            });
-        }
-
-        showAddQuantityModal.value = false;
-        showReduceQuantityModal.value = false;
-        async function checkAndDelete() {
-            const quantity = await getItem(editedItem.barcode); // Wait for the quantity
-            console.log(quantity);
-            if (quantity == 0) { 
-                deleteEntry(editedItem.barcode);
-                getInventory();
-            }
-            else if (quantity < 0) {
-                openInvalidQuantityPopup();
-                if (editedItem.barcode && editedItem.quantity){
-                    item = await $fetch('/api/inventory/:id', {  // update entry in database; call [id].put.ts
-                        method: 'PUT',
-                        body: { // data for database entry
-                            barcode: editedItem.barcode,
-                            quantity: -editedItem.quantity,
-                        },
-                    });
-                }
-                getInventory();
-            }
-        }
-
-        // delete item from inventory if quantity == 0
-        checkAndDelete();
-
-        getInventory();
-    }
-
-    // Fetch inventory data
-    //onMounted(async () => { // Fetches data when the page (component) is initially loaded
-    // Helper to get start/end of today in server local time
-    function getTodayRange() {
-        const now = new Date();
-        const start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
-        const end = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0, 0);
-        return { start, end };
-    }
-
-    // Check and create new day's inventory records if they don't exist
-    async function checkAndCreateNewDay() {
-        try {
-            const response: any = await $fetch('/api/inventory/check-new-day', {
-                method: 'POST',
-            });
-            
-            if (response.recordsCreated) {
-                console.log(`✅ New day detected: Created ${response.count || 0} inventory records for ${new Date(response.date).toLocaleDateString()}`);
-            } else {
-                console.log(`✓ Today's inventory records already exist`);
-            }
-            
-            return response;
-        } catch (error) {
-            console.error('Failed to check/create new day:', error);
-            throw error;
-        }
-    }
-
-    async function getInventory() {
-        try {
-            // Check and create new day's records first
-            await checkAndCreateNewDay();
-            
-            const { start, end } = getTodayRange();
-            // Fetch only today's InventoryRecords
-            inventory.value = await ($fetch as any)('/api/inventory/', {
-                method: 'GET',
-                params: {
-                    start: start.toISOString(),
-                    end: end.toISOString(),
-                },
-            });
-        } catch (error) {
-            console.error('Fetch error:', error);
-        }
-    }
-
-    onMounted(getInventory);
-
-    // Fetch inventory item
-    async function getItem(id: any) {
-        try {
-            console.log(id);
-            const item: any = await $fetch(`/api/inventory/${id}`, { // get inventory data; call [id].get.ts
-                method: 'GET'
-            });
-
-            //console.log("Fetching from get item API!");
-            console.log(item?.quantity);
-            //return item;
-            return item?.quantity;
-        } catch (error) {
-            console.error('Fetch error:', error);
-        }
+    const fallbackGenders =
+      category === "Other Items"
+        ? []
+        : visibleGenders.map((gender) => ({
+            name: gender,
+            info: [{ size: "XS", quantity: 0 }],
+          }));
+    categoryDetails.value = {
+      catDetails:
+        data.length > 0
+          ? data
+          : [{ category, quantity: 0, genders: fallbackGenders }],
     };
+  } catch (err) {
+    console.error("Error fetching category details:", err);
+    categoryDetails.value = { catDetails: [] };
+  }
+}
 
-    // Call the server-side API to delete this item from the database
-    async function deleteEntry(barcode: any) {
-        const response = await $fetch('/api/inventory/', {  // post entry to database; call index.delete.ts
-            method: 'DELETE',
-            body: { // data for database entry
-                barcode: barcode
-            },
-        });
-
-        console.log("Response from API:", response); // Log API response
+async function confirmAddition() {
+  additionPreviewItems.value = [];
+  const additions = items.value.flatMap((gender) => gender.filter((i) => i.quantity > 0));
+  if (!additions.length) {
+    showEmptyInputError.value = true;
+    return;
+  }
+  pendingAdditionPayloads.value = additions;
+  for(const addition of additions){
+    if(selectedCategory.value !== "Other Items")
+    additionPreviewItems.value.push({
+      ...addition,
+      category:selectedCategory.value
+    })
+    else{
+      additionPreviewItems.value.push({
+      ...addition,
+      category:selectedCategory.value,
+      size:addition.otherItemName
+    })
     }
+  }
+  
+  showAdditionConfirmPopup.value = true;
+}
 
-    // Computed property to filter and sort inventory based on search query and sort option
-    const sortedAndFilteredInventory = computed((): any[] => {
-    let filtered = inventory.value; //.value accesses the actual array inside the inventory variable
+async function confirmPendingAdditions() {
+  showAdditionConfirmPopup.value = false;
+  if (!pendingAdditionPayloads.value.length) return;
 
-        // Filter by search query
-        if (searchQuery.value) {
-            const query = searchQuery.value.toLowerCase();
-            filtered = filtered.filter((item) =>    // loops through inventory items
-                Object.values(item).some((value) => { // checks if any of the fields contain the query value
-                    if (value && typeof value === 'object') { // checks if the value is an object (nested structure)
-                        return Object.values(value).some((nestedValue) => // checks if any of the nested fields contain the query value
-                            nestedValue.toString().toLowerCase().includes(query) // checks if nested value contains the query
-                        );
-                    }
-                    return value?.toString().toLowerCase().includes(query); // checks if value contains the query
-                })
-            );
-        }
+  try {
+    for (const body of pendingAdditionPayloads.value) {
+      console.log(body);
+      await $fetch("/api/inventory/", {
+        method: "POST",
+        credentials: "include",
+        body: {
+          ...body,
+          category: selectedCategory.value,
+          size:
+            selectedCategory.value !== "Other Items"
+              ? body.size
+              : body.otherItemName,
+        },
+      });
+    }
+    await getInventory();
+    await fetchCategoryDetails(selectedCategory.value);
+    pendingAdditionPayloads.value = [];
+    additionPreviewItems.value = [];
+    showAdditionSuccessPopup.value = true;
+  } catch (err: unknown) {
+    console.error("Error adding item:", err);
+    addErrorMessage.value = formatApiError(
+      err,
+      "The item could not be saved. Please try again.",
+    );
+  }
+}
+async function getInventory() {
+  try {
 
-        // Sort based on selected option
-        return filtered.slice().sort((a: any, b: any) => {
-            if (selectedSort.value === 'recent') {
-                // Most recent first (must convert to Date format for comparison)
-                return new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime();
-            } else if (selectedSort.value === 'dateAdded') {
-                // Oldest first
-                return new Date(a.lastUpdated).getTime() - new Date(b.lastUpdated).getTime();
-            }
-
-            // Default/custom ordering: Shirts, Pants, Jackets, Underwear, Shoes, Snack Packs, Hygiene Packs, Blankets
-            const order = ['Shirts', 'Pants', 'Jackets', 'Underwear', 'Shoes', 'Snack Packs', 'Hygiene Packs', 'Blankets'];
-            const idx = (name: string) => {
-                if (!name) return order.length;
-                const i = order.indexOf(name);
-                return i === -1 ? order.length : i;
-            };
-
-            const aName = a?.category?.name ?? '';
-            const bName = b?.category?.name ?? '';
-            const diff = idx(aName) - idx(bName);
-            if (diff !== 0) return diff;
-            // fallback: alphabetical within same category or for unknown categories
-            return aName.localeCompare(bName);
-        });
+    inventory.value = await ($fetch as any)("/api/inventory/", {
+      method: "GET",
     });
+  } catch (error) {
+    console.error("Fetch error:", error);
+  }
+}
 
-    // Function to add a new item to the inventory
-    const addItem = async () => {
-        // Generate a new ID
-        const newId = inventory.value.length;
-        //    ? Math.max(...inventory.value.map((item) => item.id)) + 1
-        //    : 1;
+onMounted(() => {
+  getInventory();
+});
 
-        // Create a new item object
-        const item = {
-            id: newId,
-            ...newItem.value,
-            quantity: Number(newItem.value.quantity),
-        };
-
-        console.log("ID: " + item.id);
-
-        // Add the new item to the inventory list
-        //inventory.value.push(item);
-        console.log("This is the inventory: " + inventory.value);
-
-        // Reset the newItem form
-        newItem.value = {
-            category: '',
-            style: '',
-            gender: '',
-            size: '',
-            quantity: 1,
-            location: '',
-            lastUpdated: '',
-        };
-
-        // Close the modal
-        showAddItemModal.value = false;
-
-        insertEntry();
-
-        // Call the server-side API to insert this item into the database
-        async function insertEntry() {
-            const response = await $fetch('/api/inventory/', {  // post entry to database; call index.post.ts
-                method: 'POST',
-                body: { // data for database entry
-                    id: item.id,
-                    category: item.category,
-                    style: item.style,
-                    gender: item.gender,
-                    size: item.size,
-                    quantity: item.quantity,
-                },
-            });
-
-            console.log("Response from API:", response); // Log API response
-
-            // Refresh inventory after insertion completes
-            await getInventory();
-        }
-    };
-
-    const filteredStyles = computed(() => {
-        return styleOptions[newItem.value.category] || [];
-    })
-
-
-    watch(() => newItem.value.category, () => {
-        newItem.value.style = '';        
-    })
-
+// Refetch category details when inventory updates (e.g. after adding)
+watch(
+  inventory,
+  () => {
+    if (selectedCategory.value) {
+      fetchCategoryDetails(selectedCategory.value);
+    }
+  },
+  { deep: true },
+);
 </script>
-
-<style scoped>
-    /* General Styling */
-    .inventory-container {
-        font-family: 'sans-serif', Arial;
-        padding: 2em;
-        background-color: #f0f2f5; /* Light gray background */
-        min-height: 100vh;
-        max-height: 300px; /* Adjust as needed */
-        overflow-y: auto; /* Vertical scroll */
-        overflow-x: auto; /* Horizontal scroll if needed */
-    }
-
-    /* Heading Styling */
-    h1 {
-        font-size: 2.5em;
-        color: #3f51b5; /* Indigo */
-        margin-bottom: 1em;
-        text-align: center;
-    }
-
-    /* Add Item Section */
-    .add-item-section {
-        display: block;
-        margin-bottom: 1em;
-    }
-
-    .add-item-button {
-        padding: 0.5em 1.5em;
-        background-color: #4caf50; /* Green */
-        color: #fff;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 1em;
-        text-transform: uppercase;
-        transition: background-color 0.3s ease;
-        display: flex;
-        align-items: center;
-        gap: 0.5em;
-    }
-
-    /* Category grid for quick-add buttons */
-    .category-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-        gap: 0.6rem;
-        align-items: stretch;
-        grid-auto-rows: 1fr;
-    }
-
-    .category-button {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        gap: 0.4rem;
-        /* Make buttons square */
-        aspect-ratio: 4 / 3;
-        width: 100%;
-        padding: 0.6rem;
-        border-radius: 8px;
-        border: 1px solid rgba(0,0,0,0.08);
-        background: #fff;
-        color: #000;
-        font-weight: 550;
-        cursor: pointer;
-        transition: transform 120ms ease, box-shadow 120ms ease, background 120ms ease;
-    }
-
-    .category-button .label {
-        display: inline-block;
-        font-size: 1.5rem;
-        text-align: center;
-        line-height: 1.1;
-        padding: 0 6px;
-        word-break: break-word;
-    }
-
-    .category-button:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 8px 18px rgba(0,0,0,0.06);
-        border-color: rgba(0,0,0,0.12);
-        background: linear-gradient(180deg, #ffffff, #f7f7f7);
-    }
-
-    .category-button:active {
-        transform: translateY(-1px) scale(0.995);
-        box-shadow: 0 4px 8px rgba(0,0,0,0.05);
-        background: linear-gradient(180deg, #f9f9f9, #f0f0f0);
-    }
-
-    /* Shirts popup close X */
-    .popup-close-x {
-        position: absolute;
-        top: 8px;
-        right: 8px;
-        width: 32px;
-        height: 32px;
-        border-radius: 50%;
-        background: rgba(0,0,0,0.06);
-        border: none;
-        color: #333;
-        font-size: 18px;
-        line-height: 1;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-    }
-
-    .popup-close-x:hover {
-        background: rgba(0,0,0,0.12);
-    }
-
-    
-
-    .remove-item-button {
-        padding: 0.5em 1.5em;
-        background-color: #f44336; /* Red */
-        color: #fff;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 1em;
-        text-transform: uppercase;
-        transition: background-color 0.3s ease;
-        display: flex;
-        align-items: center;
-        gap: 0.5em;
-    }
-
-        .add-item-button:hover {
-            background-color: #43a047;
-        }
-
-        .remove-item-button:hover {
-            background-color: #e53935;
-        }
-
-    /* Modal Styling */
-    .modal-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0,0,0,0.5);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 1000;
-    }
-
-    .modal {
-        background: white;
-        border-radius: 8px;
-        padding: 20px;
-        min-width: 320px;
-        max-width: 480px;
-        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
-        position: relative;
-    }
-
-    .modal-content {
-        background-color: #fff;
-        padding: 2em;
-        border-radius: 8px;
-        width: 90%;
-        max-width: 500px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    }
-
-        .modal-content h2 {
-            margin-top: 0;
-            margin-bottom: 1em;
-            color: #3f51b5; /* Indigo */
-            text-align: center;
-        }
-
-    .form-group {
-        margin-bottom: 1em;
-    }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 0.5em;
-            color: #333;
-        }
-
-        .form-group input {
-            width: 100%;
-            padding: 0.5em;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-        }
-
-    .form-actions {
-        display: flex;
-        justify-content: flex-end;
-        gap: 1em;
-    }
-
-    .modal-actions {
-        display: flex;
-        gap: 10px;
-        justify-content: flex-end;
-        margin-top: 8px;
-    }
-
-    .btn {
-        padding: 8px 14px;
-        border-radius: 6px;
-        border: 1px solid #bbb;
-        cursor: pointer;
-        background: #f5f5f5;
-    }
-
-    .btn.danger {
-        background: #c0392b;
-        color: white;
-        border: none;
-    }
-
-    .save-button,
-    .cancel-button,
-    .add-button {
-        padding: 0.5em 1.5em;
-        color: #fff;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        gap: 0.5em;
-    }
-
-    .save-button {
-        background-color: #4caf50; /* Green */
-    }
-
-        .save-button:hover {
-            background-color: #43a047;
-        }
-
-    .add-button {
-        background-color: #007bff; /* Blue */
-    }
-
-        .add-button:hover {
-            background-color: #0056b3;
-        }
-
-    .cancel-button {
-        background-color: #f44336; /* Red */
-    }
-
-        .cancel-button:hover {
-            background-color: #e53935;
-        }
-
-    /* Filter and Sort Section */
-    .filter-sort-section {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 1em;
-    }
-
-    .search-input {
-        flex: 1 1 200px;
-        margin-bottom: 1em;
-        max-width: 300px; /* Shortened search bar */
-    }
-
-        .search-input input {
-            width: 100%;
-            padding: 0.5em;
-            border-radius: 4px;
-            border: 1px solid #ddd;
-        }
-
-    .sort-options {
-        flex: 1 1 200px;
-        text-align: right;
-    }
-
-        .sort-options label {
-            margin-right: 0.5em;
-            font-weight: bold;
-        }
-
-        .sort-options select {
-            padding: 0.5em;
-            border-radius: 4px;
-            border: 1px solid #ddd;
-        }
-
-    #inventory {
-        max-height: 500px;
-        overflow-y: auto;
-        border: 1px solid #ddd;
-    }
-
-    /* Inventory Table */
-    #inventory table {
-        width: 100%;
-        border-collapse: collapse;
-        table-layout: fixed;
-        background-color: #fff;
-        border-radius: 8px;
-        /*overflow: hidden;*/
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    }
-
-    #inventory th,
-    #inventory td {
-        padding: 12px;
-        border-bottom: 1px solid #ddd;
-        text-align: center;
-    }
-
-    #inventory th {
-        background-color: #3f51b5; /* Indigo */
-        color: #fff;
-        font-weight: bold;
-    }
-
-    thead {
-        position: sticky;
-        top: 0;
-        background-color: #fff; /* Ensures the background is white so it covers content */
-        z-index: 2; /* Keeps header on top */
-    }
-    
-    #inventory tr:nth-child(even) {
-        background-color: #f9f9f9;
-    }
-
-    #inventory tr:hover {
-        background-color: #e0e0e0;
-    }
-
-    #inventory td {
-        color: #333;
-    }
-
-   
-
-    
-</style>

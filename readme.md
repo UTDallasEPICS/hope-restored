@@ -1,105 +1,83 @@
 ## Hope-Restored (Community Information & Inventory Tracking)
 
-## Conceptual Overview
+## Conceptual Overview:
 The Hope Restored Missions Inventory Tracking System is designed to provide the organization with a centralized digital platform for managing inventory operations and client services. The system streamlines the process of adding, updating, and removing inventory items while maintaining accurate records across multiple categories, genders, and sizes.
-
 In addition to inventory management, the platform tracks client history to help Hope Restored Missions better understand and meet the needs of the individuals they serve. This data also supports outreach and reporting efforts when requesting donations or partnerships from larger organizations.
-
 The system further simplifies report generation by providing daily, weekly, and monthly inventory analytics. These reports allow the organization to monitor operational progress, inventory trends, and community impact more efficiently.
-
 The primary users of the platform are the staff members and volunteers at Hope Restored Missions who manage day-to-day inventory and client operations.
 
----
 
-# Functional Requirements
-
-## Authentication System
+## Functional Requirements
+# Authentication System
 The authentication system includes:
-- `login.vue`
-- `Users.vue`
-- `Home.vue`
-
+- login.vue
+- Users.vue
+- Home.vue
 These pages allow users to:
 - Sign in securely
 - Create accounts through an administrator-managed system
 - Access protected application functionality through role-based authentication
 
-## Inventory Management
-The inventory management page (`inventory.vue`) allows administrators to:
+# Inventory Management
+The inventory management page (inventory.vue) allows administrators to:
 - View current inventory levels
 - Add new inventory items
 - Manage inventory by:
-  - Category
-  - Gender
-  - Size
+	- Category
+	- Gender
+	- Size
 
-## Checkout System
-The checkout page (`checkout.vue`) supports:
+# Checkout System
+The checkout page (checkout.vue) supports:
 - Removing inventory items from stock
 - Validating available inventory quantities
 - Updating inventory records automatically after checkout
 
-## Reporting System
-The reports page (`reports.vue`) allows users to:
+# Reporting System
+The reports page (reports.vue) allows users to:
 - Generate daily, weekly, and monthly reports
 - View summary and detailed inventory analytics
 - Track inventory activity over time
 
-## Activity Logging
-The activity page (`activity.vue`) provides:
+# Activity Logging
+The activity page (activity.vue) provides:
 - System activity logs
 - Search functionality
 - Filtering options for recorded system actions
 
----
+## Third-Party Integrations
+Better Auth: Handles user login and authentication
+Nodemailer (SMTP / Gmail): Sends emails as verification
+ParadeDB / PostgreSQL (Docker service): Supports database search and analytics services through docker
+Chart.js: Displays graphs and analytics charts in the dashboard
 
-# Third-Party Integrations
+## Tech Stack
+Frontend: Vue 3 + Nuxt 4 (Builds UI and admin dashboard)
+Backend: Nuxt Server API Routes (Handles server side logic and API requests)
+Database: SQLite with Prisma ORM (Stores application data)
+Meta Framework: Nuxt 4 (Combines frontend and backend into a full-stack application)
 
-- **Better Auth**: Handles user login and authentication
-- **Nodemailer (SMTP / Gmail)**: Sends emails for verification
-- **ParadeDB / PostgreSQL (Docker service)**: Supports database search and analytics services through Docker
-- **Chart.js**: Displays graphs and analytics charts in the dashboard
+## Other Tools
+Docker Compose: Runs project services in containers
+Prisma Migrations: Manages database schema updates
+Seed Scripts: Populates the database with starter or test data
 
----
+## Deployment Notes
+Deployment is currently being handled by the UTD EPICS department, and the organization is going to host the website on their own infrastructure.
 
-# Tech Stack
 
-- **Frontend**: Vue 3 + Nuxt 4 (Builds UI and admin dashboard)
-- **Backend**: Nuxt Server API Routes (Handles server-side logic and API requests)
-- **Database**: SQLite with Prisma ORM (Stores application data)
-- **Meta Framework**: Nuxt 4 (Combines frontend and backend into a full-stack application)
+## Migration Scripts
+There is no formal automated migration pipeline, data import functionality depends on Prisma seed scripts and manual or script-assisted processing.
+Relevant Files:
+`admin/prisma/migrations/`
+`admin/prisma/seed.ts`
+`admin/utils/client_files/`
+`admin/static/client_files/`
 
----
+## Folder Structures
 
-# Other Tools
+```
 
-- **Docker Compose**: Runs project services in containers
-- **Prisma Migrations**: Manages database schema updates
-- **Seed Scripts**: Populates the database with starter or test data
-
----
-
-# Deployment Notes
-
-Deployment is currently being handled by the UTD EPICS department, and the organization is planning to host the website on their own infrastructure.
-
----
-
-# Migration Scripts
-
-There is no formal automated migration pipeline. Data import functionality depends on Prisma seed scripts and manual or script-assisted processing.
-
-Relevant files:
-- `admin/prisma/migrations/`
-- `admin/prisma/seed.ts`
-- `admin/utils/client_files/`
-- `admin/static/client_files/`
-
----
-
-# Folder Structure
-
-```text
 root/
 │
 ├── admin/
