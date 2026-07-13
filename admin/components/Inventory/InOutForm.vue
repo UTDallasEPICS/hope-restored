@@ -72,7 +72,7 @@
                     </div>
                 </div>
                 <div v-else>   
-                    <section v-for="(gender,genIdx) in visibleGenders" :key="gender" class="border border-gray-200 rounded-lg p-4">
+                    <section v-for="(gender,genIdx) in visibleGenders" :key="gender" class="border border-gray-200 mb-4 rounded-lg p-4">
                         <h3 class="text-[1rem] font-semibold text-indigo-600 mb-2">{{ gender }}</h3>
                         <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
                             <label
