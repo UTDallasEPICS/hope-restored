@@ -47,7 +47,7 @@ defineEmits<{
 const buttonClass = computed(() =>
   props.variant === "tile"
     ? [
-        "flex flex-col items-center justify-center gap-1.5 h-20 min-h-[5rem] px-2 rounded-lg border-2 font-semibold transition hover:-translate-y-0.5 hover:shadow-md",
+        "flex flex-col items-center justify-center h-20 min-h-[5rem] px-2 rounded-lg border-2 font-semibold transition hover:-translate-y-0.5 hover:shadow-md",
         props.selected
           ? "bg-indigo-600 text-white border-indigo-600 shadow-md"
           : "bg-white text-gray-900 border-gray-200 hover:border-indigo-300",
@@ -61,7 +61,7 @@ const buttonClass = computed(() =>
 const textClass = computed(() =>
   props.variant === "tile"
     ? props.selected
-      ? "text-white"
+      ? "text-white text-[clamp(0.55rem,1.2vw+0.45rem,1.25rem)]"
       : "text-gray-900 text-[clamp(0.55rem,1.2vw+0.45rem,1.25rem)]"
     : "text-left",
 );
