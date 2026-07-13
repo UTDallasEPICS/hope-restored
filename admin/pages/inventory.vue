@@ -273,12 +273,13 @@ const categories = [
   "Shirts",
   "Pants",
   "Jackets",
+  "Dresses",
   "Underwear",
   "Shoes",
   "Snack Packs",
   "Hygiene Packs",
   "Blankets",
-  "Other Items",
+  "Other Items"
 ];
 const sizeOptions = ["XS", "S", "M", "L", "XL","2XL","3XL","4XL+"];
 const shoeSizeOptions = (() => {
@@ -286,7 +287,7 @@ const shoeSizeOptions = (() => {
   for (let n = 5; n <= 14.5; n += 0.5) sizes.push(String(n));
   return sizes;
 })();
-const visibleGenders = ["Male", "Female", "Child"];
+let visibleGenders = ["Male", "Female", "Child"];
 const items= ref<{name: string, gender:string, hasSize: boolean, size:string, quantity:number, otherItemName: string}[][]>([]);
 
 
@@ -333,14 +334,25 @@ const isSizedCategory = computed(
 const formSizeOptions = computed(() =>
   isShoes.value ? shoeSizeOptions : sizeOptions,
 );
-const visibleCategoryGenders = computed(() =>
-  (categoryDetails.value.catDetails[0]?.genders || [])
+const visibleCategoryGenders = computed(() => {
+  if(selectedCategory.value !== "Dresses"){
+    return (categoryDetails.value.catDetails[0]?.genders || [])
     .filter((gender) => gender.name !== "Unisex")
     .sort(
       (a, b) =>
         visibleGenders.indexOf(a.name) - visibleGenders.indexOf(b.name),
-    ),
-);
+    )
+  }
+  else{
+    return (categoryDetails.value.catDetails[0]?.genders || [])
+    .filter((gender) => gender.name === "Female")
+    .sort(
+      (a, b) =>
+        visibleGenders.indexOf(a.name) - visibleGenders.indexOf(b.name),
+    )
+  }
+}); 
+
 
 function sizesToShowForGender(gender: {
   name: string;
@@ -400,7 +412,13 @@ function selectCategory(catName:string){
     )
   }
   else{
-    for(const gender of visibleGenders){
+    if(selectedCategory.value == "Dresses"){
+        visibleGenders = ["Female"]
+    }
+    else{
+      visibleGenders = ["Male", "Female", "Child"];
+    }
+    for(const gender of visibleGenders){  
       items.value.push(
         sizeOptions.map((size) => ({
           gender: gender,

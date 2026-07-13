@@ -79,91 +79,87 @@ Relevant Files:
 ```
 
 root/
-│   --- PRIVATE VIEW ----
+│
 ├── admin/
 │   ├── components/            # Vue.js components
 │   ├── lib/
-│   ├── pages/		# pages for navigation
-│   ├── prisma/		
+│   ├── pages/                 # Pages for navigation
+│   ├── prisma/
 │   ├── server/
-│   │   ├── api/              	# Server-side API handling
-│   │   ├── db/                	# Database models or utilities
-│   │   ├── middleware/   # API middleware
-│   │   ├── usage/            # Prisma functions		
-│   ├── static/		# holds all community info module csv files
-│   ├── utils/		# General utility functions
-│   --- PUBLIC VIEW ----
-├── webcomponent/
-│   ├── src/
-│   │   ├── assets/        # Uncompiled assets like Sass, images, fonts
-│   │   │   ├── main.css 	# holds all styling and Tailwind themes for public view
-│   │   ├── components/            # Vue.js components
-│   │   ├── router/
-|   |   |__ scripts        #Handles automatic inventory snapshots and necessary actions for each day
-|   |   |
-│   │   ├── server/
-│   │   │   ├── api/              	# Server-side API handling
-│   │   │   ├── db/                	# Database models or utilities
-│   │   │   ├── middleware/   # API middleware
-│   │   │   ├── usage/            # Prisma functions		
-│   │   ├── stores/		# all vue stores for the project
-│   │   ├── utils/		# General utility functions
-│   │   ├── views/		# pages for the router to access
-│   │   ├── app.vue		# The application
-│   │   ├── main.ts		# Typescript for the application
-│   ├── package.json           # NPM dependencies and scripts
-│   ├── .env           		# where all environment variables for the public view are stored
-│   ├── various configs
-│   --- GENERAL ----
-├── .env.example     # example .env file
-├── .gitignore     	# tells git which file types and directories not to commit
-├── package.json           # NPM dependencies and scripts
-└── README.md              # Project documentation
+│   │   ├── api/               # Server-side API handling
+│   │   ├── db/                # Database models or utilities
+│   │   ├── middleware/        # API middleware
+│   │   ├── usage/             # Prisma functions
+│   ├── static/                # Holds all community info module CSV files
+│   ├── utils/                 # General utility functions
+│
+├── .env.example               # Example .env file
+├── .gitignore                 # Tells git which files/directories not to commit
+├── package.json               # NPM dependencies and scripts
+└── README.md                  # Project documentation
 ```
 
-## Project setup
+---
 
-Here is how to setup the project
+# Project Setup
 
-1. At the root of the project run
-   node ./scripts/cpenv.js  (Creates the imp env files)
+Here is how to set up the project:
 
-2. npm install && cd admin/ (Install root dependencies and enter the admin dir)
+1. At the root of the project run:
 
-3. npm install (Install admin dependencies)
+```bash
+node ./scripts/cpenv.js
+```
 
-4. npx prisma migrate dev (Build Prisma database)
+Creates the important environment files.
 
+2. Install root dependencies and enter the admin directory:
 
-## Project operation
+```bash
+npm install && cd admin/
+```
 
-Run the following command (in the admin directory) to start the development server and admin application
+3. Install admin dependencies:
 
-   ```bash
-   # Serve with hot reload at localhost:4000 for the public application (Community Information)
-   npm run dev
-   ```
+```bash
+npm install
+```
 
-# Note: The admin application needs to finish running first before the
-public frontend since the data is being fetched from the private backend
-Just refresh the public frontend page if you see a connection error
-## Other Dev Scripts
-#### Note: To use these, you must be in the root directory
-(See the ``scripts`` section of ``package.json`` in the root directory for a more comprehensive list)
+4. Build the Prisma database:
 
-- To view Prisma Studio, you can use the following command:
-   ```bash
-  # Tip: You can use Prisma Studio to view and edit data in the database
-  npm run prismaStudio
-  ```
+```bash
+npx prisma migrate dev
+```
 
-- To reset your Prisma migrations, you can use the following command:
-  ```bash
-  npm run prismaResetMigrations
-  ```
+---
 
-- To run the admin **and** public apps with less typing, you can use the following command:
-  ```bash
-  npm run prismaResetMigrations
-  ```
+# Project Operation
 
+Run the following command (in the admin directory) to start the development server and admin application:
+
+```bash
+# Serve with hot reload for the admin inventory application
+npm run dev
+```
+
+---
+
+# Other Dev Scripts
+
+### Note
+To use these, you must be in the root directory.
+
+(See the `scripts` section of `package.json` in the root directory for a more comprehensive list.)
+
+## View Prisma Studio
+
+```bash
+# Tip: You can use Prisma Studio to view and edit data in the database
+npm run prismaStudio
+```
+
+## Reset Prisma Migrations
+
+```bash
+npm run prismaResetMigrations
+```
