@@ -1,7 +1,10 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
+import { PrismaClient } from "../../../../../admin/generated/prisma/client";
 import { defineEventHandler, createError } from "h3";
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({
+  adapter: new PrismaBetterSqlite3({ url: process.env.DATABASE_URL || "file:./dev.db" }),
+});
 
 export default defineEventHandler(async (event) => {
   try {

@@ -5,6 +5,9 @@
 .nitro
 .cache
 dist
+
+# Generated Prisma client (run `pnpm generate`)
+admin/generated
 *.db
 *.db-journal
 

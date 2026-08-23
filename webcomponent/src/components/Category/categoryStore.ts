@@ -2,7 +2,7 @@ import { ref, computed } from "vue";
 import CategoryService from "./request";
 import { type CategoryProps } from "./Category.vue";
 import { CakeIcon, UserIcon, HomeIcon } from "@heroicons/vue/24/solid";
-import { Prisma } from "@prisma/client";
+import type { Prisma } from "../../../admin/generated/prisma/client";
 type CategoryDB = Prisma.GroupGetPayload<{}>;
 
 const categories = ref<CategoryProps[]>([]);

@@ -67,10 +67,10 @@ Deployment is currently being handled by the UTD EPICS department, and the organ
 
 
 ## Migration Scripts
-There is no formal automated migration pipeline, data import functionality depends on Prisma seed scripts and manual or script-assisted processing.
+Migrations are applied automatically by the CI/CD pipeline (Prisma Lambda) before each deploy; locally use `pnpm db:migrate:dev` / `pnpm db:seed`.
 Relevant Files:
-`admin/prisma/migrations/`
-`admin/prisma/seed.ts`
+`prisma/migrations/`
+`prisma/seed.ts`
 `admin/utils/client_files/`
 `admin/static/client_files/`
 
@@ -84,7 +84,6 @@ root/
 │   ├── components/            # Vue.js components
 │   ├── lib/
 │   ├── pages/                 # Pages for navigation
-│   ├── prisma/
 │   ├── server/
 │   │   ├── api/               # Server-side API handling
 │   │   ├── db/                # Database models or utilities
@@ -96,6 +95,8 @@ root/
 ├── .env.example               # Example .env file
 ├── .gitignore                 # Tells git which files/directories not to commit
 ├── package.json               # NPM dependencies and scripts
+├── prisma/                    # Prisma schema, migrations, and seed script
+├── prisma.config.ts           # Prisma CLI configuration (schema path, seed command, DATABASE_URL)
 └── README.md                  # Project documentation
 ```
 
@@ -105,41 +106,34 @@ root/
 
 Here is how to set up the project:
 
-1. At the root of the project run:
+1. Copy `.env.example` to `.env` at the project root and fill in the values.
+
+2. Install all workspace dependencies from the project root:
 
 ```bash
-node ./scripts/cpenv.js
+pnpm install
 ```
 
-Creates the important environment files.
-
-2. Install root dependencies and enter the admin directory:
+3. Create/update the local database and generate the Prisma Client:
 
 ```bash
-npm install && cd admin/
-```
-
-3. Install admin dependencies:
-
-```bash
-npm install
-```
-
-4. Build the Prisma database:
-
-```bash
-npx prisma migrate dev
+pnpm db:migrate:dev
 ```
 
 ---
 
 # Project Operation
 
-Run the following command (in the admin directory) to start the development server and admin application:
+Run the following command to start the development server and admin application:
 
 ```bash
-# Serve with hot reload for the admin inventory application
-npm run dev
+pnpm --admin dev
+```
+
+or from inside `admin/`:
+
+```bash
+pnpm dev
 ```
 
 ---
@@ -155,11 +149,11 @@ To use these, you must be in the root directory.
 
 ```bash
 # Tip: You can use Prisma Studio to view and edit data in the database
-npm run prismaStudio
+pnpm exec prisma studio
 ```
 
 ## Reset Prisma Migrations
 
 ```bash
-npm run prismaResetMigrations
+pnpm exec prisma migrate reset
 ```
