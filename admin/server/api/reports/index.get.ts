@@ -1,4 +1,3 @@
-import { PrismaClient } from '@prisma/client';
 import { it } from 'node:test';
 import prisma from '~/lib/prisma';
 

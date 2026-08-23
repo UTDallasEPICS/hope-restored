@@ -1,4 +1,4 @@
-import { Prisma } from "@prisma/client";
+import type { Prisma } from "../../admin/generated/prisma/client";
 
 type LocationDB = Prisma.LocationGetPayload<{}>;
 export function locationToString(location: LocationDB): string {

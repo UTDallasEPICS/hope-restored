@@ -1,12 +1,17 @@
-// Clears any existing data/records in the InventoryRecords table and adds records where the quantity for each of the seven categories of 
-// items is 0 and the date is set to the current date at midnight CST 
+// Clears any existing data/records in the InventoryRecords table and adds records where the quantity for each of the seven categories of
+// items is 0 and the date is set to the current date at midnight CST
 
-// To run this seed file, run npx prisma db seed from project root
+// To run this seed file, run pnpm db:seed from project root
 
-// admin/prisma/seed.ts
-import { PrismaClient } from "@prisma/client";
+import "dotenv/config";
+import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
+import { PrismaClient } from "../admin/generated/prisma/client";
 
-const prisma = new PrismaClient();
+const adapter = new PrismaBetterSqlite3({
+  url: process.env.DATABASE_URL || "file:./dev.db",
+});
+
+const prisma = new PrismaClient({ adapter });
 
 async function seed() {
   console.log("Starting to seed InventoryRecords...");

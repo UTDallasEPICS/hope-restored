@@ -1,4 +1,5 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
+import { PrismaClient } from "../../../admin/generated/prisma/client";
 import { type ResourceDB, RESOURCE_INCLUDE_ALL } from "../../db/constants";
 import { SearchManyResourceUseCase } from "./searchMany";
 

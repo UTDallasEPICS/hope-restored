@@ -1,4 +1,4 @@
-import { Prisma } from "@prisma/client";
+import type { Prisma } from "../../../admin/generated/prisma/client";
 
 export const RESOURCE_INCLUDE_ALL = {
   group: true,

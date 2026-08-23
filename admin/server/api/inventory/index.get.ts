@@ -1,8 +1,6 @@
 import { defineEventHandler, getQuery } from 'h3';
-import { PrismaClient } from '@prisma/client';
+import prisma from '../../../lib/prisma';
 import { group } from 'node:console';
-
-const prisma = new PrismaClient();
 
 const OTHER_ITEMS = 'Other Items';
 

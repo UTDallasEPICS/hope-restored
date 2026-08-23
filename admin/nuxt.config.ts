@@ -30,6 +30,13 @@ export default defineNuxtConfig({
   },
 
   compatibilityDate: "2025-02-27",
+  nitro: {
+    // Prisma's runtime loads WASM/native files from its own package directory,
+    // so keep it out of the bundle; Nitro traces it into .output/server/node_modules.
+    externals: {
+      external: ['@prisma/client', 'better-sqlite3'],
+    },
+  },
   vite: {
     plugins: [
       tailwindcss(),

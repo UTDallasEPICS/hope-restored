@@ -1,7 +1,8 @@
-import { PrismaClient } from '@prisma/client'
 import { config as loadEnv } from 'dotenv'
 import { existsSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
+import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3'
+import { PrismaClient } from '../generated/prisma/client'
 
 const envCandidates = [resolve(process.cwd(), '.env'), resolve(process.cwd(), 'admin/.env')]
 const resolvedEnvPath = envCandidates.find((path) => existsSync(path))
@@ -12,11 +13,11 @@ if (resolvedEnvPath) {
   loadEnv()
 }
 
-const adminRoot = resolvedEnvPath ? dirname(resolvedEnvPath) : process.cwd()
-
-
 const prismaClientSingleton = () => {
-  return new PrismaClient()
+  const adapter = new PrismaBetterSqlite3({
+    url: process.env.DATABASE_URL || 'file:./dev.db',
+  })
+  return new PrismaClient({ adapter })
 }
 
 declare const globalThis: {
