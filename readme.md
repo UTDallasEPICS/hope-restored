@@ -106,7 +106,7 @@ root/
 
 Here is how to set up the project:
 
-1. Copy `.env.example` to `.env` at the project root and fill in the values.
+1. Copy `.env.example` to `.env` at the project root and in admin, fill in the values.
 
 2. Install all workspace dependencies from the project root:
 
@@ -114,10 +114,16 @@ Here is how to set up the project:
 pnpm install
 ```
 
-3. Create/update the local database and generate the Prisma Client:
+3. Create/update the local database:
 
 ```bash
 pnpm db:migrate:dev
+```
+
+4. Generate the Prisma Client:
+
+```bash
+pnpm generate
 ```
 
 ---
