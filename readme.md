@@ -106,7 +106,7 @@ root/
 
 Here is how to set up the project:
 
-1. Copy `.env.example` to `.env` at the project root and in admin, fill in the values.
+1. Copy `.env.example` to `.env` at both the project root and in admin, and fill in the values.
 
 2. Install all workspace dependencies from the project root:
 
@@ -125,7 +125,6 @@ pnpm db:migrate:dev
 ```bash
 pnpm generate
 ```
-
 ---
 
 # Project Operation
