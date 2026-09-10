@@ -101,7 +101,7 @@
                         {{ inf.size }}
                       </td>
                       <td class="px-3 py-2 border-b border-gray-100 text-right">
-                        {{ inf.quantity }}
+                          {{ inf.quantity ? inf.quantity : 0 }}
                       </td>
                     </tr>
                   </tbody>
