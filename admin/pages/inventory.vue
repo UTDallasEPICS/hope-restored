@@ -443,6 +443,7 @@ watch(
   { immediate: true },
 );
 
+// Gets details for category
 async function fetchCategoryDetails(category: string) {
   try {
     const data = await $fetch<CategoryDetail[]>("/api/inventory", {
@@ -451,15 +452,23 @@ async function fetchCategoryDetails(category: string) {
     const fallbackGenders =
       category === "Other Items"
         ? []
-        : visibleGenders.map((gender) => ({
+        : (visibleGenders || []).map((gender) => ({
             name: gender,
-            info: [{ size: "XS", quantity: 0 }],
+            info: getDefaultSizesForCategory(category).map((size) => ({
+              size,
+              quantity: 0,
+            })),
           }));
+    const normalizedData =
+      data.length > 0
+        ? data.map((entry) => ({
+            ...entry,
+            genders: normalizeGenderSizes(category, entry.genders ?? []),
+          }))
+        : [{ category, quantity: 0, genders: fallbackGenders }];
+
     categoryDetails.value = {
-      catDetails:
-        data.length > 0
-          ? data
-          : [{ category, quantity: 0, genders: fallbackGenders }],
+      catDetails: normalizedData,
     };
   } catch (err) {
     console.error("Error fetching category details:", err);
@@ -537,9 +546,37 @@ async function getInventory() {
   }
 }
 
-onMounted(() => {
-  getInventory();
-});
+// Determines the size list between clothes or shoes.
+function getDefaultSizesForCategory(category: string): string[] {
+  if (category === "Shoes") return shoeSizeOptions;
+  return sizeOptions;
+}
+
+/* Used in whenever inventory data is retrieved & fills in missing sizes w/ zero quantity. 
+  Returns list w/ all sizes.
+*/
+function normalizeGenderSizes(
+  category: string,
+  genders: { 
+    name: string; 
+    info: { size: string; quantity: number }[] }[] = [],
+) {
+  const defaultSizes = getDefaultSizesForCategory(category);
+
+  return genders.map((gender) => {
+    const entriesBySize = new Map(
+      (gender.info ?? []).map((row) => [row.size, row.quantity]),
+    );
+
+    return {
+      ...gender,
+      info: defaultSizes.map((size) => ({
+        size,
+        quantity: entriesBySize.get(size) ?? 0,
+      })),
+    };
+  });
+}
 
 // Refetch category details when inventory updates (e.g. after adding)
 watch(
