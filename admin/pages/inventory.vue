@@ -281,12 +281,6 @@ const categories = [
   "Blankets",
   "Other Items"
 ];
-const sizeOptions = ["XS", "S", "M", "L", "XL","2XL","3XL","4XL+"];
-const shoeSizeOptions = (() => {
-  const sizes: string[] = [];
-  for (let n = 5; n <= 14.5; n += 0.5) sizes.push(String(n));
-  return sizes;
-})();
 let visibleGenders = ["Male", "Female", "Child"];
 const items= ref<{name: string, gender:string, hasSize: boolean, size:string, quantity:number, otherItemName: string}[][]>([]);
 
@@ -544,38 +538,6 @@ async function getInventory() {
   } catch (error) {
     console.error("Fetch error:", error);
   }
-}
-
-// Determines the size list between clothes or shoes.
-function getDefaultSizesForCategory(category: string): string[] {
-  if (category === "Shoes") return shoeSizeOptions;
-  return sizeOptions;
-}
-
-/* Used in whenever inventory data is retrieved & fills in missing sizes w/ zero quantity. 
-  Returns list w/ all sizes.
-*/
-function normalizeGenderSizes(
-  category: string,
-  genders: { 
-    name: string; 
-    info: { size: string; quantity: number }[] }[] = [],
-) {
-  const defaultSizes = getDefaultSizesForCategory(category);
-
-  return genders.map((gender) => {
-    const entriesBySize = new Map(
-      (gender.info ?? []).map((row) => [row.size, row.quantity]),
-    );
-
-    return {
-      ...gender,
-      info: defaultSizes.map((size) => ({
-        size,
-        quantity: entriesBySize.get(size) ?? 0,
-      })),
-    };
-  });
 }
 
 // Refetch category details when inventory updates (e.g. after adding)
