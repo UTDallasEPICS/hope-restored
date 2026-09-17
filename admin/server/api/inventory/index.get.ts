@@ -81,7 +81,7 @@ for(const item of inv){
   }
 }
 const simpleCategories =['Blankets','Hygiene Packs','Snack Packs'];
-const letterSizedCategories=['Shirts','Pants','Jackets','Underwear'];
+const letterSizedCategories=['Shirts','Pants','Jackets','Underwear', 'Dresses'];
 const numberSizedCategories=['Shoes'] //add pants
 
 // Defining  the correct size order for clothing (XS→4XL+) and shoes (numeric),
