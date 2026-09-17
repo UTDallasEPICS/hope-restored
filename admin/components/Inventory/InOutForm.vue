@@ -1,11 +1,11 @@
 <template>
     <div
-        class="bg-white border border-gray-200 rounded-lg shadow-sm p-4 md:p-5 min-h-0 h-full overflow-y-auto overflow-x-hidden flex flex-col box-border"
+        class="bg-white border border-gray-200 rounded-lg shadow-sm p-4 md:p-5 min-h-0 h-full overflow-y-auto overflow-x-hidden flex flex-col box-border" ref = "divHeight"
     >
         <h2 v-if="!selectedCategory" class="text-[1.15rem] font-semibold text-indigo-600 mb-4 mt-0">
            {{ emptyPrompt ?? `Select a category to ${inForm ? "add " : "remove "} items` }}
         </h2>
-        <form v-if="selectedCategory" class="flex flex-col gap-5" @submit.prevent="submitForm">
+        <form v-if="selectedCategory" class="flex flex-col gap-5" @submit.prevent="resetScroll">
             <div v-if="items.length">
                 <div v-if="isSimpleCategory">  
                     <label class="block mb-1 text-[0.95rem] font-medium text-gray-800">
@@ -104,7 +104,12 @@
 </template>
 
 <script setup lang="ts">
+const divHeight = ref(null);
+function resetScroll(){
+    divHeight.value.scrollTo({top: 0, behavior: 'smooth'});
+    props.submitForm();
 
+}
 const props = defineProps<{
         inForm:boolean,
         selectedCategory:string,
