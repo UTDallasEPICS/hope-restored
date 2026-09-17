@@ -517,6 +517,7 @@ async function confirmPendingAdditions() {
     await fetchCategoryDetails(selectedCategory.value);
     pendingAdditionPayloads.value = [];
     additionPreviewItems.value = [];
+    selectCategory(selectedCategory.value);
     showAdditionSuccessPopup.value = true;
   } catch (err: unknown) {
     console.error("Error adding item:", err);

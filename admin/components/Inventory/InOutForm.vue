@@ -2,11 +2,8 @@
     <div
         class="bg-white border border-gray-200 rounded-lg shadow-sm p-4 md:p-5 min-h-0 h-full overflow-y-auto overflow-x-hidden flex flex-col box-border"
     >
-        <h2 v-if="selectedCategory" class="text-[1.15rem] font-semibold text-indigo-600 mb-4 mt-0">
-            {{inForm? "Add " : "Remove "}} {{selectedCategory}}
-        </h2>
-        <h2 v-else class="text-[1.15rem] font-normal text-gray-500 mb-4 mt-0">
-            {{ emptyPrompt ?? `Select a category to ${inForm ? "add " : "remove "} items` }}
+        <h2 v-if="!selectedCategory" class="text-[1.15rem] font-semibold text-indigo-600 mb-4 mt-0">
+           {{ emptyPrompt ?? `Select a category to ${inForm ? "add " : "remove "} items` }}
         </h2>
         <form v-if="selectedCategory" class="flex flex-col gap-5" @submit.prevent="submitForm">
             <div v-if="items.length">
@@ -120,6 +117,7 @@ const props = defineProps<{
         submitForm:()=>void,
         emptyPrompt?: string,
     }>();
+
 
 const otherItemsSubcategories = [
   "Appliances",
