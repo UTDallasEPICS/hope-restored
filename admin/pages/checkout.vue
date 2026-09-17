@@ -973,6 +973,9 @@ async function confirmCheckout() {
 
   // Refresh local inventory display after successful checkout
   await loadInventory();
+  if (selectedCategory.value) {
+    selectCategory(selectedCategory.value);
+  }
 
   removedListServer.value = removals.map((r) =>
     r.category === "Other Items"
