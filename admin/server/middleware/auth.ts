@@ -4,13 +4,10 @@ import { requireSession } from "~/server/utils/auth";
 const STAFF_PROTECTED_PREFIXES = [
   "/api/checkout",
   "/api/inventory",
-  "/api/reports",
-  "/api/resource/create",
-  "/api/resource/update",
-  "/api/resource/delete",
+  "/api/reports"
 ];
 
-const ADMIN_PROTECTED_PREFIXES = ["/api/amend"];
+const ADMIN_PROTECTED_PREFIXES = ["/api/user"]; //backend check
 
 export default defineEventHandler(async (event) => {
   const method = event.node.req.method?.toUpperCase();
