@@ -5,6 +5,7 @@
     <div
       class="flex flex-col flex-1 min-h-0 overflow-hidden bg-gray-100 p-3 sm:p-4 md:p-6 lg:p-8 gap-3 sm:gap-4 font-sans"
     >
+      <!-- Top 1/3: Category selection -->
       <CategorySelector
         :categories="categories"
         :selected-category="selectedCategory"
@@ -37,216 +38,21 @@
         </button>
       </div>
 
+      <!-- Bottom 2/3 -->
       <section
-        class="checkout-panels grid grid-cols-1 gap-3 sm:gap-4 lg:grid-cols-2 lg:gap-6 flex-1 min-h-0 w-full min-w-0 items-stretch"
+        class="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 lg:gap-6 flex-1 min-h-0 items-stretch"
         :class="!selectedCategory ? 'grid-rows-2 lg:grid-rows-none' : ''"
       >
-        <!-- LEFT: inventory for selected category; height synced to form on lg+ -->
-        <div
-          class="checkout-panel checkout-panel--inventory order-2 lg:order-1 min-w-0 h-full min-h-0 bg-white border border-gray-200 rounded-lg shadow-sm p-4 md:p-5 flex flex-col overflow-hidden"
-          :style="selectedCategory ? checkoutLeftPanelStyle : undefined"
-        >
-        <div class="flex items-start justify-between gap-3 mb-4 shrink-0">
-          <h2
-            v-if="selectedCategory"
-            class="text-[1.15rem] font-semibold text-indigo-600 m-0 leading-snug"
-          >
-            {{ selectedCategory }} – Current Inventory
-          </h2>
-          <h2
-            v-else
-            class="text-[1.15rem] font-normal text-gray-500 m-0 leading-snug"
-          >
-            Select a category above to view inventory
-          </h2>
-          <div
-            v-if="selectedCategory"
-            ref="filtersWrapperRef"
-            class="relative shrink-0"
-            :class="{ 'filters-dropdown-open': filtersDropdownOpen }"
-          >
-            <div class="relative">
-              <button
-                type="button"
-                class="inline-flex items-center justify-center w-10 h-10 rounded-md border border-gray-300 bg-white text-gray-700 shadow-sm hover:border-indigo-500 hover:text-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                :aria-expanded="filtersDropdownOpen"
-                aria-haspopup="true"
-                aria-label="Open filter options"
-                @click="filtersDropdownOpen = !filtersDropdownOpen"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 640 640"
-                  class="w-5 h-5"
-                  aria-hidden="true"
-                >
-                  <path
-                    d="M342.6 534.6C330.1 547.1 309.8 547.1 297.3 534.6L137.3 374.6C124.8 362.1 124.8 341.8 137.3 329.3C149.8 316.8 170.1 316.8 182.6 329.3L320 466.7L457.4 329.4C469.9 316.9 490.2 316.9 502.7 329.4C515.2 341.9 515.2 362.2 502.7 374.7L342.7 534.7zM502.6 182.6L342.6 342.6C330.1 355.1 309.8 355.1 297.3 342.6L137.3 182.6C124.8 170.1 124.8 149.8 137.3 137.3C149.8 124.8 170.1 124.8 182.6 137.3L320 274.7L457.4 137.4C469.9 124.9 490.2 124.9 502.7 137.4C515.2 149.9 515.2 170.2 502.7 182.7z"
-                  />
-                </svg>
-                <span
-                  v-if="
-                    categoryFilter ||
-                    genderFilter ||
-                    clothingSizeFilter ||
-                    shoeSizeFilter
-                  "
-                  class="absolute top-1 right-1 inline-block w-2 h-2 rounded-full bg-indigo-600"
-                  aria-hidden="true"
-                ></span>
-              </button>
-              <div
-                v-show="filtersDropdownOpen"
-                class="absolute right-0 mt-1 w-56 bg-white border border-gray-200 rounded-lg shadow-lg p-3 z-10"
-              >
-                <div class="flex flex-col gap-2 text-sm">
-                  <label class="font-semibold text-gray-700">Category</label>
-                  <select
-                    v-model="categoryFilter"
-                    class="w-full rounded-md border border-gray-300 px-2 py-1 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  >
-                    <option value="">All categories</option>
-                    <option v-for="c in categoryOptions" :key="c" :value="c">
-                      {{ c }}
-                    </option>
-                  </select>
-                  <label class="font-semibold text-gray-700">Gender</label>
-                  <select
-                    v-model="genderFilter"
-                    class="w-full rounded-md border border-gray-300 px-2 py-1 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  >
-                    <option value="">All genders</option>
-                    <option v-for="g in genderOptions" :key="g" :value="g">
-                      {{ g }}
-                    </option>
-                  </select>
-                  <label class="font-semibold text-gray-700"
-                    >Clothing size</label
-                  >
-                  <select
-                    v-model="clothingSizeFilter"
-                    class="w-full rounded-md border border-gray-300 px-2 py-1 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  >
-                    <option value="">All clothing sizes</option>
-                    <option
-                      v-for="s in clothingSizeOptions"
-                      :key="s"
-                      :value="s"
-                    >
-                      {{ s }}
-                    </option>
-                  </select>
-                  <label class="font-semibold text-gray-700">Shoe size</label>
-                  <select
-                    v-model="shoeSizeFilter"
-                    class="w-full rounded-md border border-gray-300 px-2 py-1 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  >
-                    <option value="">All shoe sizes</option>
-                    <option v-for="s in shoeSizeOptions" :key="s" :value="s">
-                      {{ s }}
-                    </option>
-                  </select>
-                  <button
-                    type="button"
-                    class="mt-1 inline-flex items-center justify-center rounded-md bg-gray-100 px-3 py-2 text-sm font-semibold text-gray-700 border border-gray-200 hover:bg-gray-200"
-                    @click="loadInventory"
-                  >
-                    Refresh
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- lg:h-0 + flex-1: long table scrolls inside fixed-height card on desktop -->
-        <div
-          v-if="selectedCategory"
-          class="min-h-0 flex-1 overflow-x-auto lg:h-0 lg:flex-1 lg:min-h-0 lg:overflow-y-auto lg:overscroll-contain"
-        >
-          <table
-            class="w-full max-w-full min-w-0 table-fixed border border-gray-200 bg-white text-sm"
-          >
-            <template v-if="loadingInventory">
-              <td colspan="2" class="px-3 py-2 text-center">Loading...</td>
-            </template>
-            <template v-else-if="!checkoutInventoryRows.length">
-              <td colspan="2" class="px-3 py-2 text-center text-gray-500">
-                No inventory for this category.
-              </td>
-            </template>
-            <template
-              v-else
-              v-for="row in checkoutInventoryRows"
-              :key="row.category"
-            >
-              <thead>
-                <tr>
-                  <th
-                    colspan="2"
-                    class="border-b border-gray-200 bg-gray-50 px-3 py-2"
-                  >
-                    <div
-                      class="flex items-center justify-between text-xl font-bold text-gray-900"
-                    >
-                      <span>{{ row.category }}</span>
-                      <span
-                        v-if="simpleCategories.includes(row.category)"
-                        class="text-lg font-semibold"
-                        >{{ row.quantity }}</span
-                      >
-                    </div>
-                  </th>
-                </tr>
-              </thead>
-              <template
-                v-for="genders in row.genders"
-                :key="`${row.category}-${genders.name}`"
-              >
-                <template v-if="genderInventoryTotal(genders) > 0">
-                  <tr class="bg-white">
-                    <td
-                      class="bg-white px-3 py-2 font-semibold text-base text-gray-800"
-                      colspan="2"
-                    >
-                      {{ genders.name }}
-                    </td>
-                  </tr>
-                  <tr
-                    v-for="info in genders.info"
-                    :key="`${row.category}-${genders.name}-${info.size}`"
-                    class="bg-white"
-                  >
-                    <td class="border-t border-gray-200 bg-white px-3 py-2">
-                      {{ info.size }}
-                    </td>
-                    <td class="border-t border-gray-200 bg-white px-3 py-2 text-right">
-                      {{ info.quantity }}
-                    </td>
-                  </tr>
-                </template>
-                <tr v-else class="bg-white">
-                  <td
-                    class="border-t border-gray-200 bg-white px-3 py-2 font-semibold text-base text-gray-800"
-                  >
-                    {{ genders.name }}
-                  </td>
-                  <td
-                    class="border-t border-gray-200 bg-white px-3 py-2 text-right font-semibold text-base text-gray-800"
-                  >
-                    0
-                  </td>
-                </tr>
-              </template>
-            </template>
-          </table>
-        </div>
-        </div>
+        <!-- LEFT: inventory for selected category -->
+        <InventoryPanel
+          class="order-2 lg:order-1"
+          :selected-category="selectedCategory"
+          :category-details="categoryDetails"
+          :visible-genders="visibleGenders"
+        />
 
         <!-- RIGHT: removal form first on mobile -->
         <div
-          id="checkout-item-removal-form"
-          ref="rightPanelRef"
           class="checkout-panel checkout-panel--form order-1 lg:order-2 min-w-0 h-full min-h-0 flex flex-col"
         >
           <InOutForm
@@ -341,14 +147,16 @@
 import {
   ref,
   computed,
-  onMounted,
-  onUnmounted,
   watch,
-  nextTick,
 } from "vue";
 import { $fetch } from "ofetch";
 import { useRouter } from "vue-router";
 import InOutForm from "../components/Inventory/InOutForm.vue";
+import InventoryPanel from "../components/Inventory/InventoryPanel.vue";
+import {
+  getDefaultSizesForCategory,
+  normalizeGenderSizes,
+} from "../composables/inventorySizes";
 
 type InventoryInfoRow = {
   size: string;
@@ -364,13 +172,6 @@ type InventoryCategoryGroup = {
   category: string;
   quantity: number;
   genders: InventoryGenderGroup[];
-};
-
-type InventoryRow = {
-  category: string;
-  gender: string;
-  size: string;
-  quantity: number;
 };
 
 type CheckoutItem = {
@@ -425,78 +226,6 @@ const visibleGenders = computed(() =>{
 
 const sizeOptions = ["XS", "S", "M", "L", "XL", "2XL", "3XL", "4XL+"];
 
-/** Desktop: left inventory card height = right form natural height; form is not grid-stretched */
-const rightPanelRef = ref<HTMLElement | null>(null);
-const leftPanelHeightPx = ref<number | null>(null);
-/** Must match Tailwind `md:` two-column layout (see admin/assets/css/main.css --breakpoint-md) */
-const CHECKOUT_TWO_COL_MQL = "(min-width: 1024px)";
-
-function isCheckoutTwoColumnLayout() {
-  if (typeof window === "undefined") return false;
-  return window.matchMedia(CHECKOUT_TWO_COL_MQL).matches;
-}
-
-function getRightFormPanelEl(): HTMLElement | null {
-  const wrapper = rightPanelRef.value as HTMLElement | null;
-  if (wrapper) {
-    const formEl = wrapper.firstElementChild as HTMLElement | null;
-    return formEl ?? wrapper;
-  }
-  return typeof document !== "undefined"
-    ? document.getElementById("checkout-item-removal-form")
-    : null;
-}
-
-/** Grid min-height:auto would ignore a plain height:px and grow with the table; clamp with maxHeight + minHeight 0 */
-const checkoutLeftPanelStyle = computed(() => {
-  const h = leftPanelHeightPx.value;
-  if (h === null) return undefined;
-  return {
-    height: `${h}px`,
-    maxHeight: `${h}px`,
-    minHeight: "0",
-  } as const;
-});
-
-function syncCheckoutPanelHeights() {
-  if (typeof window === "undefined") return;
-  if (!isCheckoutTwoColumnLayout()) {
-    leftPanelHeightPx.value = null;
-    return;
-  }
-  const rightEl = getRightFormPanelEl();
-  if (!rightEl) return;
-  const h = Math.round(rightEl.getBoundingClientRect().height);
-  if (h < 1) return;
-  leftPanelHeightPx.value = h;
-}
-
-/** Run after layout so getBoundingClientRect matches painted form */
-function scheduleSyncCheckoutPanelHeights() {
-  if (typeof window === "undefined") return;
-  requestAnimationFrame(() => {
-    requestAnimationFrame(syncCheckoutPanelHeights);
-  });
-}
-
-let rightPanelResizeObserver: ResizeObserver | null = null;
-
-function attachRightPanelResizeObserver() {
-  rightPanelResizeObserver?.disconnect();
-  rightPanelResizeObserver = null;
-  const rightEl = getRightFormPanelEl();
-  if (!rightEl || typeof ResizeObserver === "undefined") return;
-  rightPanelResizeObserver = new ResizeObserver(() =>
-    scheduleSyncCheckoutPanelHeights(),
-  );
-  rightPanelResizeObserver.observe(rightEl);
-}
-
-let checkoutTwoColMql: MediaQueryList | null = null;
-function onCheckoutTwoColMqlChange() {
-  scheduleSyncCheckoutPanelHeights();
-}
-
 const categories = [
   { name: "Shirts", hasSize: true },
   { name: "Pants", hasSize: true },
@@ -521,6 +250,7 @@ function selectCategory(catName:string){
     isOtherItems.value = false;
     return;
   }
+  fetchCategoryDetails(catName);
   if(simpleCategories.includes(selectedCategory.value)){
     items.value.push(
       [{name:selectedCategory.value,
@@ -585,22 +315,10 @@ function selectCategory(catName:string){
 
 const availableMap = ref<Record<string, number>>({});
 
-const inventoryRows = ref<InventoryRow[]>([]);
-const otherItemsInventory = ref<InventoryCategoryGroup | null>(null);
 const loadingInventory = ref(false);
-const filtersDropdownOpen = ref(false);
-const filtersWrapperRef = ref<HTMLElement | null>(null);
-const categoryFilter = ref("");
-const genderFilter = ref("");
-const clothingSizeFilter = ref("");
-const shoeSizeFilter = ref("");
-const pageSize = ref(25);
-const currentPage = ref(1);
 // Category-specific rules
-const apparelCategories = ["Shirts", "Pants", "Jackets", "Underwear","Dresses"];
 const simpleCategories = ["Snack Packs", "Hygiene Packs", "Blankets"];
 const otherItemsCategory = "Other Items";
-const shoeCategory = "Shoes";
 const apparelSizes = ["XS", "S", "M", "L", "XL","2XL", "3XL", "4XL+"];
 const shoeSizes = (() => {
   const arr = [];
@@ -608,285 +326,71 @@ const shoeSizes = (() => {
   return arr;
 })();
 
-function genderInventoryTotal(genders: InventoryGenderGroup) {
-  return genders.info.reduce((sum, row) => sum + (row.quantity || 0), 0);
-}
-
-const checkoutInventoryRows = computed(() => {
-  if (!selectedCategory.value) return [];
-  return inventoryDisplay.value.filter(
-    (row) => row.category === selectedCategory.value,
-  );
+const categoryDetails = ref<{ catDetails: InventoryCategoryGroup[] }>({
+  catDetails: [],
 });
 
-const inventoryDisplay = computed(() => {
-  // Aggregate to one row per category. Quantity is the sum of matching size/gender rows
-  const inv = inventoryRows.value || [];
-  const aggregated: InventoryCategoryGroup[] = [];
-
-  for (const cat of apparelCategories) {
-    if (categoryFilter.value && cat !== categoryFilter.value) continue;
-    aggregated.push({
-      category: cat,
-      quantity: 0,
-      genders: (() => {
-        const catGenders: InventoryGenderGroup[] = [];
-        for (const g of visibleGenders.value) {
-          if (genderFilter.value && g !== genderFilter.value) continue;
-          catGenders.push({
-            name: g,
-            info: [],
-          });
-        }
-        return catGenders;
-      })(),
-    });
-  }
-  if (!categoryFilter.value || shoeCategory === categoryFilter.value) {
-    aggregated.push({
-      category: shoeCategory,
-      quantity: 0,
-      genders: (() => {
-        const catGenders: InventoryGenderGroup[] = [];
-        for (const g of visibleGenders.value) {
-          if (genderFilter.value && g !== genderFilter.value) continue;
-          catGenders.push({
-            name: g,
-            info: [],
-          });
-        }
-        return catGenders;
-      })(),
-    });
-  }
-  for (const cat of simpleCategories) {
-    if (categoryFilter.value && cat !== categoryFilter.value) continue;
-    aggregated.push({
-      category: cat,
-      quantity: 0,
-      genders: [],
-    });
-  }
-
-  // Inject Other Items with full breakdown if available
-  if (
-    (!categoryFilter.value || categoryFilter.value === otherItemsCategory) &&
-    otherItemsInventory.value
-  ) {
-    const oi = otherItemsInventory.value;
-    aggregated.push({
-      category: otherItemsCategory,
-      quantity: oi.quantity || 0,
-      genders: oi.genders || [],
-    });
-  }
-
-  for (const item of inv) {
-    for (const row of aggregated) {
-      if (item.category === row.category) {
-        row.quantity += item.quantity;
-        for (const gender of row.genders) {
-          if (item.gender === gender.name) {
-            if (item.category !== "Shoes") {
-              if (
-                (clothingSizeFilter.value &&
-                  item.size !== clothingSizeFilter.value) ||
-                item.quantity === 0
-              )
-                continue;
-              gender.info.push({
-                size: item.size ? item.size : "",
-                quantity: item.quantity,
-              });
-            } else if (item.category === "Shoes" && item.quantity > 0) {
-              if (shoeSizeFilter.value && item.size !== shoeSizeFilter.value)
-                continue;
-              gender.info.push({
-                size: item.size ? item.size : "",
-                quantity: item.quantity,
-              });
-            }
-          }
-        }
-      }
-    }
-  }
-  return aggregated;
-});
-
-const totalPages = computed(() => {
-  const len = inventoryDisplay.value.length || 0;
-  return Math.max(1, Math.ceil(len / (pageSize.value || 1)));
-});
-
-const inventoryPaged = computed(() => {
-  const start = (currentPage.value - 1) * pageSize.value;
-  return inventoryDisplay.value.slice(start, start + pageSize.value);
-});
-
-const categoryOptions = computed(() => {
-  // keep canonical category order from `categories` list
-  return categories.map((c) => c.name);
-});
-
-const genderOptions = computed(() => {
-  // Standard order for non-tech users
-  return visibleGenders.value;
-});
-
-const clothingSizeOptions = computed(() => apparelSizes);
-const shoeSizeOptions = computed(() => shoeSizes);
-
-watch(
-  [categoryFilter, genderFilter, clothingSizeFilter, shoeSizeFilter, pageSize],
-  () => {
-    currentPage.value = 1;
-  },
-);
-
-watch(
-  [loadingInventory, () => inventoryDisplay.value.length],
-  () => {
-    scheduleSyncCheckoutPanelHeights();
-  },
-  { flush: "post" },
-);
-
-async function loadInventory() {
+// Gets details for the selected category, mirroring inventory.vue's fetchCategoryDetails
+async function fetchCategoryDetails(category: string) {
   loadingInventory.value = true;
   inventoryLoadError.value = "";
   inventoryAuthStatus.value = null;
-  const map: Record<string, number> = {};
-  const normalized: InventoryRow[] = [];
+  try {
+    const data = await $fetch<InventoryCategoryGroup[]>("/api/inventory", {
+      params: { category },
+    });
 
-  // For each known category, fetch detailed breakdown and build rows of category/gender/size/quantity
-  const catNames = categories.map((c) => c.name);
-  for (const catName of catNames) {
-    try {
-      const data = await $fetch<InventoryCategoryGroup[]>("/api/inventory", {
-        params: { category: catName },
-      });
-      const InventoryInfo: InventoryCategoryGroup =
-        data.length > 0
-          ? data[0]
-          : {
-              category: catName,
-              quantity: 0,
-              genders: visibleGenders.value.map((gender) => ({
-                name: gender,
-                info: [],
-              })),
-            };
-      const totalQty = Number(InventoryInfo.quantity || 0);
-      for (const gender of InventoryInfo.genders) {
-        for (const row of gender.info) {
-          map[catName + gender.name + row.size] = row.quantity;
-        }
+    // Build the raw lookup map (used for checkout availability validation) straight from the DB response
+    const InventoryInfo: InventoryCategoryGroup =
+      data.length > 0 ? data[0] : { category, quantity: 0, genders: [] };
+    const map: Record<string, number> = {};
+    for (const gender of InventoryInfo.genders) {
+      for (const row of gender.info) {
+        map[category + gender.name + row.size] = row.quantity;
       }
-      // Build rows according to category type
-      if (catName === otherItemsCategory) {
-        // Keep full structure for Other Items so it can be displayed with subcategories + item names
-        otherItemsInventory.value = InventoryInfo;
-      } else if (apparelCategories.includes(catName)) {
-        for (const g of InventoryInfo.genders) {
-          for (const s of apparelSizes) {
-            const infoEntry = g.info.find(
-              (row: InventoryInfoRow) => row.size === s,
-            );
-            normalized.push({
-              category: catName,
-              gender: g.name,
-              size: s,
-              quantity: infoEntry?.quantity ?? 0,
-            });
-          }
-        }
-      } else if (catName === shoeCategory) {
-        for (const g of InventoryInfo.genders) {
-          for (const s of shoeSizes) {
-            const infoEntry = g.info.find(
-              (row: InventoryInfoRow) => row.size === s,
-            );
-            normalized.push({
-              category: catName,
-              gender: g.name,
-              size: s,
-              quantity: infoEntry?.quantity ?? 0,
-            });
-          }
-        }
-      } else if (simpleCategories.includes(catName)) {
-        normalized.push({
-          category: catName,
-          gender: "",
-          size: "N/A",
-          quantity: totalQty,
-        });
-        map[catName] = totalQty;
-      }
-    } catch (e) {
-      if (setInventoryAuthError(e)) {
-        loadingInventory.value = false;
-        return;
-      }
-      console.error("Error loading category details for", catName, e);
     }
-  }
+    if (simpleCategories.includes(category)) {
+      map[category] = Number(InventoryInfo.quantity || 0);
+    }
+    availableMap.value = map;
 
-  inventoryRows.value = normalized;
-  availableMap.value = map;
+    const fallbackGenders =
+      category === otherItemsCategory
+        ? []
+        : visibleGenders.value.map((gender) => ({
+            name: gender,
+            info: getDefaultSizesForCategory(category).map((size) => ({
+              size,
+              quantity: 0,
+            })),
+          }));
+    const normalizedData =
+      data.length > 0
+        ? data.map((entry) => ({
+            ...entry,
+            genders: normalizeGenderSizes(category, entry.genders ?? []),
+          }))
+        : [{ category, quantity: 0, genders: fallbackGenders }];
+
+    categoryDetails.value = { catDetails: normalizedData };
+  } catch (err) {
+    if (setInventoryAuthError(err)) {
+      loadingInventory.value = false;
+      return;
+    }
+    console.error("Error fetching category details:", err);
+    categoryDetails.value = { catDetails: [] };
+    availableMap.value = {};
+  }
   loadingInventory.value = false;
-  await nextTick();
-  scheduleSyncCheckoutPanelHeights();
 }
 
-onMounted(async () => {
-  void loadInventory();
-  if (typeof window === "undefined") return;
-  window.addEventListener("resize", scheduleSyncCheckoutPanelHeights);
-  checkoutTwoColMql = window.matchMedia(CHECKOUT_TWO_COL_MQL);
-  checkoutTwoColMql.addEventListener("change", onCheckoutTwoColMqlChange);
-  await nextTick();
-  await nextTick();
-  scheduleSyncCheckoutPanelHeights();
-  attachRightPanelResizeObserver();
-  if (!rightPanelResizeObserver) {
-    await nextTick();
-    attachRightPanelResizeObserver();
+// Retry the currently selected category's data (used by the error banner's "Try again")
+async function loadInventory() {
+  if (selectedCategory.value) {
+    await fetchCategoryDetails(selectedCategory.value);
   }
-});
-
-let filtersClickOutsideHandler: ((e: MouseEvent) => void) | null = null;
-watch(filtersDropdownOpen, (isOpen) => {
-  if (filtersClickOutsideHandler) {
-    document.removeEventListener("click", filtersClickOutsideHandler);
-    filtersClickOutsideHandler = null;
-  }
-  if (isOpen) {
-    filtersClickOutsideHandler = (e: MouseEvent) => {
-      if (
-        filtersWrapperRef.value &&
-        !filtersWrapperRef.value.contains(e.target as Node)
-      ) {
-        filtersDropdownOpen.value = false;
-      }
-    };
-    const clickHandler = filtersClickOutsideHandler;
-    setTimeout(() => document.addEventListener("click", clickHandler), 0);
-  }
-});
-onUnmounted(() => {
-  if (filtersClickOutsideHandler) {
-    document.removeEventListener("click", filtersClickOutsideHandler);
-  }
-  if (typeof window !== "undefined") {
-    window.removeEventListener("resize", scheduleSyncCheckoutPanelHeights);
-  }
-  checkoutTwoColMql?.removeEventListener("change", onCheckoutTwoColMqlChange);
-  checkoutTwoColMql = null;
-  rightPanelResizeObserver?.disconnect();
-  rightPanelResizeObserver = null;
-});
+}
 
 /* ----------------------
    Checkout Logic
