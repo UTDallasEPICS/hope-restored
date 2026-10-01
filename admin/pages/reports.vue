@@ -318,6 +318,7 @@
 <script setup>
 import { computed, onMounted, ref, watchEffect } from 'vue';
 import CategoryDetails from '../components/categoryDetails.vue';
+import { getDefaultSizesForCategory, normalizeGenderSizes } from '../composables/inventorySizes.ts';
 
 function getTodayInCentralTime() {
     const now = new Date();
@@ -721,8 +722,99 @@ async function saveDaily() {
     }
 }
 
+// Combines standard size list with report data for gender 
+function mergeSizes(existing = [], normalized = []) {
+    const existingBySize = new Map(existing.map((item) => [item.size, item]));
+    const normalizedSizes = new Set(normalized.map((item) => item.size));
+
+    const normalizedRows = normalized.map(({ size, quantity }) => {
+        const existingRow = existingBySize.get(size);
+        return {
+            ...existingRow,
+            size,
+            quantity: existingRow?.quantity ?? quantity ?? 0,
+            additions: existingRow?.additions ?? 0,
+            removals: existingRow?.removals ?? 0,
+        };
+    });
+    const additionalRows = existing
+        .filter((item) => !normalizedSizes.has(item.size))
+        .map((item) => ({
+            ...item,
+            quantity: item.quantity ?? 0,
+            additions: item.additions ?? 0,
+            removals: item.removals ?? 0,
+        }));
+
+    const mergedRows = [...normalizedRows, ...additionalRows];
+    console.log('[reports] mergeSizes', { existing, normalized, result: mergedRows });
+    return mergedRows;
+}
+// Returns new array of category rows with complete gender/size data 
+function normalizeAllCategories(inventory = []) {
+    console.log('[reports] normalizeAllCategories input', inventory);
+    const normalizedInventory = inventory.map((row) => {
+        const existingGenders = Array.isArray(row.genders) ? row.genders : [];
+        const visibleGenders = row.category === 'Dresses'
+            ? ['Female']
+            : ['Male', 'Female', 'Child'];
+        const fallbackGenders = row.category === 'Other Items'
+            ? []
+            : visibleGenders.map((name) => ({
+                name,
+                info: getDefaultSizesForCategory(row.category).map((size) => ({
+                    size,
+                    quantity: 0,
+                    additions: 0,
+                    removals: 0,
+                })),
+            }));
+        const normalizedData = existingGenders.length > 0
+            ? [{
+                ...row,
+                genders: normalizeGenderSizes(row.category, existingGenders),
+            }]
+            : [{
+                ...row,
+                quantity: row.quantity ?? 0,
+                genders: fallbackGenders,
+            }];
+        const normalizedGenders = normalizedData[0].genders;
+
+        if (row.category === 'Other Items') {
+            return {
+                ...normalizedData[0],
+                genders: normalizedGenders.map((gender) => ({
+                    ...gender,
+                    info: mergeSizes(gender.info ?? [], gender.info ?? []),
+                })),
+            };
+        }
+
+        const normalizedByName = new Map(normalizedGenders.map((gender) => [gender.name, gender]));
+        const existingByName = new Map(existingGenders.map((gender) => [gender.name, gender]));
+
+        return {
+            ...normalizedData[0],
+            genders: visibleGenders.map((name) => {
+                const existingGender = existingByName.get(name);
+                const normalizedGender = normalizedByName.get(name)
+                    ?? fallbackGenders.find((gender) => gender.name === name);
+
+                return {
+                    ...normalizedGender,
+                    name,
+                    info: mergeSizes(existingGender?.info ?? [], normalizedGender?.info ?? []),
+                };
+            }),
+        };
+    });
+    console.log('[reports] normalizeAllCategories result', normalizedInventory);
+    return normalizedInventory;
+}
+
 function getDetails(category, row){
-    detailRow.value = row;
+    detailRow.value = normalizeAllCategories([{ category, genders: row ?? [] }])[0].genders;
     detailCategory.value = category;
     showDetails.value = true;
 }
