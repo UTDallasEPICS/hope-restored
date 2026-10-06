@@ -660,7 +660,7 @@ async function saveMonthly() {
         const startDate = new Date(year,month-1,1);
         const endDate = new Date(year,month,0);
         const data = await $fetch(`/api/reports?startDate=${startDate}&endDate=${endDate}`);
-        selectedReportRows.value = Array.isArray(data) ? data : mapApiResponseToRows(data);
+        selectedReportRows.value = Array.isArray(data) ? normalizeAllCategories(data) : mapApiResponseToRows(data);
         selectedReportTitle.value = `${monthNames[selectedDate.value.month]} ${selectedDate.value.year}`;
         viewingSelectedReport.value = true;
         ChooseMonthlyReport.value = false;
@@ -684,7 +684,7 @@ async function saveWeekly() {
         const end = formatLocalDate(selectedDate.value.weekEnd);
         const data = await $fetch(`/api/reports?startDate=${selectedDate.value.weekStart}&endDate=${selectedDate.value.weekEnd}`);
         console.log(data);
-        selectedReportRows.value = Array.isArray(data) ? data : mapApiResponseToRows(data);
+        selectedReportRows.value = Array.isArray(data) ? normalizeAllCategories(data) : mapApiResponseToRows(data);
 
         const startDisplay = `${monthNames[selectedDate.value.weekStart.getMonth()]} ${selectedDate.value.weekStart.getDate()}`;
         const endDisplay = `${monthNames[selectedDate.value.weekEnd.getMonth()]} ${selectedDate.value.weekEnd.getDate()}`;
@@ -709,7 +709,7 @@ async function saveDaily() {
     try {
         const date = formatLocalDate(selectedDate.value);
         const data = await $fetch(`/api/reports?startDate=${selectedDate.value}&endDate=${selectedDate.value}`);
-        selectedReportRows.value = Array.isArray(data) ? data : mapApiResponseToRows(data);
+        selectedReportRows.value = Array.isArray(data) ? normalizeAllCategories(data) : mapApiResponseToRows(data);
         selectedReportTitle.value = `${monthNames[selectedDate.value.getMonth()]} ${selectedDate.value.getDate()} ${selectedDate.value.getFullYear()}`;
         viewingSelectedReport.value = true;
         ChooseDailyReport.value = false;
@@ -849,7 +849,7 @@ function gendersWithQuantity(genders) {
 }
 
 function infoRowsWithQuantity(gender) {
-    return (gender.info ?? []).filter((i) => i.quantity !== 0);
+    return (gender.info ?? []);//.filter((i) => i.quantity !== 0);
 }
 
 function hasMasterBreakdown(row) {
