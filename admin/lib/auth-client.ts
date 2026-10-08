@@ -5,7 +5,7 @@ function resolveAuthBaseURL() {
 	if (typeof window !== "undefined") {
 		return window.location.origin;
 	}
-	return undefined;
+	return process.env.BETTER_AUTH_URL;
 }
 
 export const authClient = createAuthClient({
