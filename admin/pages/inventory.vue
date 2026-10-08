@@ -184,7 +184,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from "vue";
 import InOutForm from "../components/Inventory/InOutForm.vue";
-import InventoryPanel from "../components/inventory/InventoryPanel.vue";
+import InventoryPanel from "../components/Inventory/InventoryPanel.vue";
 import { formatApiError } from "../utils/format-api-error";
 import {
   sizeOptions,
