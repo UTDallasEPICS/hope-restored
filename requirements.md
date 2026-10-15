@@ -17,11 +17,16 @@ Use the matrix below to track requirements throughout the project lifecycle.
 | --------- | ------------------------------------------------------------------------------------------------ | -------- | --------------- | -------------------------------------------- |
 | REQ-F-01  | Passwordless sign-in via email OTP (Better Auth + Nodemailer); OTP emailed to an existing user   | Verified | 2026F           | `server/utils/auth.ts`, `app/pages/auth.vue` |
 | REQ-F-02  | Server API gateway rejects unauthenticated requests to non-public routes with HTTP 401           | Verified | 2026F           | `server/middleware/auth.ts`                  |
-| REQ-F-03  | Client route guard redirects signed-out users to `/Login` and signed-in users away from `/Login`   | Verified | 2026F           | `app/middleware/auth.global.ts`              |
-| REQ-NF-03 | Deploy pipeline order is build → migrate → push → deploy, so a failed migration never ships       | Verified | 2026F           | `.github/workflows/deploy.yml`               |
+| REQ-F-03  | Client route guard redirects signed-out users to `/Login` and signed-in users away from `/Login` | Verified | 2026F           | `app/middleware/auth.global.ts`              |
+| REQ-F-04  | All sizes should be displayed regardless of quantity                                             | Verified | 2026F           | `pages/inventory.vue`                        |
+| REQ-F-05  |Show metrics for available sizes and gender for each clothing type                              | In-Progress| 2026F           | `pages/inventory.vue`                        |
+| REQ-F-06  |Support QR codes for addition and removal to inventory                                          | In-Progress| 2026F           | `pages/QR/QRdisplay.vue` , `pages/QR/QRscan.vue`              |
+| REQ-F-07  |Implement role based access with admin accounts that can create accounts and manage permissions | In-Progress| 2026F           |  `middleware/auth.global.ts`,  `server/middleware/auth.ts`            |
+| REQ-NF-03 | Deploy pipeline order is build → migrate → push → deploy, so a failed migration never ships      | Verified | 2026F           | `.github/workflows/deploy.yml`               |
 | REQ-NF-04 | `stage`/`prod` auto-deploy to AWS ECS via GitHub OIDC — no static AWS keys stored                | Verified | 2026F           | `.github/workflows/{stage,prod}.yml`         |
 | REQ-NF-05 | App ships as a container image with the toolchain to compile native modules in the builder       | Verified | 2026F           | `Dockerfile`                                 |
-|
+| REQ-NF-06 | QR code scanning must be done with a mobile device                                             | In-Progress| 2026F           | `Dockerfile`                                 |
+
 ## 2. Change Log
 
 Track major changes, additions, or deprecations to the project scope.
@@ -31,3 +36,4 @@ Track major changes, additions, or deprecations to the project scope.
 | 2026-08-23 | REQ-F/NF-\*    | Established the initial requirements register from the template baseline             | @TusharW4ni | —           |
 | 2026-08-23 | REQ-NF-07      | Pinned `better-auth@1.6.23` and `better-sqlite3@12.11.1` to keep the deploy build and migration Lambda working | @TusharW4ni | —           |
 | 2026-08-23 | REQ-NF-05      | Added `python3`/`make`/`g++` to the Docker builder so native modules compile         | @TusharW4ni | —           |
+| 2026-09-24 | REQ-F-06, REQ-NF-06      |Added requierments for QR code scanning                                     | @TusharW4ni | —           |
