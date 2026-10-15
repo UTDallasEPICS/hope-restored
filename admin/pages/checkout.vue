@@ -338,6 +338,8 @@
 </template>
 
 <script setup lang="ts">
+import { useAuthenticatedFetch } from "~/composables/useAuthenticatedFetch";
+const apiFetch = useAuthenticatedFetch();
 import {
   ref,
   computed,
@@ -346,7 +348,6 @@ import {
   watch,
   nextTick,
 } from "vue";
-import { $fetch } from "ofetch";
 import { useRouter } from "vue-router";
 import InOutForm from "../components/Inventory/InOutForm.vue";
 
@@ -763,7 +764,7 @@ async function loadInventory() {
   const catNames = categories.map((c) => c.name);
   for (const catName of catNames) {
     try {
-      const data = await $fetch<InventoryCategoryGroup[]>("/api/inventory", {
+      const data = await apiFetch<InventoryCategoryGroup[]>("/api/inventory", {
         params: { category: catName },
       });
       const InventoryInfo: InventoryCategoryGroup =
@@ -960,7 +961,7 @@ async function confirmCheckout() {
     );
 
   try {
-    await $fetch("/api/checkout", {
+    await apiFetch("/api/checkout", {
       method: "POST",
       body: { removals },
     });

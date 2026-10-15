@@ -1,5 +1,6 @@
 import { createAuthClient } from "better-auth/vue";
-import { emailOTPClient } from "better-auth/client/plugins";
+import { emailOTPClient, inferAdditionalFields } from "better-auth/client/plugins";
+import type { auth } from "./auth";
 
 function resolveAuthBaseURL() {
 	if (typeof window !== "undefined") {
@@ -10,6 +11,7 @@ function resolveAuthBaseURL() {
 
 export const authClient = createAuthClient({
 	baseURL: resolveAuthBaseURL(),
-	plugins: [emailOTPClient()],
+	fetchOptions: { credentials: "include" },
+	plugins: [emailOTPClient(), inferAdditionalFields<typeof auth>()],
 });
 

@@ -316,6 +316,8 @@
 </template>
 
 <script setup>
+import { useAuthenticatedFetch } from "~/composables/useAuthenticatedFetch";
+const apiFetch = useAuthenticatedFetch();
 import { computed, onMounted, ref, watchEffect } from 'vue';
 import CategoryDetails from '../components/categoryDetails.vue';
 
@@ -411,15 +413,15 @@ onMounted(async () => {
     pageLoadError.value = '';
     try {
         const [inventory, firstDate] = await Promise.all([
-            $fetch('/api/inventory'),
-            $fetch('/api/inventory/first-date').catch(() => null),
+            apiFetch('/api/inventory'),
+            apiFetch('/api/inventory/first-date').catch(() => null),
         ]);
         fullReport.value = Array.isArray(inventory) ? inventory : [];
         if (firstDate?.firstDate) {
             firstInventoryDate.value = new Date(firstDate.firstDate);
         }
         try {
-            await $fetch('/api/reports', { method: 'POST' });
+            await apiFetch('/api/reports', { method: 'POST' });
         } catch (reportErr) {
             console.warn('Daily report snapshot failed', reportErr);
         }
@@ -658,7 +660,7 @@ async function saveMonthly() {
         const month = selectedDate.value.month + 1;
         const startDate = new Date(year,month-1,1);
         const endDate = new Date(year,month,0);
-        const data = await $fetch(`/api/reports?startDate=${startDate}&endDate=${endDate}`);
+        const data = await apiFetch(`/api/reports?startDate=${startDate}&endDate=${endDate}`);
         selectedReportRows.value = Array.isArray(data) ? data : mapApiResponseToRows(data);
         selectedReportTitle.value = `${monthNames[selectedDate.value.month]} ${selectedDate.value.year}`;
         viewingSelectedReport.value = true;
@@ -681,7 +683,7 @@ async function saveWeekly() {
     try {
         const start = formatLocalDate(selectedDate.value.weekStart);
         const end = formatLocalDate(selectedDate.value.weekEnd);
-        const data = await $fetch(`/api/reports?startDate=${selectedDate.value.weekStart}&endDate=${selectedDate.value.weekEnd}`);
+        const data = await apiFetch(`/api/reports?startDate=${selectedDate.value.weekStart}&endDate=${selectedDate.value.weekEnd}`);
         console.log(data);
         selectedReportRows.value = Array.isArray(data) ? data : mapApiResponseToRows(data);
 
@@ -707,7 +709,7 @@ async function saveDaily() {
 
     try {
         const date = formatLocalDate(selectedDate.value);
-        const data = await $fetch(`/api/reports?startDate=${selectedDate.value}&endDate=${selectedDate.value}`);
+        const data = await apiFetch(`/api/reports?startDate=${selectedDate.value}&endDate=${selectedDate.value}`);
         selectedReportRows.value = Array.isArray(data) ? data : mapApiResponseToRows(data);
         selectedReportTitle.value = `${monthNames[selectedDate.value.getMonth()]} ${selectedDate.value.getDate()} ${selectedDate.value.getFullYear()}`;
         viewingSelectedReport.value = true;
@@ -728,7 +730,7 @@ function getDetails(category, row){
 }
 
 async function getReport(){
-    const Report = await  $fetch('/api/reports',{
+    const Report = await  apiFetch('/api/reports',{
         query:{
             startDate: new Date().toISOString(),
             endDate: new Date().toISOString(),
@@ -739,7 +741,7 @@ async function getReport(){
 }
 
 async function makeReport(){
-    const Report = await  $fetch('/api/reports',{
+    const Report = await  apiFetch('/api/reports',{
         method:"POST"
     })
     fullReport.value=Report
