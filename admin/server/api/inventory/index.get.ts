@@ -81,12 +81,44 @@ for(const item of inv){
   }
 }
 const simpleCategories =['Blankets','Hygiene Packs','Snack Packs'];
-const letterSizedCategories=['Shirts','Pants','Jackets','Underwear'];
+const letterSizedCategories=['Shirts','Pants','Jackets','Underwear', 'Dresses'];
 const numberSizedCategories=['Shoes'] //add pants
+
+// Defining  the correct size order for clothing (XS→4XL+) and shoes (numeric),
+// Tables for Inventory, Checkout, Category Details to show sizes correctly.
+
+const APPAREL_SIZE_ORDER = ["XS", "S", "M", "L", "XL", "2XL", "3XL", "4XL+"];
+
+function sizeSortKey(category: string, size: string): number {
+  if (letterSizedCategories.includes(category)) {
+    const i = APPAREL_SIZE_ORDER.indexOf(size);
+    return i === -1 ? Number.MAX_SAFE_INTEGER : i;
+  }
+  if (numberSizedCategories.includes(category)) {
+    const n = parseFloat(size);
+    return isNaN(n) ? Number.MAX_SAFE_INTEGER : n;
+  }
+  return 0;
+}
+
+
 let simpleData:{category:string,quantity:number,additions:number,removals:number,genders:{name:string,info:{size:string,quantity:number,additions:number,removals:number}[]}[]}[] = []
 let letterData:{category:string,quantity:number,additions:number,removals:number,genders:{name:string,info:{size:string,quantity:number,additions:number,removals:number}[]}[]}[] = []
 let numberData:{category:string,quantity:number,additions:number,removals:number,genders:{name:string,info:{size:string,quantity:number,additions:number,removals:number}[]}[]}[] = []
 let otherData:{category:string,quantity:number,additions:number,removals:number,genders:{name:string,info:{size:string,quantity:number,additions:number,removals:number}[]}[]}[] = []
+
+// Sorting each gender's size list before returning the data, using sizeSortKey().
+// Ensuring clothing sizes go smallest → largest and shoe sizes go in numeric order
+
+for (const cat of groupedData) {
+  for (const gender of cat.genders) {
+    gender.info.sort(
+      (a, b) => sizeSortKey(cat.category, a.size) - sizeSortKey(cat.category, b.size)
+    );
+  }
+}
+
+
 for(const cat of groupedData){
   if(simpleCategories.includes(cat.category)){
     simpleData.push(cat);
