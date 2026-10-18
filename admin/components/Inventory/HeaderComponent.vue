@@ -44,6 +44,12 @@
             </NuxtLink>
           </li>
           <li>
+            <NuxtLink to="/accounts" class="nav-link" exact-active-class="nav-link--active">
+              <i class="fas fa-users" aria-hidden="true"></i>
+              <span>Accounts</span>
+            </NuxtLink>
+          </li>
+          <li>
             <button type="button" class="nav-link" @click="handleSignOut">
               <i class="fas fa-right-from-bracket" aria-hidden="true"></i>
               <span>Logout</span>
