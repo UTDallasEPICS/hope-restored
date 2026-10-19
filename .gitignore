@@ -32,3 +32,5 @@ logs
 /private/
 
 .venv
+
+.png

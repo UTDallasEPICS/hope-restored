@@ -11,6 +11,32 @@ export const shoeSizeOptions = (() => {
   return sizes;
 })();
 
+// Clothing categories for QR codes
+export const qrClothingGenders: Record<string, string[]> = {
+  Shirts: ["Male", "Female", "Child"],
+  Pants: ["Male", "Female", "Child"],
+  Jackets: ["Male", "Female", "Child"],
+  Dresses: ["Female"],
+};
+
+/* Returns list of objects w/ format: 
+    { code: "ShirtsXSMale", category: "Shirts", gender: "Male", size: "XS" }
+    All category + gender + size combinations
+  Used in: itemTOQRCode.mts, qr-codes/index.get.ts
+*/
+export function getQRCatalog() {
+  return Object.entries(qrClothingGenders).flatMap(([category, genders]) =>
+    genders.flatMap((gender) =>
+      getDefaultSizesForCategory(category).map((size) => ({
+        code: `${category}${size}${gender}`,
+        category,
+        gender,
+        size,
+      })),
+    ),
+  );
+}
+
 // Determines the size list between clothes or shoes.
 export function getDefaultSizesForCategory(category: string): string[] {
   if (category === "Shoes") return shoeSizeOptions;
