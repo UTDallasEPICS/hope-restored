@@ -10,9 +10,9 @@
       <h1 class="text-xl font-semibold">Add to inventory</h1>
 
       <dl class="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
-        <dt class="font-medium">Clothing type</dt><dd>{{ item.category }}</dd>
-        <dt class="font-medium">Size</dt><dd>{{ item.size }}</dd>
-        <dt class="font-medium">Gender</dt><dd>{{ item.gender }}</dd>
+        <dt class="font-medium">Item type</dt><dd>{{ item.category }}</dd>
+        <template v-if="item.size"><dt class="font-medium">Size</dt><dd>{{ item.size }}</dd></template>
+        <template v-if="item.gender"><dt class="font-medium">Gender</dt><dd>{{ item.gender }}</dd></template>
       </dl>
 
       <label class="flex flex-col text-sm">
@@ -35,11 +35,10 @@
 </template>
 
 <script setup lang="ts">
-import { getQRCatalog } from "../../composables/inventorySizes";
-
 const route = useRoute();
 const code = String(route.params.code);
-const item = getQRCatalog().find((i) => i.code === code);
+const { data: catalog } = await useFetch<{ code: string; category: string; gender: string; size: string }[]>("/api/qr-codes");
+const item = (catalog.value ?? []).find((i) => i.code === code);
 
 const quantity = ref(1);
 const submitting = ref(false);
@@ -68,7 +67,7 @@ async function addToInventory() {
         quantity: quantity.value,
       },
     });
-    message.value = `Added ${quantity.value} to ${item.gender} ${item.category} (${item.size}).`;
+    message.value = `Added ${quantity.value} to ${[item.gender, item.category, item.size && `(${item.size})`].filter(Boolean).join(" ")}.`;
     quantity.value = 1;
   } catch (err: any) {
     errorMessage.value = err?.data?.message ?? "Could not add the item. Please try again.";

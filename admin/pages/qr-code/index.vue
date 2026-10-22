@@ -1,16 +1,19 @@
 <template>
   <div class="p-4 md:p-8 bg-gray-100 min-h-screen">
-    <h1 class="text-2xl font-semibold mb-4">QR Codes</h1>
+    <div class="flex items-center justify-between mb-4">
+      <h1 class="text-2xl font-semibold">QR Codes</h1>
+      <NuxtLink to="/qr-code/new" class="bg-blue-600 text-white rounded px-3 py-1 text-sm">New item type</NuxtLink>
+    </div>
 
     <div class="flex flex-wrap gap-4 mb-6">
       <label class="flex flex-col text-sm">
-        Clothing type
+        Item type
         <select v-model="category" class="border rounded px-2 py-1 bg-white">
           <option value="">Select type</option>
           <option v-for="c in categories" :key="c" :value="c">{{ c }}</option>
         </select>
       </label>
-      <label class="flex flex-col text-sm">
+      <label v-if="genders.length" class="flex flex-col text-sm">
         Gender
         <select v-model="gender" class="border rounded px-2 py-1 bg-white">
           <option value="">Select gender</option>
@@ -21,15 +24,15 @@
 
     <p v-if="pending">Loading QR codes...</p>
     <p v-else-if="error" class="text-red-600">Could not load QR codes.</p>
-    <p v-else-if="!category || !gender" class="text-gray-600">
-      Choose a clothing type and gender to view QR codes.
+    <p v-else-if="!ready" class="text-gray-600">
+      Choose an item type{{ genders.length ? ' and gender' : '' }} to view QR codes.
     </p>
     <p v-else-if="!filtered.length" class="text-gray-600">No QR codes found.</p>
 
     <div v-else class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
       <figure v-for="item in filtered" :key="item.code" class="bg-white rounded p-2 text-center shadow">
-        <img :src="`/qr-code/${item.code}.png`" :alt="`QR code for ${item.category} ${item.gender} ${item.size}`" class="w-full" />
-        <figcaption class="text-sm font-medium">{{ item.size || 'One size' }}</figcaption>
+        <img :src="`/qr-code/${encodeURIComponent(item.code)}.png`" :alt="`QR code for ${item.category} ${item.gender} ${item.size}`" class="w-full" />
+        <figcaption class="text-sm font-medium">{{ item.size || item.category }}</figcaption>
       </figure>
     </div>
   </div>
@@ -49,8 +52,11 @@ const genders = computed(() =>
 )
 watch(category, () => { gender.value = '' })
 
+// Types without genders only need a type selected
+const ready = computed(() => !!category.value && (!genders.value.length || !!gender.value))
+
 // API returns items already sorted so the grid reads smallest to largest
 const filtered = computed(() =>
-  items.value.filter((i) => i.category === category.value && i.gender === gender.value)
+  items.value.filter((i) => i.category === category.value && (!genders.value.length || i.gender === gender.value))
 )
 </script>

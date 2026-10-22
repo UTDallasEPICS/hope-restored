@@ -33,4 +33,8 @@ logs
 
 .venv
 
-.png
+# QR Code image files
+*.png
+
+# Runtime state for added QR item types
+admin/data/
