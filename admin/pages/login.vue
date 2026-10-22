@@ -3,27 +3,7 @@
     <div class="login-page__card-wrap">
       <div class="login-page__card">
         <h1 class="login-page__title">Hope Restored Admin</h1>
-        <SignUpTab :signup-form="signUp" />
-        <button
-          type="button"
-          class="login-page__toggle mt-4 w-full"
-          @click="signUp = !signUp"
-        >
-          <template v-if="!signUp">
-            <p class="text-center text-sm text-gray-700 m-0">
-              Don&apos;t have an account?
-            </p>
-            <p class="text-center text-blue-600 underline cursor-pointer m-0 mt-1">
-              Sign up
-            </p>
-          </template>
-          <template v-else>
-            <p class="text-center text-sm text-gray-700 m-0">Have an account?</p>
-            <p class="text-center text-blue-600 underline cursor-pointer m-0 mt-1">
-              Log in
-            </p>
-          </template>
-        </button>
+        <SignUpTab :signup-form="false" /> 
       </div>
     </div>
   </div>
@@ -31,8 +11,6 @@
 
 <script setup lang="ts">
 import SignUpTab from "~/components/Authentication/SignUpTab.vue";
-
-const signUp = ref(false);
 </script>
 
 <style scoped>
