@@ -61,6 +61,21 @@ async function resolveSessionUser(user: SessionUserLike): Promise<SessionUserLik
   return user;
 }
 
+/** Requires any signed-in user, with no staff/admin role check. */
+export async function requireLogin(event: Parameters<typeof getHeaders>[0]) {
+  const session = await getRequestSession(event);
+
+  if (!session?.session || !session?.user) {
+    throw createError({
+      statusCode: 401,
+      statusMessage: "Unauthorized",
+      message: "Please sign in to continue.",
+    });
+  }
+
+  return session;
+}
+
 export async function requireSession(
   event: Parameters<typeof getHeaders>[0],
   requiredRole: AppRole = "staff",
