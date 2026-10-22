@@ -2,8 +2,8 @@ import QRCode from "qrcode"
 import { mkdir, readdir } from "node:fs/promises"
 import { existsSync } from "node:fs"
 import { resolve } from "node:path"
-import { getQRCatalog, qrTypeCatalog } from "../composables/inventorySizes.ts"
-import { readQRTypes } from "../server/utils/qr-types.ts"
+import { getQRCatalog, qrTypeCatalog } from "../composables/inventorySizes.js"
+import { readQRTypes } from "../server/utils/qr-types.js"
 
 export const QR_DIR = resolve(process.cwd(), "public/qr-code")
 
@@ -13,16 +13,22 @@ export async function hasQRCodes() {
     return files.some((f) => f.endsWith(".png"))
 }
 
+// Link encoded in the QR code
+export function qrLinkFor(code) {
+    const base = process.env.BETTER_AUTH_URL?.replace(/\/+$/, "")
+    if (!base) throw new Error("BETTER_AUTH_URL must be set to generate QR code links")
+    return `${base}/qr-code/${encodeURIComponent(code)}`
+}
+
 // Writes a PNG for each item that doesn't have one yet
 /** @param {{ code: string }[]} items */
 export async function generateQRCodesFor(items) {
-    const baseUrl = process.env.url ?? ""
     await mkdir(QR_DIR, { recursive: true })   // create folder if DNE
 
     await Promise.all(
         items
             .filter((item) => !existsSync(`${QR_DIR}/${item.code}.png`))
-            .map((item) => QRCode.toFile(`${QR_DIR}/${item.code}.png`, `${baseUrl}${encodeURIComponent(item.code)}`))
+            .map((item) => QRCode.toFile(`${QR_DIR}/${item.code}.png`, qrLinkFor(item.code)))
     )
 }
 

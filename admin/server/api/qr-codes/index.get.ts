@@ -1,5 +1,5 @@
 import { defineEventHandler } from 'h3';
-import itemToQRCode from '../../../scripts/itemToQRCode.mts';
+import itemToQRCode from '../../../scripts/itemToQRCode.js';
 import { getQRCatalog } from '../../../composables/inventorySizes.ts';
 import { readQRTypes } from '../../utils/qr-types';
 import { existsSync } from 'node:fs';
