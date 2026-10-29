@@ -47,6 +47,9 @@
             <NuxtLink to="/accounts" class="nav-link" exact-active-class="nav-link--active">
               <i class="fas fa-users" aria-hidden="true"></i>
               <span>Accounts</span>
+            <NuxtLink to="/qr-code" class="nav-link" exact-active-class="nav-link--active">
+              <i class="fas fa-shopping-cart" aria-hidden="true"></i>
+              <span>QR Codes</span>
             </NuxtLink>
           </li>
           <li>
