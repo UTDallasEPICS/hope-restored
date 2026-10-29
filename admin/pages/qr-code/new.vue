@@ -1,5 +1,5 @@
 <template>
-  <div class="p-4 md:p-8 bg-gray-100 min-h-screen">
+  <div class="p-4 md:p-8 bg-gray-100 min-h-[calc(100vh-130px)] flex items-center justify-center">
     <form class="bg-white rounded shadow p-6 max-w-md flex flex-col gap-4" @submit.prevent="confirmCreation">
       <h1 class="text-xl font-semibold">New item type</h1>
 
