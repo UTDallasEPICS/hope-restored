@@ -90,6 +90,18 @@ export async function requireSession(
     });
   }
 
+  // Account administration requires the current database role, not an email allowlist.
+  if (requiredRole === "admin") {
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { role: true },
+    });
+    if (user?.role !== "admin") {
+      throw createError({ statusCode: 403, message: "Administrator access is required." });
+    }
+    return { ...session, user: { ...session.user, role: user.role } };
+  }
+
   const config = useRuntimeConfig(event);
   const adminEmails = parseCsv(config.betterAuthAdminEmails);
   const staffEmails = parseCsv(config.betterAuthStaffEmails);

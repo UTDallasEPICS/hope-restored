@@ -316,6 +316,8 @@
 </template>
 
 <script setup>
+import { useAuthenticatedFetch } from "~/composables/useAuthenticatedFetch";
+const apiFetch = useAuthenticatedFetch();
 import { computed, onMounted, ref, watchEffect } from 'vue';
 import CategoryDetails from '../components/categoryDetails.vue';
 import { getDefaultSizesForCategory, normalizeGenderSizes } from '../composables/inventorySizes.ts';
@@ -412,15 +414,15 @@ onMounted(async () => {
     pageLoadError.value = '';
     try {
         const [inventory, firstDate] = await Promise.all([
-            $fetch('/api/inventory'),
-            $fetch('/api/inventory/first-date').catch(() => null),
+            apiFetch('/api/inventory'),
+            apiFetch('/api/inventory/first-date').catch(() => null),
         ]);
         fullReport.value = Array.isArray(inventory) ? inventory : [];
         if (firstDate?.firstDate) {
             firstInventoryDate.value = new Date(firstDate.firstDate);
         }
         try {
-            await $fetch('/api/reports', { method: 'POST' });
+            await apiFetch('/api/reports', { method: 'POST' });
         } catch (reportErr) {
             console.warn('Daily report snapshot failed', reportErr);
         }
@@ -682,7 +684,7 @@ async function saveWeekly() {
     try {
         const start = formatLocalDate(selectedDate.value.weekStart);
         const end = formatLocalDate(selectedDate.value.weekEnd);
-        const data = await $fetch(`/api/reports?startDate=${selectedDate.value.weekStart}&endDate=${selectedDate.value.weekEnd}`);
+        const data = await apiFetch(`/api/reports?startDate=${selectedDate.value.weekStart}&endDate=${selectedDate.value.weekEnd}`);
         console.log(data);
         selectedReportRows.value = Array.isArray(data) ? normalizeAllCategories(data) : mapApiResponseToRows(data);
 
@@ -820,7 +822,7 @@ function getDetails(category, row){
 }
 
 async function getReport(){
-    const Report = await  $fetch('/api/reports',{
+    const Report = await  apiFetch('/api/reports',{
         query:{
             startDate: new Date().toISOString(),
             endDate: new Date().toISOString(),
@@ -831,7 +833,7 @@ async function getReport(){
 }
 
 async function makeReport(){
-    const Report = await  $fetch('/api/reports',{
+    const Report = await  apiFetch('/api/reports',{
         method:"POST"
     })
     fullReport.value=Report

@@ -5,7 +5,7 @@
         v-if="!validEmail"
         class="flex flex-col items-stretch w-full max-w-full"
       >
-        <h2 class="text-xl font-semibold mb-4 text-center">{{props.signupForm? "Sign up" : "Login"}}</h2>
+        <h2 class="text-xl font-semibold mb-4 text-center">{{ props.signupForm ? "Sign up" : "Login" }}</h2>
         <p
           v-if="ErrorMsg"
           class="whitespace-pre-wrap text-red-600 text-sm mb-4 w-full text-center"
@@ -13,22 +13,9 @@
         >
           {{ ErrorMsg }}
         </p>
-        <div
-          v-if="props.signupForm"
-          class="flex flex-col sm:flex-row gap-3 sm:gap-5 w-full"
-        >
-          <input
-            type="text"
-            v-model="firstName"
-            placeholder="First Name"
-            class="auth-input"
-          />
-          <input
-            type="text"
-            v-model="lastName"
-            placeholder="Last Name"
-            class="auth-input"
-          />
+        <div v-if="props.signupForm" class="flex flex-col sm:flex-row gap-3 sm:gap-5 w-full">
+          <input type="text" v-model="firstName" placeholder="First Name" class="auth-input" />
+          <input type="text" v-model="lastName" placeholder="Last Name" class="auth-input" />
         </div>
         <input
           type="email"
@@ -115,21 +102,14 @@ const ErrorMsg = ref('');
 const Error = ref(false);
 const firstName = ref('');
 const lastName = ref('');
+const props = defineProps<{ signupForm: boolean }>();
 
-
-const props = defineProps<{
-        signupForm:boolean
-    }>();
-
-watch(
-  () => props.signupForm,
-  () => {
-    validEmail.value = false;
-    otp.value = "";
-    Error.value = false;
-    ErrorMsg.value = "";
-  },
-);
+watch(() => props.signupForm, () => {
+  validEmail.value = false;
+  otp.value = '';
+  Error.value = false;
+  ErrorMsg.value = '';
+});
 
 async function sendLoginCode() {
   const result = await authClient.emailOtp.sendVerificationOtp({
@@ -140,7 +120,7 @@ async function sendLoginCode() {
     ErrorMsg.value =
       result.error.message ||
       result.error.statusText ||
-      `Error ${result.error.status}: Failed to send code. Check SMTP settings in admin/.env.`;
+      "Unable to send a login code. Please try again.";
     return false;
   }
   validEmail.value = true;
@@ -152,6 +132,7 @@ const handleSubmit = async () => {
   Error.value = false;
   ErrorMsg.value = "";
 
+  email.value = email.value.trim().toLowerCase();
   const regex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
   if (email.value.length === 0) {
     ErrorMsg.value = "Email field is required";
@@ -165,33 +146,14 @@ const handleSubmit = async () => {
     return;
   }
 
-  if (props.signupForm) {
-    if (firstName.value.length === 0) {
-      ErrorMsg.value = "First Name is required";
-    }
-    if (lastName.value.length === 0) {
-      ErrorMsg.value += ErrorMsg.value ? "\nLast Name is required" : "Last Name is required";
-    }
-    if (ErrorMsg.value) {
-      Error.value = true;
-      return;
-    }
-    try {
-      await sendLoginCode();
-      if (ErrorMsg.value) Error.value = true;
-    } catch (err) {
-      ErrorMsg.value =
-        (err as Error)?.message ||
-        "Network error: could not reach auth server.";
-      Error.value = true;
-    }
+  if (props.signupForm && (!firstName.value.trim() || !lastName.value.trim())) {
+    ErrorMsg.value = "First and last name are required";
+    Error.value = true;
     return;
   }
 
   try {
-    const userExists = await $fetch<boolean>("/api/user", {
-      params: { email: email.value.trim() },
-    });
+    const userExists = await $fetch<boolean>(`/api/user/${encodeURIComponent(email.value.trim())}`);
     if (!userExists) {
       ErrorMsg.value =
         "No account found for this email. Use Sign up or check the address.";
@@ -222,25 +184,23 @@ const handleOTPSubmit = async () =>{
     Error.value = true;
     return;
   }
-  const name = props.signupForm
-    ? [firstName.value, lastName.value].filter(Boolean).join(' ')
-    : undefined;
-
-  const result = await authClient.signIn.emailOtp({
-    email: email.value,
-    otp: otp.value,
-    ...(name ? { name } : {}),
-  });
-  console.log("EmailOTP result:",result)
-  if(result.error){
-    ErrorMsg.value = result.error.message || 'Code is invalid';
+  try {
+    const result = await authClient.signIn.emailOtp({
+      email: email.value,
+      otp: otp.value,
+      ...(props.signupForm ? { name: `${firstName.value.trim()} ${lastName.value.trim()}` } : {}),
+    });
+    if (result.error) {
+      ErrorMsg.value = result.error.message || 'Code is invalid';
+      Error.value = true;
+    } else {
+      Error.value = false;
+      ErrorMsg.value = '';
+      await router.push('/Home');
+    }
+  } catch (err) {
+    ErrorMsg.value = (err as Error)?.message || 'Unable to verify code. Please try again.';
     Error.value = true;
-  } else {
-    Error.value = false;
-    ErrorMsg.value = '';
-    router.push('/Home');
   }
 }
 </script>
-
-    
