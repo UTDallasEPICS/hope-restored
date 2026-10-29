@@ -11,7 +11,7 @@ const STAFF_PROTECTED_PREFIXES = [
   "/api/resource/delete",
 ];
 
-const ADMIN_PROTECTED_PREFIXES = ["/api/amend", "/api/user"];
+const ADMIN_PROTECTED_PREFIXES = ["/api/amend", "/api/user/accounts"];
 
 function matchesPrefix(path: string, prefix: string) {
   return path === prefix || path.startsWith(`${prefix}/`);

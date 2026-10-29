@@ -153,7 +153,7 @@ const handleSubmit = async () => {
   }
 
   try {
-    const userExists = await $fetch<boolean>(`/api/user/${email.value.trim()}`);
+    const userExists = await $fetch<boolean>(`/api/user/${encodeURIComponent(email.value.trim())}`);
     if (!userExists) {
       ErrorMsg.value =
         "No account found for this email. Use Sign up or check the address.";

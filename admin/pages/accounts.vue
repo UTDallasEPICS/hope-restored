@@ -89,23 +89,22 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
+import { useAuthenticatedFetch } from "~/composables/useAuthenticatedFetch";
+import { useStaffAccounts } from "~/composables/useStaffAccounts";
+import type { StaffAccount } from "~/types/staff-account";
 
-interface AppUser {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-}
+const apiFetch = useAuthenticatedFetch();
+const { createStaffAccount, deleteStaffAccount } = useStaffAccounts();
 
-const users = ref<AppUser[]>([]);
+const users = ref<StaffAccount[]>([]);
 const newName = ref("");
 const newEmail = ref("");
 const createError = ref("");
 const createSuccess = ref(false);
-const userToDelete = ref<AppUser | null>(null);
+const userToDelete = ref<StaffAccount | null>(null);
 
 async function fetchUsers() {
-  users.value = await $fetch<AppUser[]>("/api/user");
+  users.value = await apiFetch<StaffAccount[]>("/api/user/accounts");
 }
 
 async function handleCreate() {
@@ -118,10 +117,7 @@ async function handleCreate() {
   }
 
   try {
-    await $fetch("/api/user", {
-      method: "POST",
-      body: { name: newName.value, email: newEmail.value },
-    });
+    await createStaffAccount({ name: newName.value, email: newEmail.value });
     createSuccess.value = true;
     newName.value = "";
     newEmail.value = "";
@@ -131,16 +127,13 @@ async function handleCreate() {
   }
 }
 
-function confirmDelete(user: AppUser) {
+function confirmDelete(user: StaffAccount) {
   userToDelete.value = user;
 }
 
 async function handleDelete() {
   if (!userToDelete.value) return;
-  await $fetch("/api/user", {
-    method: "DELETE",
-    body: { email: userToDelete.value.email },
-  });
+  await deleteStaffAccount(userToDelete.value.id);
   userToDelete.value = null;
   await fetchUsers();
 }
