@@ -1,5 +1,5 @@
 <template>
-  <div class="p-4 md:p-8 bg-gray-100 min-h-screen">
+  <div class="p-4 md:p-8 bg-gray-100 min-h-[calc(100vh-130px)] flex items-center justify-center">
     <div v-if="!item" class="bg-white rounded shadow p-6 max-w-md">
       <h1 class="text-xl font-semibold mb-2">Unknown item</h1>
       <p class="text-gray-600 mb-4">No item matches the code "{{ code }}".</p>
