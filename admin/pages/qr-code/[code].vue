@@ -3,7 +3,7 @@
     <div v-if="!item" class="bg-white rounded shadow p-6 max-w-md">
       <h1 class="text-xl font-semibold mb-2">Unknown item</h1>
       <p class="text-gray-600 mb-4">No item matches the code "{{ code }}".</p>
-      <NuxtLink to="/qr-code" class="text-blue-600 underline">Back to QR codes</NuxtLink>
+      <NuxtLink v-if="isAdmin" to="/qr-code" class="text-blue-600 underline">Back to QR codes</NuxtLink>
     </div>
 
     <form v-else class="bg-white rounded shadow p-6 max-w-md flex flex-col gap-4" @submit.prevent="confirmAddition">
@@ -146,11 +146,20 @@
 
 <script setup lang="ts">
 import { formatApiError } from "../../utils/format-api-error";
+import { authClient } from "../../lib/auth-client";
+import { useAuthenticatedFetch } from "../../composables/useAuthenticatedFetch";
 
 const route = useRoute();
-const code = String(route.params.code);
-const { data: catalog } = await useFetch<{ code: string; category: string; gender: string; size: string }[]>("/api/qr-codes");
-const item = (catalog.value ?? []).find((i) => i.code === code);
+const code = computed(() => String(route.params.code));
+const apiFetch = useAuthenticatedFetch();
+const sessionState = authClient.useSession();
+const isAdmin = computed(() => sessionState.value?.data?.user.role === "admin");
+type QRItem = { code: string; category: string; gender: string; size: string };
+const { data: item, error } = await useAsyncData(
+  () => `qr-item:${code.value}`,
+  () => apiFetch<QRItem>(`/api/qr-codes/${encodeURIComponent(code.value)}`),
+);
+if (error.value && error.value.statusCode !== 404) throw createError(error.value);
 
 const quantity = ref(1);
 const submitting = ref(false);
@@ -169,16 +178,12 @@ function confirmAddition() {
 }
 
 async function addToInventory() {
-  if (!item) return;
+  if (!item.value) return;
   submitting.value = true;
   try {
-    await $fetch("/api/inventory/", {
+    await apiFetch(`/api/qr-codes/${encodeURIComponent(code.value)}`, {
       method: "POST",
-      credentials: "include",
       body: {
-        category: item.category,
-        gender: item.gender,
-        size: item.size,
         quantity: quantity.value,
       },
     });

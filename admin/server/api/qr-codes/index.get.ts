@@ -4,8 +4,10 @@ import { getQRCatalog } from '../../../composables/inventorySizes.ts';
 import { readQRTypes } from '../../utils/qr-types';
 import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { requireSession } from '../../utils/auth';
 
-export default defineEventHandler(async () => {
+export default defineEventHandler(async (event) => {
+  await requireSession(event, 'admin');
   const catalog = getQRCatalog(await readQRTypes());
   const dir = resolve(process.cwd(), 'public/qr-code');
   if (catalog.some((item) => !existsSync(`${dir}/${item.code}.png`))) {

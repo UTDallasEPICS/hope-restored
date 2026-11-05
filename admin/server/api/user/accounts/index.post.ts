@@ -7,18 +7,19 @@ export default defineEventHandler(async (event) => {
   const body = await readBody(event);
   const name = typeof body?.name === "string" ? body.name.trim() : "";
   const email = typeof body?.email === "string" ? body.email.trim().toLowerCase() : "";
+  const role = body?.role ?? "staff";
 
   if (!name || name.length > 200 || email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     throw createError({ statusCode: 400, message: "A name and valid email are required." });
   }
-  if (body.role !== undefined && body.role !== "staff") {
-    throw createError({ statusCode: 400, message: "Only staff accounts can be created." });
+  if (role !== "admin" && role !== "staff" && role !== "scanner") {
+    throw createError({ statusCode: 400, message: "Choose an admin, staff, or scanner role." });
   }
 
   try {
-    // Staff sign in through email OTP; no password or administrator session is created.
+    // Managed accounts sign in through email OTP; no administrator session is created.
     const user = await prisma.user.create({
-      data: { name, email, role: "staff", emailVerified: false },
+      data: { name, email, role, emailVerified: false },
       select: { id: true, name: true, email: true, role: true },
     });
     setResponseStatus(event, 201);
