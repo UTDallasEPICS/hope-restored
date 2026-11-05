@@ -3,6 +3,9 @@
     <div class="reports-container">
         <!-- Actions Row: View Previous Reports -->
         <div class="actions-row">
+            <button @click="showChartsModal = true" class="monthly-reports-button">
+                <i class="fas fa-chart-bar"></i> Charts
+            </button>
             <button @click="showPreviousReportsModal = true" class="monthly-reports-button">
                 <i class="fas fa-folder-open"></i> View Report
             </button>
@@ -10,6 +13,8 @@
                 <i class="fas fa-folder-open"></i> {{ !showFullInv? "Master Report": "Detail View" }}
             </button>
         </div>
+
+        <ReportCharts v-if="showChartsModal" @close="showChartsModal = false" />
 
         <!-- Previous Reports Modal -->
         <div v-if="showPreviousReportsModal" class="modal-overlay" >
@@ -320,6 +325,7 @@ import { useAuthenticatedFetch } from "~/composables/useAuthenticatedFetch";
 const apiFetch = useAuthenticatedFetch();
 import { computed, onMounted, ref, watchEffect } from 'vue';
 import CategoryDetails from '../components/categoryDetails.vue';
+import ReportCharts from '../components/ReportCharts.vue';
 import { getDefaultSizesForCategory, normalizeGenderSizes } from '../composables/inventorySizes.ts';
 
 function getTodayInCentralTime() {
@@ -340,6 +346,7 @@ const fullReport = ref([]);
 const pageLoading = ref(true);
 const pageLoadError = ref('');
 const showPreviousReportsModal = ref(false);
+const showChartsModal = ref(false);
 const ChooseDailyReport = ref(false);
 const ChooseWeeklyReport = ref(false);
 const ChooseMonthlyReport = ref(false);
