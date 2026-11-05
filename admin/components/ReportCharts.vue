@@ -37,7 +37,7 @@
                                         <option v-for="c in sizedCategories" :key="c" :value="c">{{ c }}</option>
                                     </select>
                                     <select v-model="sizeGender" aria-label="Gender">
-                                        <option v-for="g in genderFilters" :key="g" :value="g">{{ g }}</option>
+                                        <option v-for="g in sizeGenderFilters" :key="g" :value="g">{{ g }}</option>
                                     </select>
                                 </div>
                             </div>
@@ -114,10 +114,12 @@ ChartJS.register(BarElement, CategoryScale, Legend, LinearScale, LineElement, Po
 
 defineEmits(['close']);
 
-const GENDERS = ['Male', 'Female', 'Child'];
-const GENDER_COLORS = { Male: '#29a3e0', Female: '#f4a6c0', Child: '#8c8c8c' };
+const GENDERS = ['Male', 'Female', 'Child', 'Unisex'];
+const GENDER_COLORS = { Male: '#29a3e0', Female: '#f4a6c0', Child: '#8c8c8c', Unisex: '#7cb342' };
+const CLOTHING_CATEGORIES = ['Shirts', 'Pants', 'Jackets', 'Dresses', 'Underwear', 'Shoes'];
 const SIMPLE_CATEGORIES = ['Blankets', 'Snack Packs', 'Hygiene Packs', 'Other Items'];
 const genderFilters = ['All', ...GENDERS];
+const sizeGenderFilters = ['All', ...GENDERS.filter((g) => g !== 'Unisex')];
 
 const tab = ref('bar');
 const error = ref('');
@@ -160,14 +162,24 @@ const sizedCategories = computed(() =>
 );
 const gendersFor = (selected) => (selected === 'All' ? GENDERS : [selected]);
 
+// Non-clothing categories no gender, so whole quantity treated as Unisex.
+// null leaves a gap so a bar only shows where that gender applies.
+function genderValue(row, name) {
+    const isClothing = CLOTHING_CATEGORIES.includes(row.category);
+    if (name === 'Unisex') {
+        return isClothing ? null : (row.quantity ?? categoryTotal(row));
+    }
+    return isClothing ? sumGender(row.genders.find((g) => g.name === name)) : null;
+}
+
 const allCategoriesData = computed(() => {
-    const rows = snapshot.value.filter((r) => r.category !== 'Other Items');
+    const rows = snapshot.value;
     return {
         labels: rows.map((r) => r.category),
         datasets: gendersFor(categoryGender.value).map((name) => ({
             label: name,
             backgroundColor: GENDER_COLORS[name],
-            data: rows.map((r) => sumGender(r.genders.find((g) => g.name === name))),
+            data: rows.map((r) => genderValue(r, name)),
         })),
     };
 });
@@ -179,7 +191,7 @@ const sizesData = computed(() => {
     const labels = genders[0]?.info.map((i) => i.size) ?? [];
     return {
         labels,
-        datasets: gendersFor(sizeGender.value).map((name) => {
+        datasets: gendersFor(sizeGender.value).filter((name) => name !== 'Unisex').map((name) => {
             const g = genders.find((x) => x.name === name);
             return {
                 label: name,
@@ -265,6 +277,7 @@ async function loadSnapshot() {
     error.value = '';
     try {
         const data = await fetchReport(startOfDay(new Date()));
+        console.log(data)
         snapshot.value = Array.isArray(data) ? data : [];
         sizeCategory.value = sizedCategories.value[0] ?? '';
         lineCategory.value = allCategories.value[0] ?? '';
