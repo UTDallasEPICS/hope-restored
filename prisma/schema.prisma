@@ -15,7 +15,7 @@ model User {
   email         String    @unique
   emailVerified Boolean   @default(false)
   image         String?
-  role          String    @default("staff") // Role can be staff or admin
+  role          String    @default("staff") // Role can be staff, admin, or scanner
   
   accounts      Account[]
   sessions      Session[]

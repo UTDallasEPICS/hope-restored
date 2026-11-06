@@ -16,12 +16,20 @@
             placeholder="Full Name"
             class="auth-input"
           />
-          <input
+          <input  
             type="email"
             v-model="newEmail"
             placeholder="example@email.com"
             class="auth-input"
           />
+          <label class="text-sm">
+            Role
+            <select v-model="newRole" class="auth-input">
+              <option value="admin">Admin</option>
+              <option value="staff">Staff</option>
+              <option value="scanner">Scanner</option>
+            </select>
+          </label>
           <button type="submit" class="auth-submit">Create Account</button>
         </form>
       </section>
@@ -29,6 +37,7 @@
       <!-- Existing Accounts Section -->
       <section class="bg-white border border-gray-200 rounded-lg shadow-sm p-5 md:p-6">
         <h2 class="text-xl font-bold text-indigo-600 mb-4">Existing Accounts</h2>
+        <p v-if="updateSuccess" class="text-green-600 text-sm mb-3" role="status">Account updated successfully.</p>
 
         <p v-if="users.length === 0" class="text-gray-500 text-sm">No accounts found.</p>
 
@@ -48,6 +57,12 @@
               <td class="py-2">{{ user.role }}</td>
               <td class="py-2 text-right">
                 <button
+                  @click="openUpdate(user)"
+                  class="text-blue-600 hover:text-blue-800 text-sm font-semibold mr-3"
+                >
+                  Update
+                </button>
+                <button
                   @click="confirmDelete(user)"
                   class="text-red-600 hover:text-red-800 text-sm font-semibold"
                 >
@@ -60,6 +75,43 @@
       </section>
 
     </div>
+
+    <dialog
+      ref="updateDialog"
+      class="bg-white rounded-lg shadow-lg p-6 max-w-md w-[calc(100%-2rem)] backdrop:bg-black/40"
+      aria-labelledby="update-account-title"
+      @cancel="updating && $event.preventDefault()"
+      @close="userToUpdate = null"
+    >
+      <form v-if="userToUpdate" @submit.prevent="handleUpdate" class="flex flex-col gap-3">
+        <h2 id="update-account-title" class="text-xl font-bold text-indigo-600">Update Account</h2>
+        <p v-if="updateError" class="text-red-600 text-sm" role="alert">{{ updateError }}</p>
+        <label class="text-sm">
+          Full Name
+          <input v-model="editName" type="text" required maxlength="200" autofocus class="auth-input" :disabled="updating" />
+        </label>
+        <label class="text-sm">
+          Email
+          <input :value="userToUpdate.email" type="email" readonly class="auth-input bg-gray-100 text-gray-500" />
+        </label>
+        <label class="text-sm">
+          Role
+          <select v-model="editRole" class="auth-input" :disabled="updating">
+            <option value="admin">Admin</option>
+            <option value="staff">Staff</option>
+            <option value="scanner">Scanner</option>
+          </select>
+        </label>
+        <div class="flex justify-end gap-3 mt-2">
+          <button type="button" @click="updateDialog?.close()" :disabled="updating" class="px-4 py-2 rounded-md border border-gray-300">
+            Cancel
+          </button>
+          <button type="submit" :disabled="updating" class="auth-submit disabled:opacity-50">
+            {{ updating ? "Saving..." : "Save Changes" }}
+          </button>
+        </div>
+      </form>
+    </dialog>
 
     <!-- Delete Confirmation Modal -->
     <div
@@ -88,20 +140,32 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, onMounted, nextTick } from "vue";
 import { useAuthenticatedFetch } from "~/composables/useAuthenticatedFetch";
 import { useStaffAccounts } from "~/composables/useStaffAccounts";
 import type { StaffAccount } from "~/types/staff-account";
+import type { AppRole } from "~/utils/permissions";
+import { formatApiError } from "~/utils/format-api-error";
+import { authClient } from "~/lib/auth-client";
 
 const apiFetch = useAuthenticatedFetch();
-const { createStaffAccount, deleteStaffAccount } = useStaffAccounts();
+const { createStaffAccount, deleteStaffAccount, updateStaffAccount } = useStaffAccounts();
+const sessionState = authClient.useSession();
 
 const users = ref<StaffAccount[]>([]);
 const newName = ref("");
 const newEmail = ref("");
+const newRole = ref<AppRole>("staff");
 const createError = ref("");
 const createSuccess = ref(false);
 const userToDelete = ref<StaffAccount | null>(null);
+const userToUpdate = ref<StaffAccount | null>(null);
+const updateDialog = ref<HTMLDialogElement | null>(null);
+const editName = ref("");
+const editRole = ref<AppRole>("staff");
+const updateError = ref("");
+const updateSuccess = ref(false);
+const updating = ref(false);
 
 async function fetchUsers() {
   users.value = await apiFetch<StaffAccount[]>("/api/user/accounts");
@@ -117,10 +181,11 @@ async function handleCreate() {
   }
 
   try {
-    await createStaffAccount({ name: newName.value, email: newEmail.value });
+    await createStaffAccount({ name: newName.value, email: newEmail.value, role: newRole.value });
     createSuccess.value = true;
     newName.value = "";
     newEmail.value = "";
+    newRole.value = "staff";
     await fetchUsers();
   } catch (err) {
     createError.value = (err as Error)?.message || "Failed to create account.";
@@ -129,6 +194,39 @@ async function handleCreate() {
 
 function confirmDelete(user: StaffAccount) {
   userToDelete.value = user;
+}
+
+async function openUpdate(user: StaffAccount) {
+  userToUpdate.value = user;
+  editName.value = user.name ?? "";
+  editRole.value = user.role;
+  updateError.value = "";
+  updateSuccess.value = false;
+  await nextTick();
+  updateDialog.value?.showModal();
+}
+
+async function handleUpdate() {
+  if (!userToUpdate.value || updating.value) return;
+  updateError.value = "";
+  updating.value = true;
+  try {
+    const updated = await updateStaffAccount(userToUpdate.value.id, {
+      name: editName.value,
+      role: editRole.value,
+    });
+    users.value = users.value.map((user) => user.id === updated.id ? updated : user);
+    updateSuccess.value = true;
+    updateDialog.value?.close();
+    if (sessionState.value?.data?.user.id === updated.id) {
+      await sessionState.value.refetch();
+      if (updated.role !== "admin") await navigateTo("/Home");
+    }
+  } catch (err) {
+    updateError.value = formatApiError(err, "Failed to update account.");
+  } finally {
+    updating.value = false;
+  }
 }
 
 async function handleDelete() {

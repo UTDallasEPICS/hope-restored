@@ -1,11 +1,11 @@
 import { createError, defineEventHandler, readBody } from 'h3';
 import { qrTypeCatalog } from '../../../composables/inventorySizes.ts';
 import { addQRType, QRTypeError } from '../../utils/qr-types';
-import { requireLogin } from '../../utils/auth';
+import { requireSession } from '../../utils/auth';
 import { generateQRCodesForType } from '../../../scripts/itemToQRCode.js';
 
 export default defineEventHandler(async (event) => {
-  await requireLogin(event);
+  await requireSession(event, 'admin');
   const body = await readBody(event);
 
   try {
