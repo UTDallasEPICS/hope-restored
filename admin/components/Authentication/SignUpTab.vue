@@ -92,9 +92,11 @@
   
 <script setup lang="ts">
 import { ref, watch } from "vue";
-import { useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { authClient } from '../../lib/auth-client';
+import { qrLoginTarget } from '../../utils/permissions';
 const router = useRouter();
+const route = useRoute();
 const email = ref('');
 const validEmail = ref(false);
 const otp = ref('');
@@ -196,7 +198,7 @@ const handleOTPSubmit = async () =>{
     } else {
       Error.value = false;
       ErrorMsg.value = '';
-      await router.push('/Home');
+      await router.push(qrLoginTarget(route.query.redirect) || '/Home');
     }
   } catch (err) {
     ErrorMsg.value = (err as Error)?.message || 'Unable to verify code. Please try again.';

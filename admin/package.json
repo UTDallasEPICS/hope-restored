@@ -9,6 +9,7 @@
     "snapshot:daily": "node ./scripts/dailyInventorySnapshot.mjs",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
+    "test:auth": "node --test tests/auth.test.mjs",
     "postinstall": "nuxt prepare"
   },
   "dependencies": {

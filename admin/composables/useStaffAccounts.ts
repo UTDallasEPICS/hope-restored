@@ -1,7 +1,7 @@
 import { useAuthenticatedFetch } from "./useAuthenticatedFetch";
-import type { CreateStaffAccountInput, StaffAccount } from "~/types/staff-account";
+import type { CreateStaffAccountInput, StaffAccount, UpdateStaffAccountInput } from "~/types/staff-account";
 
-/** Call from setup. The API enforces administrator authorization for both operations. */
+/** Call from setup. The API enforces administrator authorization for all operations. */
 export function useStaffAccounts() {
   const apiFetch = useAuthenticatedFetch();
 
@@ -10,9 +10,14 @@ export function useStaffAccounts() {
   }
 
   function deleteStaffAccount(id: string) {
-    if (!id.trim()) throw new Error("A staff account ID is required.");
+    if (!id.trim()) throw new Error("An account ID is required.");
     return apiFetch<void>(`/api/user/accounts/${encodeURIComponent(id)}`, { method: "DELETE" });
   }
 
-  return { createStaffAccount, deleteStaffAccount };
+  function updateStaffAccount(id: string, input: UpdateStaffAccountInput) {
+    if (!id.trim()) throw new Error("An account ID is required.");
+    return apiFetch<StaffAccount>(`/api/user/accounts/${encodeURIComponent(id)}`, { method: "PATCH", body: input });
+  }
+
+  return { createStaffAccount, deleteStaffAccount, updateStaffAccount };
 }
