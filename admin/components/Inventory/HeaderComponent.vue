@@ -19,28 +19,40 @@
               <span>Home</span>
             </NuxtLink>
           </li>
-          <li>
+          <li v-if="hasStaffAccess">
             <NuxtLink to="/reports" class="nav-link" exact-active-class="nav-link--active">
               <i class="fas fa-chart-bar" aria-hidden="true"></i>
               <span>Reports</span>
             </NuxtLink>
           </li>
-          <li>
+          <li v-if="isAdmin">
             <NuxtLink to="/activity" class="nav-link" exact-active-class="nav-link--active">
               <i class="fas fa-clock-rotate-left" aria-hidden="true"></i>
               <span>Activity</span>
             </NuxtLink>
           </li>
-          <li>
+          <li v-if="hasStaffAccess">
             <NuxtLink to="/inventory" class="nav-link" exact-active-class="nav-link--active">
               <i class="fas fa-box" aria-hidden="true"></i>
               <span>Inventory</span>
             </NuxtLink>
           </li>
-          <li>
+          <li v-if="hasStaffAccess">
             <NuxtLink to="/checkout" class="nav-link" exact-active-class="nav-link--active">
               <i class="fas fa-shopping-cart" aria-hidden="true"></i>
               <span>Checkout</span>
+            </NuxtLink>
+          </li>
+          <li v-if="isAdmin">
+            <NuxtLink to="/accounts" class="nav-link" exact-active-class="nav-link--active">
+              <i class="fas fa-users" aria-hidden="true"></i>
+              <span>Accounts</span>
+            </NuxtLink>
+          </li>
+          <li v-if="isAdmin">
+            <NuxtLink to="/qr-code" class="nav-link" exact-active-class="nav-link--active">
+              <i class="fas fa-shopping-cart" aria-hidden="true"></i>
+              <span>QR Codes</span>
             </NuxtLink>
           </li>
           <li>
@@ -75,9 +87,12 @@
 import { computed, watch } from "vue";
 import { navigateTo, useRoute } from "nuxt/app";
 import { authClient } from "../../lib/auth-client";
+import { qrLoginTarget } from "../../utils/permissions";
 
 const sessionState = authClient.useSession();
 const isAuthenticated = computed(() => Boolean(sessionState.value?.data));
+const isAdmin = computed(() => sessionState.value?.data?.user.role === "admin");
+const hasStaffAccess = computed(() => isAdmin.value || sessionState.value?.data?.user.role === "staff");
 const route = useRoute();
 
 if (typeof window !== "undefined") {
@@ -93,7 +108,8 @@ if (typeof window !== "undefined") {
     isAuthenticated,
     (authed) => {
       if (authed && route.path === "/login") {
-        void navigateTo("/Home");
+        const target = qrLoginTarget(route.query.redirect);
+        void navigateTo(target || "/Home");
       }
     },
     { immediate: true },

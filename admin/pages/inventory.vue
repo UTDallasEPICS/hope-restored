@@ -182,6 +182,8 @@
 </template>
 
 <script setup lang="ts">
+import { useAuthenticatedFetch } from "~/composables/useAuthenticatedFetch";
+const apiFetch = useAuthenticatedFetch();
 import { ref, computed, onMounted, watch } from "vue";
 import InOutForm from "../components/Inventory/InOutForm.vue";
 import InventoryPanel from "../components/Inventory/InventoryPanel.vue";
@@ -328,7 +330,7 @@ watch(
 // Gets details for category
 async function fetchCategoryDetails(category: string) {
   try {
-    const data = await $fetch<CategoryDetail[]>("/api/inventory", {
+    const data = await apiFetch<CategoryDetail[]>("/api/inventory", {
       params: { category },
     });
     const fallbackGenders =
@@ -391,7 +393,7 @@ async function confirmPendingAdditions() {
   try {
     for (const body of pendingAdditionPayloads.value) {
       console.log(body);
-      await $fetch("/api/inventory/", {
+      await apiFetch("/api/inventory", {
         method: "POST",
         credentials: "include",
         body: {
@@ -421,7 +423,7 @@ async function confirmPendingAdditions() {
 async function getInventory() {
   try {
 
-    inventory.value = await ($fetch as any)("/api/inventory/", {
+    inventory.value = await (apiFetch as any)("/api/inventory", {
       method: "GET",
     });
   } catch (error) {

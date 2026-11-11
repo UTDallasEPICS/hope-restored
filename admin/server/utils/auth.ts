@@ -1,8 +1,7 @@
 import { createError, getHeaders } from "h3";
 import { auth } from "~/lib/auth";
 import prisma from "~/lib/prisma";
-
-type AppRole = "staff" | "admin";
+import type { AppRole } from "~/utils/permissions";
 
 type SessionUserLike = {
   role?: string | null;
@@ -43,22 +42,29 @@ export async function getRequestSession(event: Parameters<typeof getHeaders>[0])
   const session = await auth.api.getSession({
     headers,
   });
-  return session;
-}
-
-/** Session payload may omit `role`; load it from the user table when needed. */
-async function resolveSessionUser(user: SessionUserLike): Promise<SessionUserLike> {
-  if (user.role || !user.email) {
-    return user;
-  }
+  if (!session?.session || !session?.user) return null;
+  // Always use the current role so a scanner cannot retain old staff/admin permissions.
   const dbUser = await prisma.user.findUnique({
-    where: { email: user.email },
+    where: { id: session.user.id },
     select: { role: true },
   });
-  if (dbUser?.role) {
-    return { ...user, role: dbUser.role };
+  if (!dbUser) return null;
+  return { ...session, user: { ...session.user, role: dbUser.role } };
+}
+
+/** Requires any signed-in user, with no staff/admin role check. */
+export async function requireLogin(event: Parameters<typeof getHeaders>[0]) {
+  const session = await getRequestSession(event);
+
+  if (!session?.session || !session?.user) {
+    throw createError({
+      statusCode: 401,
+      statusMessage: "Unauthorized",
+      message: "Please sign in to continue.",
+    });
   }
-  return user;
+
+  return session;
 }
 
 export async function requireSession(
@@ -75,6 +81,22 @@ export async function requireSession(
     });
   }
 
+  if (requiredRole === "admin" || requiredRole === "scanner") {
+    const allowed = session.user.role === "admin"
+      || (requiredRole === "scanner" && (session.user.role === "scanner" || session.user.role === "staff"));
+    if (!allowed) {
+      throw createError({ statusCode: 403, message: requiredRole === "admin"
+        ? "Administrator access is required."
+        : "Scanner, staff, or administrator access is required." });
+    }
+    return session;
+  }
+
+  // A scanner must never inherit staff access from development mode or an email allowlist.
+  if (session.user.role === "scanner") {
+    throw createError({ statusCode: 403, message: "Scanner accounts can only use item QR codes." });
+  }
+
   const config = useRuntimeConfig(event);
   const adminEmails = parseCsv(config.betterAuthAdminEmails);
   const staffEmails = parseCsv(config.betterAuthStaffEmails);
@@ -85,9 +107,7 @@ export async function requireSession(
     return session;
   }
 
-  const user = await resolveSessionUser(session.user as SessionUserLike);
-
-  if (!hasRequiredRole(user, requiredRole, adminEmails, staffEmails)) {
+  if (!hasRequiredRole(session.user, requiredRole, adminEmails, staffEmails)) {
     throw createError({
       statusCode: 403,
       statusMessage: "Forbidden",
