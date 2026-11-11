@@ -8,7 +8,7 @@ const requestUrl = useRequestURL()
 
 const fullUrl = computed(() => {
   const path = props.value.replace(/^\/+/, '')
-  return `${requestUrl.origin}/${encodeURIComponent(path)}`
+  return `${requestUrl.origin}/qr-code/${encodeURIComponent(path)}`
 })
 
 watchEffect(async () => {

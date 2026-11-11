@@ -1,6 +1,6 @@
 <template>
   <div class="p-4 md:p-8 bg-gray-100 min-h-[calc(100vh-130px)] flex items-center justify-center">
-    <div v-if="!item" class="bg-white rounded shadow p-6 max-w-md">
+    <div v-if="!validCode" class="bg-white rounded shadow p-6 max-w-md">
       <h1 class="text-xl font-semibold mb-2">Unknown item</h1>
       <p class="text-gray-600 mb-4">No item matches the code "{{ code }}".</p>
       <NuxtLink v-if="isAdmin" to="/qr-code" class="text-blue-600 underline">Back to QR codes</NuxtLink>
@@ -160,6 +160,22 @@ const { data: item, error } = await useAsyncData(
   () => apiFetch<QRItem>(`/api/qr-codes/${encodeURIComponent(code.value)}`),
 );
 if (error.value && error.value.statusCode !== 404) throw createError(error.value);
+
+const codeList = ref([]);
+const categories=ref(["Shirts", "Pants", "Jackets", "Dresses"]);
+const apparelSizes=ref(["XS", "S", "M", "L", "XL", "2XL","3XL", "4XL+"]);
+const genders=ref(["Male", "Female", "Child"]);
+
+for(const c of categories.value){
+  for(const a of apparelSizes.value){
+    for(const g of genders.value){
+      codeList.value.push(c+a+g);
+    }
+  }
+}
+const validCode=computed(()=>{
+  return codeList.value.includes(code.value); 
+})
 
 const quantity = ref(1);
 const submitting = ref(false);
