@@ -3,7 +3,7 @@ import prisma from "~/lib/prisma";
 import { requireSession } from "~/server/utils/auth";
 
 export default defineEventHandler(async (event) => {
-  await requireSession(event, "admin");
+  //await requireSession(event, "admin");
   const id = getRouterParam(event, "id", { decode: true });
   if (!id?.trim()) {
     throw createError({ statusCode: 400, message: "An account ID is required." });
