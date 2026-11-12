@@ -29,7 +29,7 @@
     </p> -->
     <!-- <p v-else-if="!filtered.length" class="text-gray-600">No QR codes found.</p> -->
 
-    <div v-else class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+    <div v-else class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-4">
       <figure v-for="item of CodeList" :key="item.code" class="bg-white rounded p-2 text-center shadow">
         <!-- <img :src="`/qr-code/${encodeURIComponent(item.code)}.png`" :alt="`QR code for ${item.category} ${item.gender} ${item.size}`" class="w-full" /> -->
          <QRCode 
