@@ -1,6 +1,6 @@
 <!-- components/HeaderComponent.vue -->
 <template>
-  <header class="site-header">
+  <header class="site-header print:hidden">
     <!-- Top bar: site name -->
     <div class="header-top">
       <div class="header-top-inner">
