@@ -1,3 +1,12 @@
+<template>
+<div>
+    <h1>{{ props.value }}</h1>
+    <img v-if="src" :src="src" alt="QR code" />
+</div>
+  
+</template>
+
+
 <script setup lang="ts">
 import QRCode from 'qrcode'
 
@@ -16,10 +25,3 @@ watchEffect(async () => {
 })
 </script>
 
-<template>
-<div>
-    <h1>{{ props.value }}</h1>
-    <img v-if="src" :src="src" alt="QR code" />
-</div>
-  
-</template>

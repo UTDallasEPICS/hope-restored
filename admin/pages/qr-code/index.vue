@@ -30,10 +30,10 @@
     <!-- <p v-else-if="!filtered.length" class="text-gray-600">No QR codes found.</p> -->
 
     <div v-else class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-4">
-      <figure v-for="item of CodeList" :key="item.code" class="bg-white rounded p-2 text-center shadow">
+      <figure v-for="item in CodeList" :key="item.code" class="bg-white rounded p-2 text-center shadow">
         <!-- <img :src="`/qr-code/${encodeURIComponent(item.code)}.png`" :alt="`QR code for ${item.category} ${item.gender} ${item.size}`" class="w-full" /> -->
-         <QRCode 
-            :value="item"
+         <QRCode
+          :value="item"
          />
         <figcaption class="text-sm font-medium">{{ item.size || item.category }}</figcaption>
       </figure>
@@ -68,15 +68,14 @@ const CodeList = computed(() =>{
   let codes = [];
   if(category.value != '' && gender.value !=''){
     for(const s of apparelSizes.value){
-    codes.push(category.value + s + gender.value)
-  }
-  console.log(codes);
+      codes.push(category.value + s + gender.value)
+    }
   }
   return codes;
 })
 
-const items = computed(() => data.value ?? [])
-//const categories = computed(() => [...new Set(items.value.map((i) => i.category))].sort())
+// const items = computed(() => data.value ?? [])
+// const categories = computed(() => [...new Set(items.value.map((i) => i.category))].sort())
 // const genders = computed(() =>
 //   [...new Set(items.value.filter((i) => !category.value || i.category === category.value).map((i) => i.gender).filter(Boolean))] as string[]
 // )
