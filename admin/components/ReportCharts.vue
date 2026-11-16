@@ -25,7 +25,7 @@
                                 </div>
                             </div>
                             <div class="chart-box">
-                                <Bar :chart-data="allCategoriesData" :chart-options="barOptions" />
+                                <Bar :data="allCategoriesData" :options="barOptions" />
                             </div>
                         </div>
 
@@ -42,7 +42,7 @@
                                 </div>
                             </div>
                             <div class="chart-box">
-                                <Bar :chart-data="sizesData" :chart-options="barOptions" />
+                                <Bar :data="sizesData" :options="barOptions" />
                             </div>
                         </div>
                     </template>
@@ -63,7 +63,7 @@
                         </div>
                         <div class="chart-box">
                             <p v-if="loadingTotal">Loading...</p>
-                            <Line v-else :chart-data="totalLineData" :chart-options="lineOptions" />
+                            <Line v-else :data="totalLineData" :options="lineOptions" />
                         </div>
                     </div>
                     <div class="chart-block">
@@ -82,7 +82,7 @@
                         </div>
                         <div class="chart-box">
                             <p v-if="loadingCategory">Loading...</p>
-                            <Line v-else :chart-data="categoryLineData" :chart-options="lineOptions" />
+                            <Line v-else :data="categoryLineData" :options="lineOptions" />
                         </div>
                     </div>
                 </div>
