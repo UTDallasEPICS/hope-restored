@@ -43,7 +43,7 @@
               <span>Checkout</span>
             </NuxtLink>
           </li>
-          <li v-if="isAdmin">
+          <li v-if="isAdmin || hasStaffAccess">
             <NuxtLink to="/accounts" class="nav-link" exact-active-class="nav-link--active">
               <i class="fas fa-users" aria-hidden="true"></i>
               <span>Accounts</span>

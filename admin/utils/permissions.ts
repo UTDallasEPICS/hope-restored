@@ -23,7 +23,7 @@ export function canAccessPage(role: string | null | undefined, path: string) {
   if (["/", "/home", "/login"].includes(normalized)) return true;
   if (role === "admin") return true;
   if (role === "staff") {
-    return isQRItemPath(path) || ["/inventory", "/checkout", "/reports"].some((prefix) => matchesPath(normalized, prefix));
+    return isQRItemPath(path) || ["/inventory", "/checkout", "/reports", "/accounts"].some((prefix) => matchesPath(normalized, prefix));
   }
   return role === "scanner" && isQRItemPath(path);
 }

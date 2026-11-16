@@ -9,6 +9,7 @@ const STAFF_PROTECTED_PREFIXES = [
   "/api/resource/create",
   "/api/resource/update",
   "/api/resource/delete",
+  "/api/user/accounts"
 ];
 
 const ADMIN_PROTECTED_PREFIXES = [
@@ -32,10 +33,10 @@ export default defineEventHandler(async (event) => {
     return;
   }
 
-  if (ADMIN_PROTECTED_PREFIXES.some((prefix) => matchesPath(path, prefix))) {
-    await requireSession(event, "admin");
-    return;
-  }
+  // if (ADMIN_PROTECTED_PREFIXES.some((prefix) => matchesPath(path, prefix))) {
+  //   await requireSession(event, "admin");
+  //   return;
+  // }
 
   if (STAFF_PROTECTED_PREFIXES.some((prefix) => matchesPath(path, prefix))) {
     await requireSession(event, "staff");
