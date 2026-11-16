@@ -267,8 +267,11 @@ function formatLabel(date, mode) {
     return date.toLocaleString('en-US', { month: 'short', day: 'numeric' });
 }
 
+const ymd = (d) =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
 async function fetchReport(date) {
-    return await $fetch(`/api/reports?startDate=${encodeURIComponent(date.toString())}&endDate=${encodeURIComponent(date.toString())}`);
+    return await $fetch('/api/reports', { query: { startDate: ymd(date), endDate: ymd(date) } });
 }
 
 // Get reports data, runs when page mounted
