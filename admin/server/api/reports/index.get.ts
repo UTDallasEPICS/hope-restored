@@ -1,4 +1,3 @@
-import { it } from 'node:test';
 import prisma from '~/lib/prisma';
 
 export default defineEventHandler(async (event) =>{
@@ -24,17 +23,35 @@ export default defineEventHandler(async (event) =>{
         const catList = await prisma.inventory.groupBy({
             by:['category'],
         })
-         const lastDates = await prisma.inventoryRecords.findMany({
-            where:{
-                date:{
-                    gte:ed[0] <= todayStart ? ed[0] : todayStart,
-                    lte:ed[1] <= todayEnd ? ed[1] : todayEnd
-                }
-            },
-            orderBy:{
-                date:'asc'
-            }
+        //  const lastDates = await prisma.inventoryRecords.findMany({
+        //     where:{
+        //         date:{
+        //             gte:ed[0] <= todayStart ? ed[0] : todayStart,
+        //             lte:ed[1] <= todayEnd ? ed[1] : todayEnd
+        //         }
+        //     },
+        //     orderBy:{
+        //         date:'asc'
+        //     }
+        // });
+        const endOfDay = ed[1] <= todayEnd ? ed[1] : todayEnd;
+
+        // find the most recent day that has records, on or before the requested day
+        const latest = await prisma.inventoryRecords.aggregate({
+            _max: { date: true },
+            where: { date: { lte: endOfDay } },
         });
+
+        let lastDates: any[] = [];
+        if (latest._max.date) {
+            const dayStart = new Date(latest._max.date); dayStart.setHours(0, 0, 0, 0);
+            const dayEnd = new Date(latest._max.date); dayEnd.setHours(23, 59, 59, 999);
+            lastDates = await prisma.inventoryRecords.findMany({
+                where: { date: { gte: dayStart, lte: dayEnd } },
+                orderBy: { date: 'asc' },
+            });
+        }
+
         const aggregations = await prisma.inventoryRecords.groupBy({
             by:['code','category','gender','size'],
             where:{
