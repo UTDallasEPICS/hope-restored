@@ -3,6 +3,9 @@
     <div class="reports-container">
         <!-- Actions Row: View Previous Reports -->
         <div class="actions-row">
+            <button @click="showChartsModal = true" class="monthly-reports-button">
+                <i class="fas fa-chart-bar"></i> Charts
+            </button>
             <button @click="showPreviousReportsModal = true" class="monthly-reports-button">
                 <i class="fas fa-folder-open"></i> View Report
             </button>
@@ -10,6 +13,8 @@
                 <i class="fas fa-folder-open"></i> {{ !showFullInv? "Master Report": "Detail View" }}
             </button>
         </div>
+
+        <ReportCharts v-if="showChartsModal" @close="showChartsModal = false" />
 
         <!-- Previous Reports Modal -->
         <div v-if="showPreviousReportsModal" class="modal-overlay" >
@@ -316,8 +321,11 @@
 </template>
 
 <script setup>
+import { useAuthenticatedFetch } from "~/composables/useAuthenticatedFetch";
+const apiFetch = useAuthenticatedFetch();
 import { computed, onMounted, ref, watchEffect } from 'vue';
 import CategoryDetails from '../components/categoryDetails.vue';
+import ReportCharts from '../components/ReportCharts.vue';
 import { getDefaultSizesForCategory, normalizeGenderSizes } from '../composables/inventorySizes.ts';
 
 function getTodayInCentralTime() {
@@ -338,6 +346,7 @@ const fullReport = ref([]);
 const pageLoading = ref(true);
 const pageLoadError = ref('');
 const showPreviousReportsModal = ref(false);
+const showChartsModal = ref(false);
 const ChooseDailyReport = ref(false);
 const ChooseWeeklyReport = ref(false);
 const ChooseMonthlyReport = ref(false);
@@ -412,15 +421,15 @@ onMounted(async () => {
     pageLoadError.value = '';
     try {
         const [inventory, firstDate] = await Promise.all([
-            $fetch('/api/inventory'),
-            $fetch('/api/inventory/first-date').catch(() => null),
+            apiFetch('/api/inventory'),
+            apiFetch('/api/inventory/first-date').catch(() => null),
         ]);
         fullReport.value = Array.isArray(inventory) ? inventory : [];
         if (firstDate?.firstDate) {
             firstInventoryDate.value = new Date(firstDate.firstDate);
         }
         try {
-            await $fetch('/api/reports', { method: 'POST' });
+            await apiFetch('/api/reports', { method: 'POST' });
         } catch (reportErr) {
             console.warn('Daily report snapshot failed', reportErr);
         }
@@ -682,7 +691,7 @@ async function saveWeekly() {
     try {
         const start = formatLocalDate(selectedDate.value.weekStart);
         const end = formatLocalDate(selectedDate.value.weekEnd);
-        const data = await $fetch(`/api/reports?startDate=${selectedDate.value.weekStart}&endDate=${selectedDate.value.weekEnd}`);
+        const data = await apiFetch(`/api/reports?startDate=${selectedDate.value.weekStart}&endDate=${selectedDate.value.weekEnd}`);
         console.log(data);
         selectedReportRows.value = Array.isArray(data) ? normalizeAllCategories(data) : mapApiResponseToRows(data);
 
@@ -820,7 +829,7 @@ function getDetails(category, row){
 }
 
 async function getReport(){
-    const Report = await  $fetch('/api/reports',{
+    const Report = await  apiFetch('/api/reports',{
         query:{
             startDate: new Date().toISOString(),
             endDate: new Date().toISOString(),
@@ -831,7 +840,7 @@ async function getReport(){
 }
 
 async function makeReport(){
-    const Report = await  $fetch('/api/reports',{
+    const Report = await  apiFetch('/api/reports',{
         method:"POST"
     })
     fullReport.value=Report

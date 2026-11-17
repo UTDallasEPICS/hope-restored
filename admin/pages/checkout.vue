@@ -144,12 +144,13 @@
 </template>
 
 <script setup lang="ts">
+import { useAuthenticatedFetch } from "~/composables/useAuthenticatedFetch";
+const apiFetch = useAuthenticatedFetch();
 import {
   ref,
   computed,
   watch,
 } from "vue";
-import { $fetch } from "ofetch";
 import { useRouter } from "vue-router";
 import InOutForm from "../components/Inventory/InOutForm.vue";
 import InventoryPanel from "../components/Inventory/InventoryPanel.vue";
@@ -464,7 +465,7 @@ async function confirmCheckout() {
     );
 
   try {
-    await $fetch("/api/checkout", {
+    await apiFetch("/api/checkout", {
       method: "POST",
       body: { removals },
     });

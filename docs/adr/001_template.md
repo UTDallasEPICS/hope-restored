@@ -1,16 +1,15 @@
-# ADR [Number]: [Short Title of the Decision]
+# ADR [001]: [Improved Stocking Procedure]
 
-- **Status:** [ Proposed | Accepted | Rejected | Superseded ]
-- **Deciders:** [Name/GitHub Handles of everyone involved in the choice]
-- **Date:** YYYY-MM-DD
+- **Status:** [ Accepted ]
+- **Deciders:** [@AryanVallabhbhai, @isaac-trejo, @Manu-Mahi, @JasonLaPorte]
+- **Date:** 2026-09-24
 
 ---
 
 ## 1. Context & Problem Statement
 
 Describe the issue or architectural challenge you are facing. Why does a decision need to be made right now? Keep it clear and concise.
-
-> Example: We need to store user preferences and sensor logs locally on the micro-controller, but our available EEPROM space is insufficient.
+>We need to improve the stocking procedure for our inventory management system to reduce errors and increase efficiency. The current process is manual and prone to mistakes, leading to discrepancies in stock levels.
 
 ---
 
@@ -18,15 +17,26 @@ Describe the issue or architectural challenge you are facing. Why does a decisio
 
 List the main objectives, limitations, or requirements that influence this decision:
 
-- **Goal 1:** Must handle up to 10,000 write cycles per day.
-- **Goal 2:** Cost must remain under $5 per unit.
-- **Constraint:** Must fit within our existing physical enclosure dimensions.
+- **Goal 1:** Find a new stocking procedure that reduces errors for input new inventory items.
+- **Goal 2:** Must be tecnically intuitive and easy to use for the staff.
+- **Constraint:** Any hardware needed must be affordable and space efficent for the sponsor.
 
 ---
 
 ## 3. Options Considered
 
-### Option 1: [Name of Option 1]
+### Option 1: [Indvidual Barcode Scanning]
+
+Short description of what this option entails.
+
+- **Pros:**
+  - Allows for each clothing item to be tracked individually, reducing errors in inventory counts.
+  - Provides a clear audit trail for each item, making it easier to identify discrepancies.
+- **Cons:**
+  - Requires to print barcodes for each item, which may be time-consuming and require additional resources.
+  -
+
+### Option 2: QR Code Scanning]
 
 Short description of what this option entails.
 
@@ -37,18 +47,7 @@ Short description of what this option entails.
   - Disadvantage 1
   - Disadvantage 2
 
-### Option 2: [Name of Option 2]
-
-Short description of what this option entails.
-
-- **Pros:**
-  - Advantage 1
-  - Advantage 2
-- **Cons:**
-  - Disadvantage 1
-  - Disadvantage 2
-
-### Option 3: [Name of Option 3]
+### Option 3: [Computer Vision Recognition]
 
 Short description of what this option entails.
 
@@ -63,7 +62,7 @@ Short description of what this option entails.
 
 ## 4. Decision & Justification
 
-**Chosen Option:** Option [X] — [Name of Option]
+**Chosen Option:** Option [2] — [QR Code Scanning]
 
 ### Rationale
 

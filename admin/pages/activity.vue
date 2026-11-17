@@ -219,6 +219,8 @@
 </template>
 
 <script setup lang="ts">
+import { useAuthenticatedFetch } from "~/composables/useAuthenticatedFetch";
+const apiFetch = useAuthenticatedFetch();
 import { computed, ref } from "vue";
 
 type ActivityEntry = {
@@ -300,7 +302,7 @@ async function loadEntries() {
   loading.value = true;
   loadError.value = "";
   try {
-    const data = await $fetch<ActivityEntry[]>("/api/activity", {
+    const data = await apiFetch<ActivityEntry[]>("/api/activity", {
       params: {
         search: search.value || undefined,
         method: method.value || undefined,
