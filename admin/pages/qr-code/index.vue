@@ -47,8 +47,6 @@ import QRCode from '../../components/QRCode.vue';
 type QRItem = { code: string; category: string; gender: string | null; size: string | null }
 
 const { data, pending, error } = await useFetch<QRItem[]>('/api/qr-codes')
- 
-
 
 const categories=ref(["Shirts", "Pants", "Jackets", "Dresses"]);
 const apparelSizes=ref(["XS", "S", "M", "L", "XL", "2XL","3XL", "4XL+"]);
@@ -90,4 +88,7 @@ watch(category, () => { gender.value = '' })
 // const filtered = computed(() =>
 //   items.value.filter((i) => i.category === category.value && (!genders.value.length || i.gender === gender.value))
 // )
+
+
+
 </script>

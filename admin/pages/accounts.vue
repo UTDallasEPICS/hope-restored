@@ -75,7 +75,6 @@
       </section>
 
     </div>
-
     <dialog
       ref="updateDialog"
       class="bg-white rounded-lg shadow-lg p-6 max-w-md w-[calc(100%-2rem)] backdrop:bg-black/40 m-auto"

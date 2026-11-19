@@ -55,6 +55,12 @@
               <span>QR Codes</span>
             </NuxtLink>
           </li>
+                    <li v-if="isAdmin">
+            <NuxtLink to="/categories" class="nav-link" exact-active-class="nav-link--active">
+              <i class="fas fa-tags" aria-hidden="true"></i>
+              <span>Categories</span>
+            </NuxtLink>
+          </li>
           <li>
             <button type="button" class="nav-link" @click="handleSignOut">
               <i class="fas fa-right-from-bracket" aria-hidden="true"></i>

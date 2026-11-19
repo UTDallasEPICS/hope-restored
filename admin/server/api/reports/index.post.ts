@@ -36,7 +36,7 @@ export default defineEventHandler(async () =>{
         SOD.setHours(0,0,0,0);
         EOD.setHours(23,59,59,99);
         
-        if(firstRep && SOD <= firstRep.date <= EOD){
+        if(firstRep && SOD <= firstRep.date && firstRep.date <= EOD){
             for (const row of inv) {
             const existing = await prisma.inventoryRecords.findFirst({
                 where: {
@@ -63,7 +63,8 @@ export default defineEventHandler(async () =>{
                     gender: row.gender,
                     size: row.size,
                     quantity: row.quantity,
-                    additions: row.quantity,
+                    additions: row.additions,
+                    removals: row.removals,
                     date: curDate
                 }
                 })

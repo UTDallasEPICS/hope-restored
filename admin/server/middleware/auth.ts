@@ -9,6 +9,7 @@ const STAFF_PROTECTED_PREFIXES = [
   "/api/resource/create",
   "/api/resource/update",
   "/api/resource/delete",
+  "/api/user/accounts"
 ];
 
 const ADMIN_PROTECTED_PREFIXES = [
